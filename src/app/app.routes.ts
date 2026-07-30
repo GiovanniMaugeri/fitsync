@@ -1,0 +1,20 @@
+import { Routes } from '@angular/router';
+import { HomeComponent } from './features/home/home.component';
+import { TemplateListComponent } from './features/templates/template-list.component';
+import { TemplateEditorComponent } from './features/templates/template-editor.component';
+import { ActiveWorkoutComponent } from './features/workout/active-workout.component';
+import { HistoryComponent } from './features/history/history.component';
+import { AuthComponent } from './features/auth/auth.component';
+import { ExerciseListComponent } from './features/exercises/exercise-list.component';
+
+export const routes: Routes = [
+  { path: '', component: HomeComponent },
+  { path: 'templates', component: TemplateListComponent },
+  { path: 'templates/new', component: TemplateEditorComponent },
+  { path: 'templates/edit/:id', component: TemplateEditorComponent },
+  { path: 'workout/active', component: ActiveWorkoutComponent },
+  { path: 'history', component: HistoryComponent },
+  { path: 'exercises', component: ExerciseListComponent },
+  { path: 'auth', component: AuthComponent },
+  { path: '**', redirectTo: '' }
+];
