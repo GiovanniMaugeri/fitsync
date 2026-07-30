@@ -4,7 +4,8 @@ import { RouterModule, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { SyncService } from './core/services/sync.service';
 import { WorkoutService, ActiveWorkoutState } from './core/services/workout.service';
-import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, History, BicepsFlexed, Radio } from 'lucide-angular';
+import { SupabaseService } from './core/services/supabase.service';
+import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, History, BicepsFlexed, Radio, User } from 'lucide-angular';
 
 @Component({
   selector: 'app-root',
@@ -34,8 +35,11 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
 
 
             <!-- Account Link -->
-            <button class="icon-btn" routerLink="/auth" title="Account & Sync Settings">
-              <lucide-icon [img]="Settings" size="20"></lucide-icon>
+            <button *ngIf="currentUser$ | async" class="icon-btn" routerLink="/auth" title="Profilo & Sync">
+              <lucide-icon [img]="User" size="20"></lucide-icon>
+            </button>
+            <button *ngIf="!(currentUser$ | async)" class="btn btn-sm btn-primary" routerLink="/auth" style="margin-left: 0.25rem;">
+              <lucide-icon [img]="User" size="14"></lucide-icon> Accedi
             </button>
           </div>
         </div>
@@ -292,23 +296,29 @@ export class AppComponent implements OnInit {
   readonly History = History;
   readonly BicepsFlexed = BicepsFlexed;
   readonly Radio = Radio;
+  readonly User = User;
 
   isOnline$: Observable<boolean>;
   isSyncing$: Observable<boolean>;
   pendingCount$: Observable<number>;
   activeWorkout$: Observable<ActiveWorkoutState | null>;
+  currentUser$: Observable<any>;
 
   constructor(
     private syncService: SyncService,
-    private workoutService: WorkoutService
+    private workoutService: WorkoutService,
+    private supabaseService: SupabaseService
   ) {
     this.isOnline$ = this.syncService.isOnline$;
     this.isSyncing$ = this.syncService.isSyncing$;
     this.pendingCount$ = this.syncService.pendingCount$;
     this.activeWorkout$ = this.workoutService.activeWorkout$;
+    this.currentUser$ = this.supabaseService.currentUser$;
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.syncService.syncNow();
+  }
 
   forceSync() {
     this.syncService.syncNow();

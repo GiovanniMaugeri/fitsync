@@ -203,42 +203,44 @@ CREATE POLICY "Users can manage workout sets for their own sessions"
 -- ------------------------------------------
 -- SEED DATA: DEFAULT GLOBAL EXERCISES
 -- ------------------------------------------
-INSERT INTO public.exercises (name, category, equipment, is_custom, user_id) VALUES
+INSERT INTO public.exercises (id, name, category, equipment, is_custom, user_id) VALUES
 -- Petto
-('Panca Piana con Bilanciere', 'Petto', 'Bilanciere', false, NULL),
-('Panca Inclinata con Manubri', 'Petto', 'Manubri', false, NULL),
-('Dip alle Parallele', 'Petto', 'Corpo Libero', false, NULL),
-('Croci ai Cavi', 'Petto', 'Cavi', false, NULL),
+('d8970cee-e3d6-4dd0-ab09-c569f3f750f2', 'Panca Piana con Bilanciere', 'Petto', 'Bilanciere', false, NULL),
+('d9a5c5c4-fe5b-44c2-b380-adc5aacda21f', 'Panca Inclinata con Manubri', 'Petto', 'Manubri', false, NULL),
+('ebc33cb9-539d-41f9-bdae-e163dfa09762', 'Dip alle Parallele', 'Petto', 'Corpo Libero', false, NULL),
+('c8714d09-e448-4a60-baec-6e82092d27a4', 'Croci ai Cavi', 'Petto', 'Cavi', false, NULL),
 
 -- Schiena
-('Stacco da Terra (Deadlift)', 'Schiena', 'Bilanciere', false, NULL),
-('Trazioni alla Sbarra (Pull-up)', 'Schiena', 'Corpo Libero', false, NULL),
-('Lat Machine Avanti', 'Schiena', 'Macchina', false, NULL),
-('Pulley Basso', 'Schiena', 'Cavi', false, NULL),
-('Rematore con Bilanciere', 'Schiena', 'Bilanciere', false, NULL),
+('73c1430b-8c79-490c-bd37-8174fe0beee8', 'Stacco da Terra (Deadlift)', 'Schiena', 'Bilanciere', false, NULL),
+('d95f12cc-c0fa-4e29-b172-1ce437fb03f9', 'Trazioni alla Sbarra (Pull-up)', 'Schiena', 'Corpo Libero', false, NULL),
+('8cc14caa-ee32-4042-ac72-f059125d4d03', 'Lat Machine Avanti', 'Schiena', 'Macchina', false, NULL),
+('085593f7-7472-43f6-85f5-a672f7e93719', 'Pulley Basso', 'Schiena', 'Cavi', false, NULL),
+('36e581ac-1306-4b76-87ad-410a6aef3ab0', 'Rematore con Bilanciere', 'Schiena', 'Bilanciere', false, NULL),
 
 -- Gambe
-('Squat con Bilanciere', 'Gambe', 'Bilanciere', false, NULL),
-('Leg Press 45°', 'Gambe', 'Macchina', false, NULL),
-('Affondi Camminati con Manubri', 'Gambe', 'Manubri', false, NULL),
-('Leg Extension', 'Gambe', 'Macchina', false, NULL),
-('Leg Curl Sdraiato', 'Gambe', 'Macchina', false, NULL),
-('Calf Raise In Piedi', 'Gambe', 'Macchina', false, NULL),
+('9db7902f-dd5f-4ea8-8617-71dfc66f0fcb', 'Squat con Bilanciere', 'Gambe', 'Bilanciere', false, NULL),
+('95ebce18-a76a-440e-84be-3a07bf0d37a0', 'Leg Press 45°', 'Gambe', 'Macchina', false, NULL),
+('f35fd411-5022-4e1b-884a-7eb3438ec20c', 'Affondi Camminati con Manubri', 'Gambe', 'Manubri', false, NULL),
+('781e167f-d8ee-45b7-8c5f-9a7828395674', 'Leg Extension', 'Gambe', 'Macchina', false, NULL),
+('461c4269-f5bd-4440-85e1-24fd7c8820dc', 'Leg Curl Sdraiato', 'Gambe', 'Macchina', false, NULL),
+('7752da0c-aa55-4dae-8a64-84a461febd4e', 'Calf Raise In Piedi', 'Gambe', 'Macchina', false, NULL),
 
 -- Spalle
-('Military Press', 'Spalle', 'Bilanciere', false, NULL),
-('Lento Avanti con Manubri', 'Spalle', 'Manubri', false, NULL),
-('Alzate Laterali con Manubri', 'Spalle', 'Manubri', false, NULL),
-('Alzate Posteriori a 90°', 'Spalle', 'Manubri', false, NULL),
+('9759a35a-c2a2-4096-9422-cffcc25b0a38', 'Military Press', 'Spalle', 'Bilanciere', false, NULL),
+('a4bc39b7-8d68-47fc-94f3-f619f19b13bb', 'Lento Avanti con Manubri', 'Spalle', 'Manubri', false, NULL),
+('9f6634fb-ae52-4055-bacc-236082644880', 'Alzate Laterali con Manubri', 'Spalle', 'Manubri', false, NULL),
+('661d2322-266d-4ffa-992f-62dd6fa0d3db', 'Alzate Posteriori a 90°', 'Spalle', 'Manubri', false, NULL),
 
--- Braccia
-('Curl Alternato con Manubri', 'Braccia', 'Manubri', false, NULL),
-('Curl con Bilanciere EZ', 'Braccia', 'Bilanciere', false, NULL),
-('French Press panca piana', 'Braccia', 'Bilanciere', false, NULL),
-('Pushdown Tricipiti al Cavo', 'Braccia', 'Cavi', false, NULL),
+-- Bicipiti
+('11c3fe8e-7b82-4791-b862-4f0152dcdb6e', 'Curl Alternato con Manubri', 'Bicipiti', 'Manubri', false, NULL),
+('8fab3d46-ba8d-4866-a7d1-7864b127ada0', 'Curl con Bilanciere EZ', 'Bicipiti', 'Bilanciere', false, NULL),
+
+-- Tricipiti
+('63fa0bc9-0773-4d09-8843-b44df47a1946', 'French Press panca piana', 'Tricipiti', 'Bilanciere', false, NULL),
+('1f77326a-0fc1-4a02-b646-1df719087f03', 'Pushdown Tricipiti al Cavo', 'Tricipiti', 'Cavi', false, NULL),
 
 -- Core
-('Crunch su Tappetino', 'Core', 'Corpo Libero', false, NULL),
-('Plank Addominale', 'Core', 'Corpo Libero', false, NULL),
-('Leg Raise alla Sbarra', 'Core', 'Corpo Libero', false, NULL)
-ON CONFLICT DO NOTHING;
+('098506fa-10b5-4e23-a9ae-cdee10375a11', 'Crunch su Tappetino', 'Core', 'Corpo Libero', false, NULL),
+('00dd5fdd-76cf-4823-bfd3-0d88cff2fbc0', 'Plank Addominale', 'Core', 'Corpo Libero', false, NULL),
+('8391ec26-3a48-422a-899a-1710cb72f18a', 'Leg Raise alla Sbarra', 'Core', 'Corpo Libero', false, NULL)
+ON CONFLICT (id) DO NOTHING;

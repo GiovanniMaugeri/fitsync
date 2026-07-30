@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { db } from '../db/app-db';
+import { db, generateUUID } from '../db/app-db';
 import { WorkoutSession, WorkoutSet, WorkoutSetDetail, TemplateExerciseDetail } from '../models/fitsync.models';
 import { SupabaseService } from './supabase.service';
 import { SyncService } from './sync.service';
@@ -51,7 +51,7 @@ export class WorkoutService {
 
     const userId = this.supabaseService.currentUserId;
     const now = new Date().toISOString();
-    const sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+    const sessionId = generateUUID();
 
     const session: WorkoutSession = {
       id: sessionId,
@@ -77,7 +77,7 @@ export class WorkoutService {
         const lastRepsForSet = lastSets.find(s => s.set_number === i)?.reps || te.target_reps;
 
         sets.push({
-          id: 'set-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+          id: generateUUID(),
           session_id: sessionId,
           exercise_id: te.exercise_id,
           set_number: i,
@@ -114,7 +114,7 @@ export class WorkoutService {
   async startCustomWorkout(name: string = 'Allenamento Libero'): Promise<ActiveWorkoutState> {
     const userId = this.supabaseService.currentUserId;
     const now = new Date().toISOString();
-    const sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+    const sessionId = generateUUID();
 
     const session: WorkoutSession = {
       id: sessionId,
@@ -146,7 +146,7 @@ export class WorkoutService {
     const defaultWeight = lastSets.length > 0 ? lastSets[0].weight : 20;
 
     const sets: WorkoutSet[] = [1, 2, 3].map(i => ({
-      id: 'set-' + Date.now() + '-' + i + '-' + Math.random().toString(36).substring(2, 5),
+      id: generateUUID(),
       session_id: currentState.session.id,
       exercise_id: exerciseId,
       set_number: i,
@@ -196,7 +196,7 @@ export class WorkoutService {
     const lastSet = exItem.sets[exItem.sets.length - 1];
 
     exItem.sets.push({
-      id: 'set-' + Date.now() + '-' + Math.random().toString(36).substring(2, 5),
+      id: generateUUID(),
       session_id: state.session.id,
       exercise_id: exItem.exercise_id,
       set_number: newSetNumber,

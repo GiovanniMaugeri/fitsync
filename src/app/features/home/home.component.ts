@@ -4,8 +4,9 @@ import { RouterModule, Router } from '@angular/router';
 import { WorkoutService } from '../../core/services/workout.service';
 import { TemplateService } from '../../core/services/template.service';
 import { SyncService } from '../../core/services/sync.service';
+import { SupabaseService } from '../../core/services/supabase.service';
 import { WorkoutSession, WorkoutTemplate } from '../../core/models/fitsync.models';
-import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckCircle } from 'lucide-angular';
+import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckCircle, User } from 'lucide-angular';
 
 @Component({
   selector: 'app-home',
@@ -20,6 +21,17 @@ import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckC
         </div>
         <button class="btn btn-primary" (click)="startFreeWorkout()">
           <lucide-icon [img]="Zap" size="16"></lucide-icon> Allenamento Rapido
+        </button>
+      </div>
+ 
+      <!-- PROMPT DI LOGIN -->
+      <div *ngIf="!(currentUser$ | async)" class="glass-card login-prompt-card">
+        <div class="prompt-text">
+          <h3>Sincronizza i tuoi Allenamenti</h3>
+          <p>Accedi o crea un account per salvare i dati nel cloud su Supabase ed evitare di perderli.</p>
+        </div>
+        <button class="btn btn-accent btn-sm" routerLink="/auth">
+          <lucide-icon [img]="User" size="14"></lucide-icon> Accedi / Registrati
         </button>
       </div>
 
@@ -228,6 +240,39 @@ import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckC
       font-size: 0.8rem;
       font-weight: 600;
     }
+
+    .login-prompt-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+
+      @media (max-width: 600px) {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+      }
+    }
+
+    .prompt-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-main);
+      }
+
+      p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+      }
+    }
   `]
 })
 export class HomeComponent implements OnInit {
@@ -237,16 +282,19 @@ export class HomeComponent implements OnInit {
   readonly Calendar = Calendar;
   readonly Clock = Clock;
   readonly CheckCircle = CheckCircle;
-
+  readonly User = User;
+ 
   private workoutService = inject(WorkoutService);
   private templateService = inject(TemplateService);
   private syncService = inject(SyncService);
+  private supabaseService = inject(SupabaseService);
   private router = inject(Router);
-
+ 
   templates: WorkoutTemplate[] = [];
   recentSessions: WorkoutSession[] = [];
   isOnline$ = this.syncService.isOnline$;
-
+  currentUser$ = this.supabaseService.currentUser$;
+ 
   constructor() {}
 
   async ngOnInit() {

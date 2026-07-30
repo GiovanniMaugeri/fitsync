@@ -373,7 +373,7 @@ export class TemplateEditorComponent implements OnInit {
   selectedExercises: SelectedExerciseItem[] = [];
 
   allExercises: Exercise[] = [];
-  categories = ['Tutti', 'Petto', 'Schiena', 'Gambe', 'Spalle', 'Braccia', 'Core'];
+  categories = ['Tutti', 'Petto', 'Schiena', 'Gambe', 'Spalle', 'Bicipiti', 'Tricipiti', 'Core'];
   selectedCategory = 'Tutti';
   searchQuery = '';
   showExerciseModal = false;

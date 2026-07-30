@@ -11,7 +11,7 @@ export interface Exercise {
   id: string;
   user_id?: string | null;
   name: string;
-  category: string; // Petto, Schiena, Gambe, Braccia, Spalle, Core
+  category: string; // Petto, Schiena, Gambe, Bicipiti, Tricipiti, Spalle, Core
   equipment?: string; // Bilanciere, Manubri, Cavi, Macchina, Corpo Libero
   is_custom: boolean;
   created_at?: string;

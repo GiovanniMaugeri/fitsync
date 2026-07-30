@@ -20,6 +20,14 @@ export class SyncService {
   constructor(private supabaseService: SupabaseService) {
     this.initNetworkListeners();
     this.updatePendingCount();
+
+    // Reagisce all'autenticazione dell'utente scaricando i dati reali dal database Supabase
+    this.supabaseService.currentUser$.subscribe(user => {
+      if (user) {
+        console.log('FitSync Auth State Changed: Utente autenticato. Avvio sync e pull dal DB remoto Supabase...');
+        this.syncNow();
+      }
+    });
   }
 
   private initNetworkListeners() {
@@ -76,14 +84,32 @@ export class SyncService {
     this.isSyncingSubject.next(true);
 
     try {
+      // 1. Ripristina eventuali elementi in stato ERROR in modo che possano essere riprovati con le correzioni del user_id
+      const errorItems = await db.syncQueue.where('status').equals('ERROR').toArray();
+      for (const errItem of errorItems) {
+        await db.syncQueue.update(errItem.id, { status: 'PENDING', error_message: undefined });
+      }
+
       const pendingItems = await db.syncQueue
         .where('status')
         .equals('PENDING')
         .sortBy('timestamp');
 
+      const currentUserId = this.supabaseService.currentUserId;
+      const isRealUser = currentUserId && currentUserId !== 'local-user-id';
+
       for (const item of pendingItems) {
         try {
           await db.syncQueue.update(item.id, { status: 'SYNCING' });
+
+          // Se l'utente è autenticato su Supabase e l'oggetto richiede user_id, colleghiamo l'utente corrente
+          if (isRealUser && item.payload && typeof item.payload === 'object') {
+            if (['exercises', 'workout_templates', 'workout_sessions'].includes(item.table_name)) {
+              if (!item.payload.user_id || item.payload.user_id === 'local-user-id') {
+                item.payload.user_id = currentUserId;
+              }
+            }
+          }
 
           let res: any;
           if (item.action === 'INSERT') {
@@ -95,12 +121,13 @@ export class SyncService {
           }
 
           if (res?.error) {
-            console.error(`Sync error for item ${item.id}:`, res.error);
+            console.error(`Sync error for item ${item.id} (${item.table_name}):`, res.error);
             await db.syncQueue.update(item.id, {
               status: 'ERROR',
               error_message: res.error.message
             });
           } else {
+            console.log(`FitSync Sync: caricamento riuscito per elemento ${item.id} (${item.table_name})`);
             await db.syncQueue.delete(item.id);
           }
         } catch (err: any) {
@@ -126,37 +153,98 @@ export class SyncService {
     const userId = this.supabaseService.currentUserId;
 
     try {
-      // 1. Pull Exercises
-      const { data: exercises } = await client.from('exercises').select('*');
-      if (exercises && exercises.length > 0) {
-        await db.exercises.bulkPut(exercises);
+      console.log('FitSync: Sincronizzazione ed allineamento dati con il DB Supabase...');
+
+      // 1. Pull Exercises (Globali + Custom dell'utente)
+      const { data: exercises, error: exErr } = await client.from('exercises').select('*');
+      if (exErr) {
+        console.warn('FitSync: Errore durante il pull degli esercizi da Supabase:', exErr);
+      } else if (exercises) {
+        const remoteIds = new Set(exercises.map(e => e.id));
+        const localExercises = await db.exercises.toArray();
+        const toDelete = localExercises.filter(e => !remoteIds.has(e.id)).map(e => e.id);
+        if (toDelete.length > 0) {
+          await db.exercises.bulkDelete(toDelete);
+          console.log(`FitSync: Rimossi ${toDelete.length} esercizi locali eliminati dal DB remoto.`);
+        }
+        if (exercises.length > 0) {
+          await db.exercises.bulkPut(exercises);
+        }
       }
 
-      // 2. Pull Templates
-      const { data: templates } = await client.from('workout_templates').select('*').eq('user_id', userId);
-      if (templates && templates.length > 0) {
-        await db.workoutTemplates.bulkPut(templates);
+      // 2. Pull Templates dell'utente
+      if (userId && userId !== 'local-user-id') {
+        const { data: templates, error: tplErr } = await client.from('workout_templates').select('*').eq('user_id', userId);
+        if (tplErr) {
+          console.warn('FitSync: Errore durante il pull delle schede da Supabase:', tplErr);
+        } else if (templates) {
+          const remoteIds = new Set(templates.map(t => t.id));
+          const localTemplates = await db.workoutTemplates.where('user_id').equals(userId).toArray();
+          const toDelete = localTemplates.filter(t => !remoteIds.has(t.id)).map(t => t.id);
+          if (toDelete.length > 0) {
+            await db.workoutTemplates.bulkDelete(toDelete);
+            console.log(`FitSync: Rimosse ${toDelete.length} schede locali eliminate dal DB remoto.`);
+          }
+          if (templates.length > 0) {
+            await db.workoutTemplates.bulkPut(templates);
+          }
+        }
       }
 
       // 3. Pull Template Exercises
-      const { data: tempExs } = await client.from('template_exercises').select('*');
-      if (tempExs && tempExs.length > 0) {
-        await db.templateExercises.bulkPut(tempExs);
+      const { data: tempExs, error: teErr } = await client.from('template_exercises').select('*');
+      if (teErr) {
+        console.warn('FitSync: Errore durante il pull degli esercizi scheda da Supabase:', teErr);
+      } else if (tempExs) {
+        const remoteIds = new Set(tempExs.map(te => te.id));
+        const localTempExs = await db.templateExercises.toArray();
+        const toDelete = localTempExs.filter(te => !remoteIds.has(te.id)).map(te => te.id);
+        if (toDelete.length > 0) {
+          await db.templateExercises.bulkDelete(toDelete);
+        }
+        if (tempExs.length > 0) {
+          await db.templateExercises.bulkPut(tempExs);
+        }
       }
 
-      // 4. Pull Workout Sessions
-      const { data: sessions } = await client.from('workout_sessions').select('*').eq('user_id', userId);
-      if (sessions && sessions.length > 0) {
-        await db.workoutSessions.bulkPut(sessions);
+      // 4. Pull Workout Sessions dell'utente
+      if (userId && userId !== 'local-user-id') {
+        const { data: sessions, error: sErr } = await client.from('workout_sessions').select('*').eq('user_id', userId);
+        if (sErr) {
+          console.warn('FitSync: Errore durante il pull delle sessioni da Supabase:', sErr);
+        } else if (sessions) {
+          const remoteIds = new Set(sessions.map(s => s.id));
+          const localSessions = await db.workoutSessions.where('user_id').equals(userId).toArray();
+          const toDelete = localSessions.filter(s => !remoteIds.has(s.id)).map(s => s.id);
+          if (toDelete.length > 0) {
+            await db.workoutSessions.bulkDelete(toDelete);
+            console.log(`FitSync: Rimosse ${toDelete.length} sessioni locali eliminate dal DB remoto.`);
+          }
+          if (sessions.length > 0) {
+            await db.workoutSessions.bulkPut(sessions);
+          }
+        }
       }
 
       // 5. Pull Workout Sets
-      const { data: sets } = await client.from('workout_sets').select('*');
-      if (sets && sets.length > 0) {
-        await db.workoutSets.bulkPut(sets);
+      const { data: sets, error: setErr } = await client.from('workout_sets').select('*');
+      if (setErr) {
+        console.warn('FitSync: Errore durante il pull dei set da Supabase:', setErr);
+      } else if (sets) {
+        const remoteIds = new Set(sets.map(s => s.id));
+        const localSets = await db.workoutSets.toArray();
+        const toDelete = localSets.filter(s => !remoteIds.has(s.id)).map(s => s.id);
+        if (toDelete.length > 0) {
+          await db.workoutSets.bulkDelete(toDelete);
+        }
+        if (sets.length > 0) {
+          await db.workoutSets.bulkPut(sets);
+        }
       }
+
+      console.log('FitSync: Allineamento completo ed eliminazioni sincronizzate dal DB remoto!');
     } catch (err) {
-      console.warn('Error pulling remote data:', err);
+      console.warn('Errore durante il download dei dati remoti:', err);
     }
   }
 }

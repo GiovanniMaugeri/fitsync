@@ -68,7 +68,8 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
               <option value="Schiena">Schiena</option>
               <option value="Gambe">Gambe</option>
               <option value="Spalle">Spalle</option>
-              <option value="Braccia">Braccia</option>
+              <option value="Bicipiti">Bicipiti</option>
+              <option value="Tricipiti">Tricipiti</option>
               <option value="Core">Core</option>
             </select>
           </div>
@@ -223,7 +224,7 @@ export class ExerciseListComponent implements OnInit {
   readonly X = X;
 
   exercises: Exercise[] = [];
-  categories = ['Tutti', 'Petto', 'Schiena', 'Gambe', 'Spalle', 'Braccia', 'Core'];
+  categories = ['Tutti', 'Petto', 'Schiena', 'Gambe', 'Spalle', 'Bicipiti', 'Tricipiti', 'Core'];
   selectedCategory = 'Tutti';
   searchQuery = '';
 

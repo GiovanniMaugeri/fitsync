@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { db } from '../db/app-db';
+import { db, generateUUID } from '../db/app-db';
 import { Exercise } from '../models/fitsync.models';
 import { SupabaseService } from './supabase.service';
 import { SyncService } from './sync.service';
@@ -28,7 +28,7 @@ export class ExerciseService {
   async createCustomExercise(name: string, category: string, equipment?: string): Promise<Exercise> {
     const userId = this.supabaseService.currentUserId;
     const newExercise: Exercise = {
-      id: 'ex-cust-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+      id: generateUUID(),
       user_id: userId,
       name,
       category,

@@ -72,6 +72,14 @@ export class SupabaseService {
       updated_at: new Date().toISOString()
     };
     await db.profiles.put(profile);
+
+    if (this.client) {
+      try {
+        await this.client.from('profiles').upsert(profile);
+      } catch (err) {
+        console.warn('Could not sync user profile to remote Supabase:', err);
+      }
+    }
   }
 
   async signUp(username: string, password: string, fullName?: string) {

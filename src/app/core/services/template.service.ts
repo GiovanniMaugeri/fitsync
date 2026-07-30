@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { db } from '../db/app-db';
+import { db, generateUUID } from '../db/app-db';
 import { WorkoutTemplate, TemplateExercise, TemplateExerciseDetail } from '../models/fitsync.models';
 import { SupabaseService } from './supabase.service';
 import { SyncService } from './sync.service';
@@ -55,7 +55,7 @@ export class TemplateService {
     const userId = this.supabaseService.currentUserId;
     const now = new Date().toISOString();
 
-    const id = templateId || 'tpl-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+    const id = templateId || generateUUID();
 
     const template: WorkoutTemplate = {
       id,
@@ -84,7 +84,7 @@ export class TemplateService {
     for (let index = 0; index < exercisesList.length; index++) {
       const item = exercisesList[index];
       const tempEx: TemplateExercise = {
-        id: 'tpl-ex-' + Date.now() + '-' + index + '-' + Math.random().toString(36).substring(2, 5),
+        id: generateUUID(),
         template_id: id,
         exercise_id: item.exercise_id,
         order_index: index + 1,
