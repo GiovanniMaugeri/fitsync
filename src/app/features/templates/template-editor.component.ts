@@ -5,7 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { TemplateService } from '../../core/services/template.service';
 import { ExerciseService } from '../../core/services/exercise.service';
 import { Exercise, WorkoutTemplate } from '../../core/models/fitsync.models';
-import { LucideAngularModule, Save, ArrowUp, ArrowDown, Trash2, X, ArrowLeft } from 'lucide-angular';
+import { LucideAngularModule, Save, ArrowUp, ArrowDown, Trash2, X, ArrowLeft, Plus } from 'lucide-angular';
 
 interface SelectedExerciseItem {
   exercise: Exercise;
@@ -38,17 +38,37 @@ interface SelectedExerciseItem {
           <label>Descrizione (opzionale)</label>
           <input type="text" class="input-field" [(ngModel)]="description" placeholder="es. Focus ipertrofia con recuperi da 90 sec">
         </div>
+        <div class="form-group">
+          <label>Visibilità Scheda *</label>
+          <div class="visibility-toggle">
+            <button 
+              type="button" 
+              class="vis-btn" 
+              [class.active]="isPublic === true" 
+              (click)="isPublic = true">
+              🌐 Pubblica
+              <small>Tutti gli utenti possono vederla ed usarla</small>
+            </button>
+            <button 
+              type="button" 
+              class="vis-btn" 
+              [class.active]="isPublic === false" 
+              (click)="isPublic = false">
+              🔒 Privata
+              <small>Visibile solo a te</small>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- SELECTED EXERCISES LIST -->
       <div class="exercises-section">
         <div class="section-top">
           <h2>Esercizi in Scheda ({{ selectedExercises.length }})</h2>
-          <button class="btn btn-accent btn-sm" (click)="showExerciseModal = true">+ Aggiungi Esercizio</button>
         </div>
 
         <div *ngIf="selectedExercises.length === 0" class="empty-list glass-card">
-          <p>Nessun esercizio aggiunto. Clicca su "+ Aggiungi Esercizio" per selezionare dalla libreria.</p>
+          <p>Nessun esercizio aggiunto. Clicca sul pulsante in basso per selezionare dalla libreria.</p>
         </div>
 
         <div class="exercises-list">
@@ -62,37 +82,64 @@ interface SelectedExerciseItem {
                 </div>
               </div>
               <div class="reorder-btns">
-                <button class="icon-btn" (click)="moveUp(idx)" [disabled]="idx === 0"><lucide-icon [img]="ArrowUp" size="16"></lucide-icon></button>
-                <button class="icon-btn" (click)="moveDown(idx)" [disabled]="idx === selectedExercises.length - 1"><lucide-icon [img]="ArrowDown" size="16"></lucide-icon></button>
-                <button class="icon-btn danger" (click)="removeExercise(idx)"><lucide-icon [img]="Trash2" size="16"></lucide-icon></button>
+                <button class="action-btn" (click)="moveUp(idx)" [disabled]="idx === 0" title="Sposta in alto" aria-label="Sposta in alto">
+                  <lucide-icon [img]="ArrowUp" size="15"></lucide-icon>
+                </button>
+                <button class="action-btn" (click)="moveDown(idx)" [disabled]="idx === selectedExercises.length - 1" title="Sposta in basso" aria-label="Sposta in basso">
+                  <lucide-icon [img]="ArrowDown" size="15"></lucide-icon>
+                </button>
+                <button class="action-btn danger" (click)="removeExercise(idx)" title="Elimina esercizio" aria-label="Elimina esercizio">
+                  <lucide-icon [img]="Trash2" size="15"></lucide-icon>
+                </button>
               </div>
             </div>
 
-            <!-- TARGET SETTINGS -->
+            <!-- TARGET SETTINGS WITH STEPPERS -->
             <div class="item-settings">
               <div class="setting-col">
                 <label>Serie (Set)</label>
-                <input type="number" class="input-field num-input" [(ngModel)]="item.target_sets" min="1" max="20">
+                <div class="stepper-input">
+                  <button class="step-btn" (click)="adjustSets(item, -1)" [disabled]="item.target_sets <= 1">-</button>
+                  <input type="number" class="num-input" [(ngModel)]="item.target_sets" min="1" max="20">
+                  <button class="step-btn" (click)="adjustSets(item, 1)" [disabled]="item.target_sets >= 20">+</button>
+                </div>
               </div>
+
               <div class="setting-col">
                 <label>Reps Target</label>
-                <input type="number" class="input-field num-input" [(ngModel)]="item.target_reps" min="1" max="100">
+                <div class="stepper-input">
+                  <button class="step-btn" (click)="adjustReps(item, -1)" [disabled]="item.target_reps <= 1">-</button>
+                  <input type="number" class="num-input" [(ngModel)]="item.target_reps" min="1" max="100">
+                  <button class="step-btn" (click)="adjustReps(item, 1)" [disabled]="item.target_reps >= 100">+</button>
+                </div>
               </div>
+
               <div class="setting-col">
-                <label>Recupero (sec)</label>
-                <input type="number" class="input-field num-input" [(ngModel)]="item.rest_time_seconds" min="10" step="10">
+                <label>Recupero (s)</label>
+                <div class="stepper-input">
+                  <button class="step-btn" (click)="adjustRest(item, -10)" [disabled]="item.rest_time_seconds <= 10">-</button>
+                  <input type="number" class="num-input" [(ngModel)]="item.rest_time_seconds" min="10" step="5">
+                  <button class="step-btn" (click)="adjustRest(item, 10)">+</button>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- TASTO + AGGIUNGI ESERCIZIO COME ULTIMO ELEMENTO -->
+        <button class="btn btn-primary btn-block add-exercise-btn" (click)="showExerciseModal = true">
+          <lucide-icon [img]="Plus" size="18"></lucide-icon> Aggiungi Esercizio
+        </button>
       </div>
 
       <!-- EXERCISE SEARCH MODAL -->
-      <div *ngIf="showExerciseModal" class="modal-backdrop">
-        <div class="modal-card glass-card">
+      <div *ngIf="showExerciseModal" class="modal-backdrop" (click)="showExerciseModal = false">
+        <div class="modal-card glass-card" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <h3>Libreria Esercizi</h3>
-            <button class="icon-btn" (click)="showExerciseModal = false"><lucide-icon [img]="X" size="20"></lucide-icon></button>
+            <button class="modal-close-btn" (click)="showExerciseModal = false" title="Chiudi" aria-label="Chiudi libreria esercizi">
+              <lucide-icon [img]="X" size="20"></lucide-icon>
+            </button>
           </div>
 
           <div class="modal-search">
@@ -195,6 +242,17 @@ interface SelectedExerciseItem {
       gap: 0.75rem;
     }
 
+    .add-exercise-btn {
+      padding: 0.85rem;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+      border: 1px dashed rgba(255, 255, 255, 0.25);
+    }
+
     .exercise-item-card {
       padding: 1rem;
     }
@@ -229,44 +287,168 @@ interface SelectedExerciseItem {
 
     .reorder-btns {
       display: flex;
-      gap: 0.2rem;
+      align-items: center;
+      gap: 0.3rem;
     }
 
-    .icon-btn {
-      background: transparent;
-      border: none;
-      font-size: 0.9rem;
+    .action-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      padding: 0.25rem;
-      border-radius: 4px;
-      &:hover { background: rgba(255, 255, 255, 0.1); }
-      &.danger:hover { background: rgba(244, 63, 94, 0.2); }
-      &:disabled { opacity: 0.3; }
+      transition: all 0.15s ease;
+
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.35);
+      }
+
+      &.danger {
+        color: #fb7185;
+        background: rgba(244, 63, 94, 0.15);
+        border-color: rgba(244, 63, 94, 0.35);
+
+        &:hover:not(:disabled) {
+          background: #f43f5e;
+          color: #ffffff;
+          border-color: #f43f5e;
+        }
+      }
+
+      &:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+      }
     }
 
     .item-settings {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
-      gap: 0.5rem;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 0.6rem 0.8rem;
+      grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+      gap: 0.6rem;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 0.75rem 0.85rem;
       border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .setting-col {
       display: flex;
       flex-direction: column;
-      gap: 0.2rem;
+      gap: 0.3rem;
 
-      label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+      label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+    }
+
+    .stepper-input {
+      display: flex;
+      align-items: center;
+      background: #18181b;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .step-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--text-main);
+      font-size: 1.1rem;
+      font-weight: 700;
+      width: 32px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      &:active:not(:disabled) {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
     }
 
     .num-input {
-      padding: 0.4rem 0.2rem;
+      flex: 1;
+      min-width: 32px;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      padding: 0.3rem 0.1rem;
       font-family: var(--font-mono);
       font-weight: 700;
+      font-size: 0.95rem;
       text-align: center;
-      width: 100%;
+      -moz-appearance: textfield;
+
+      &::-webkit-inner-spin-button,
+      &::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      &:focus {
+        outline: none;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .item-settings {
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+        padding: 0.85rem;
+      }
+
+      .setting-col {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+
+        label {
+          font-size: 0.85rem;
+          color: var(--text-main);
+          font-weight: 600;
+          min-width: 95px;
+        }
+
+        .stepper-input {
+          flex: 1;
+          max-width: 170px;
+          height: 38px;
+        }
+
+        .step-btn {
+          width: 44px;
+          height: 38px;
+          font-size: 1.25rem;
+        }
+
+        .num-input {
+          font-size: 1rem;
+        }
+      }
     }
 
     /* Modal Styling */
@@ -284,59 +466,95 @@ interface SelectedExerciseItem {
 
     .modal-card {
       width: 100%;
-      max-width: 450px;
-      max-height: 85vh;
+      max-width: 480px;
+      height: 80vh;
+      max-height: 600px;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
       background: #18181b;
       border: 1px solid var(--border-color);
-      overflow-y: auto;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
     .modal-header {
+      padding: 1rem 1rem 0.75rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      h3 { color: var(--text-main); }
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+      h3 { color: var(--text-main); font-size: 1.1rem; font-weight: 700; }
+    }
+
+    .modal-close-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.35);
+        color: #ffffff;
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
     }
 
     .modal-search {
+      padding: 0.85rem 1rem;
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
+      gap: 0.65rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      flex-shrink: 0;
     }
 
     .categories-pills {
       display: flex;
-      gap: 0.4rem;
-      overflow-x: auto;
-      padding-bottom: 0.3rem;
+      flex-wrap: wrap;
+      gap: 0.35rem;
     }
 
     .pill-btn {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--border-color);
       color: var(--text-muted);
-      padding: 0.25rem 0.6rem;
-      font-size: 0.75rem;
-      border-radius: 12px;
-      white-space: nowrap;
+      padding: 0.3rem 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      border-radius: 16px;
       cursor: pointer;
+      transition: all 0.15s ease;
 
       &.active {
-        background: var(--primary-cyan-glow);
-        color: var(--primary-cyan);
-        border-color: var(--primary-cyan);
+        background: #ffffff;
+        color: #121212;
+        border-color: #ffffff;
+        font-weight: 700;
       }
     }
 
     .modal-list {
+      flex: 1;
       overflow-y: auto;
+      padding: 0.75rem 1rem 1rem 1rem;
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      max-height: 50vh;
     }
 
     .ex-select-row {
@@ -349,12 +567,48 @@ interface SelectedExerciseItem {
       cursor: pointer;
 
       &:hover {
-        background: rgba(6, 182, 212, 0.15);
+        background: rgba(255, 255, 255, 0.1);
       }
 
       .ex-name { font-weight: 600; color: var(--text-main); }
       .ex-sub { font-size: 0.75rem; color: var(--text-muted); }
-      .add-icon { color: var(--accent-lime); font-weight: 700; font-size: 0.85rem; }
+      .add-icon { color: var(--text-main); font-weight: 700; font-size: 0.85rem; }
+    }
+
+    .visibility-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+    }
+
+    .vis-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.6rem;
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+
+      small {
+        font-size: 0.7rem;
+        font-weight: 400;
+        opacity: 0.8;
+      }
+
+      &.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: var(--text-main);
+        border-color: #52525b;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
     }
   `]
 })
@@ -365,11 +619,13 @@ export class TemplateEditorComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly X = X;
   readonly ArrowLeft = ArrowLeft;
+  readonly Plus = Plus;
 
   @Input() id?: string;
   isEdit = false;
   name = '';
   description = '';
+  isPublic = true;
   selectedExercises: SelectedExerciseItem[] = [];
 
   allExercises: Exercise[] = [];
@@ -393,6 +649,7 @@ export class TemplateEditorComponent implements OnInit {
       if (t) {
         this.name = t.name;
         this.description = t.description || '';
+        this.isPublic = t.is_public !== false;
         if (t.exercises) {
           this.selectedExercises = t.exercises.map(te => ({
             exercise: te.exercise || { id: te.exercise_id, name: 'Esercizio', category: 'Generale', is_custom: false },
@@ -443,6 +700,18 @@ export class TemplateEditorComponent implements OnInit {
     }
   }
 
+  adjustSets(item: SelectedExerciseItem, delta: number) {
+    item.target_sets = Math.max(1, Math.min(20, (Number(item.target_sets) || 1) + delta));
+  }
+
+  adjustReps(item: SelectedExerciseItem, delta: number) {
+    item.target_reps = Math.max(1, Math.min(100, (Number(item.target_reps) || 1) + delta));
+  }
+
+  adjustRest(item: SelectedExerciseItem, delta: number) {
+    item.rest_time_seconds = Math.max(10, Math.min(600, (Number(item.rest_time_seconds) || 60) + delta));
+  }
+
   async saveTemplate() {
     if (!this.name.trim() || this.selectedExercises.length === 0) return;
 
@@ -457,7 +726,8 @@ export class TemplateEditorComponent implements OnInit {
       this.id || null,
       this.name,
       this.description,
-      list
+      list,
+      this.isPublic
     );
 
     this.router.navigate(['/templates']);

@@ -30,7 +30,7 @@ import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckC
           <h3>Sincronizza i tuoi Allenamenti</h3>
           <p>Accedi o crea un account per salvare i dati nel cloud su Supabase ed evitare di perderli.</p>
         </div>
-        <button class="btn btn-accent btn-sm" routerLink="/auth">
+        <button class="btn btn-primary btn-sm" routerLink="/auth">
           <lucide-icon [img]="User" size="14"></lucide-icon> Accedi / Registrati
         </button>
       </div>
@@ -55,7 +55,9 @@ import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckC
             </div>
             <p class="template-desc">{{ t.description || 'Nessuna descrizione.' }}</p>
             <div class="template-footer">
-              <span class="start-link"><lucide-icon [img]="PlayCircle" size="16"></lucide-icon> Avvia Ora</span>
+              <span class="start-link">
+                <lucide-icon [img]="PlayCircle" size="16"></lucide-icon> Avvia Ora
+              </span>
             </div>
           </div>
         </div>
@@ -193,11 +195,30 @@ import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckC
       .template-footer {
         display: flex;
         justify-content: flex-end;
+        align-items: center;
 
         .start-link {
-          font-size: 0.85rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.4rem;
+          background: transparent;
+          border: none;
+          color: #ffffff;
           font-weight: 700;
-          color: var(--accent-lime);
+          font-size: 0.85rem;
+          line-height: 1;
+          transition: opacity 0.15s ease;
+
+          lucide-icon {
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+          }
+
+          &:hover {
+            opacity: 0.85;
+          }
         }
       }
     }
@@ -298,6 +319,20 @@ export class HomeComponent implements OnInit {
   constructor() {}
 
   async ngOnInit() {
+    await this.loadData();
+
+    this.syncService.isSyncing$.subscribe(isSyncing => {
+      if (!isSyncing) {
+        this.loadData();
+      }
+    });
+
+    this.supabaseService.currentUser$.subscribe(() => {
+      this.loadData();
+    });
+  }
+
+  async loadData() {
     this.templates = await this.templateService.getTemplates();
     this.recentSessions = await this.workoutService.getRecentWorkoutSessions(5);
   }

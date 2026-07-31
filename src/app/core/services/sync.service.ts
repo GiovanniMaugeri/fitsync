@@ -93,7 +93,24 @@ export class SyncService {
       const pendingItems = await db.syncQueue
         .where('status')
         .equals('PENDING')
-        .sortBy('timestamp');
+        .toArray();
+
+      // Ordiniamo le tabelle in base alle dipendenze di Foreign Key (genitori prima dei figli):
+      // 1: exercises, 2: workout_templates, 3: template_exercises, 4: workout_sessions, 5: workout_sets
+      const tablePriority: Record<string, number> = {
+        'exercises': 1,
+        'workout_templates': 2,
+        'template_exercises': 3,
+        'workout_sessions': 4,
+        'workout_sets': 5
+      };
+
+      pendingItems.sort((a, b) => {
+        const pA = tablePriority[a.table_name] || 99;
+        const pB = tablePriority[b.table_name] || 99;
+        if (pA !== pB) return pA - pB;
+        return a.timestamp - b.timestamp;
+      });
 
       const currentUserId = this.supabaseService.currentUserId;
       const isRealUser = currentUserId && currentUserId !== 'local-user-id';
@@ -118,6 +135,19 @@ export class SyncService {
             res = await client.from(item.table_name).update(item.payload).eq('id', item.payload.id);
           } else if (item.action === 'DELETE') {
             res = await client.from(item.table_name).delete().eq('id', item.payload.id || item.payload);
+          }
+
+          // Fallback Failsafe: Se il DB Supabase remoto non possiede ancora la colonna 'is_public' (PGRST204), riproviamo omettendo is_public
+          if (res?.error && (res.error.code === 'PGRST204' || res.error.message?.includes('is_public'))) {
+            console.warn(`FitSync Sync Fallback: La colonna 'is_public' non è ancora presente su Supabase per '${item.table_name}'. Eseguo il caricamento senza il campo is_public...`);
+            const fallbackPayload = { ...item.payload };
+            delete fallbackPayload.is_public;
+
+            if (item.action === 'INSERT') {
+              res = await client.from(item.table_name).upsert(fallbackPayload);
+            } else if (item.action === 'UPDATE') {
+              res = await client.from(item.table_name).update(fallbackPayload).eq('id', fallbackPayload.id);
+            }
           }
 
           if (res?.error) {
@@ -172,22 +202,29 @@ export class SyncService {
         }
       }
 
-      // 2. Pull Templates dell'utente
+      // 2. Pull Templates (Pubbliche + dell'utente)
+      let query = client.from('workout_templates').select('*');
       if (userId && userId !== 'local-user-id') {
-        const { data: templates, error: tplErr } = await client.from('workout_templates').select('*').eq('user_id', userId);
-        if (tplErr) {
-          console.warn('FitSync: Errore durante il pull delle schede da Supabase:', tplErr);
-        } else if (templates) {
-          const remoteIds = new Set(templates.map(t => t.id));
-          const localTemplates = await db.workoutTemplates.where('user_id').equals(userId).toArray();
-          const toDelete = localTemplates.filter(t => !remoteIds.has(t.id)).map(t => t.id);
-          if (toDelete.length > 0) {
-            await db.workoutTemplates.bulkDelete(toDelete);
-            console.log(`FitSync: Rimosse ${toDelete.length} schede locali eliminate dal DB remoto.`);
-          }
-          if (templates.length > 0) {
-            await db.workoutTemplates.bulkPut(templates);
-          }
+        query = query.or(`is_public.eq.true,user_id.eq.${userId}`);
+      } else {
+        query = query.eq('is_public', true);
+      }
+      const { data: templates, error: tplErr } = await query;
+      if (tplErr) {
+        console.warn('FitSync: Errore durante il pull delle schede da Supabase:', tplErr);
+      } else if (templates) {
+        const pendingQueue = await db.syncQueue.toArray();
+        const pendingTplIds = new Set(pendingQueue.filter(q => q.table_name === 'workout_templates').map(q => q.payload?.id));
+
+        const remoteIds = new Set(templates.map(t => t.id));
+        const localTemplates = await db.workoutTemplates.toArray();
+        const toDelete = localTemplates.filter(t => !remoteIds.has(t.id) && !pendingTplIds.has(t.id) && t.user_id === userId).map(t => t.id);
+        if (toDelete.length > 0) {
+          await db.workoutTemplates.bulkDelete(toDelete);
+          console.log(`FitSync: Rimosse ${toDelete.length} schede locali eliminate dal DB remoto.`);
+        }
+        if (templates.length > 0) {
+          await db.workoutTemplates.bulkPut(templates);
         }
       }
 
@@ -196,9 +233,12 @@ export class SyncService {
       if (teErr) {
         console.warn('FitSync: Errore durante il pull degli esercizi scheda da Supabase:', teErr);
       } else if (tempExs) {
+        const pendingQueue = await db.syncQueue.toArray();
+        const pendingTeIds = new Set(pendingQueue.filter(q => q.table_name === 'template_exercises').map(q => q.payload?.id));
+
         const remoteIds = new Set(tempExs.map(te => te.id));
         const localTempExs = await db.templateExercises.toArray();
-        const toDelete = localTempExs.filter(te => !remoteIds.has(te.id)).map(te => te.id);
+        const toDelete = localTempExs.filter(te => !remoteIds.has(te.id) && !pendingTeIds.has(te.id)).map(te => te.id);
         if (toDelete.length > 0) {
           await db.templateExercises.bulkDelete(toDelete);
         }

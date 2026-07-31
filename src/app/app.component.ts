@@ -35,10 +35,10 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
 
 
             <!-- Account Link -->
-            <button *ngIf="currentUser$ | async" class="icon-btn" routerLink="/auth" title="Profilo & Sync">
-              <lucide-icon [img]="User" size="20"></lucide-icon>
+            <button *ngIf="currentUser$ | async" class="btn btn-sm btn-outline header-account-btn" routerLink="/auth" title="Profilo & Sync">
+              <lucide-icon [img]="User" size="14"></lucide-icon> Profilo
             </button>
-            <button *ngIf="!(currentUser$ | async)" class="btn btn-sm btn-primary" routerLink="/auth" style="margin-left: 0.25rem;">
+            <button *ngIf="!(currentUser$ | async)" class="btn btn-sm btn-primary header-account-btn" routerLink="/auth">
               <lucide-icon [img]="User" size="14"></lucide-icon> Accedi
             </button>
           </div>
@@ -138,7 +138,13 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
     .status-area {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .header-account-btn {
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .status-dot {
@@ -178,10 +184,15 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
     .icon-btn {
       background: transparent;
       border: none;
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       font-size: 1.1rem;
       cursor: pointer;
-      padding: 0.3rem;
+      padding: 0.4rem;
       border-radius: 6px;
+      transition: background 0.2s ease;
       &:hover { background: rgba(255, 255, 255, 0.1); }
     }
 

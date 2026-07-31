@@ -34,8 +34,8 @@ export class FitSyncDatabase extends Dexie {
 
     const schema = {
       profiles: 'id, username',
-      exercises: 'id, user_id, name, category, equipment, is_custom',
-      workoutTemplates: 'id, user_id, name, created_at',
+      exercises: 'id, user_id, name, category, equipment, is_custom, is_public',
+      workoutTemplates: 'id, user_id, name, is_public, created_at',
       templateExercises: 'id, template_id, exercise_id, order_index',
       workoutSessions: 'id, user_id, template_id, start_time',
       workoutSets: 'id, session_id, exercise_id, set_number',

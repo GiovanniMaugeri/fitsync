@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WorkoutService } from '../../core/services/workout.service';
+import { SupabaseService } from '../../core/services/supabase.service';
+import { SyncService } from '../../core/services/sync.service';
 import { WorkoutSession } from '../../core/models/fitsync.models';
 import { LucideAngularModule, History, Calendar, Clock, Dumbbell, ChevronUp, ChevronDown, Trash2, MessageSquare } from 'lucide-angular';
 
@@ -35,11 +37,13 @@ import { LucideAngularModule, History, Calendar, Clock, Dumbbell, ChevronUp, Che
               </div>
             </div>
             <div class="header-right">
-              <span class="expand-icon">
+              <button class="expand-btn" (click)="toggleExpand(s.id)" [title]="expandedSessionId === s.id ? 'Comprimi' : 'Espandi Dettagli'" aria-label="Dettagli sessione">
                 <lucide-icon *ngIf="expandedSessionId === s.id" [img]="ChevronUp" size="18"></lucide-icon>
                 <lucide-icon *ngIf="expandedSessionId !== s.id" [img]="ChevronDown" size="18"></lucide-icon>
-              </span>
-              <button class="icon-btn danger" (click)="deleteSession($event, s.id)" title="Elimina Sessione"><lucide-icon [img]="Trash2" size="18"></lucide-icon></button>
+              </button>
+              <button class="icon-btn danger" (click)="deleteSession($event, s.id)" title="Elimina Sessione" aria-label="Elimina Sessione">
+                <lucide-icon [img]="Trash2" size="18"></lucide-icon>
+              </button>
             </div>
           </div>
 
@@ -113,7 +117,8 @@ import { LucideAngularModule, History, Calendar, Clock, Dumbbell, ChevronUp, Che
 
     .session-meta {
       display: flex;
-      gap: 0.8rem;
+      flex-wrap: wrap;
+      gap: 0.6rem;
       font-size: 0.8rem;
       color: var(--text-muted);
       margin-top: 0.25rem;
@@ -123,13 +128,66 @@ import { LucideAngularModule, History, Calendar, Clock, Dumbbell, ChevronUp, Che
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      flex-shrink: 0;
     }
 
-    .expand-icon { font-size: 0.85rem; }
+    .expand-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+    }
 
     .icon-btn {
-      background: transparent; border: none; font-size: 0.95rem; cursor: pointer; padding: 0.3rem; border-radius: 4px;
-      &.danger:hover { background: rgba(244, 63, 94, 0.2); }
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+      }
+
+      &.danger {
+        color: #f43f5e;
+        border-color: rgba(244, 63, 94, 0.35);
+        background: rgba(244, 63, 94, 0.12);
+      }
+
+      &.danger:hover {
+        background: rgba(244, 63, 94, 0.25);
+        color: #fb7185;
+        border-color: rgba(244, 63, 94, 0.55);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
     }
 
     .session-details {
@@ -195,10 +253,24 @@ export class HistoryComponent implements OnInit {
   sessions: WorkoutSession[] = [];
   expandedSessionId: string | null = null;
 
-  constructor(private workoutService: WorkoutService) {}
+  constructor(
+    private workoutService: WorkoutService,
+    private supabaseService: SupabaseService,
+    private syncService: SyncService
+  ) {}
 
   async ngOnInit() {
     await this.loadSessions();
+
+    this.supabaseService.currentUser$.subscribe(() => {
+      this.loadSessions();
+    });
+
+    this.syncService.isSyncing$.subscribe(isSyncing => {
+      if (!isSyncing) {
+        this.loadSessions();
+      }
+    });
   }
 
   async loadSessions() {

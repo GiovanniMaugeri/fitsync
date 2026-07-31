@@ -46,8 +46,25 @@ export class WorkoutService {
   }
 
   async startWorkoutFromTemplate(templateId: string): Promise<ActiveWorkoutState> {
-    const template = await db.workoutTemplates.get(templateId);
-    const templateExercises = await db.templateExercises.where('template_id').equals(templateId).sortBy('order_index');
+    const client = this.supabaseService.supabase;
+
+    let template = await db.workoutTemplates.get(templateId);
+    if (!template && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== 'local-user-id') {
+      const { data } = await client.from('workout_templates').select('*').eq('id', templateId).maybeSingle();
+      if (data) {
+        await db.workoutTemplates.put(data);
+        template = data;
+      }
+    }
+
+    let templateExercises = await db.templateExercises.where('template_id').equals(templateId).sortBy('order_index');
+    if (templateExercises.length === 0 && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== 'local-user-id') {
+      const { data } = await client.from('template_exercises').select('*').eq('template_id', templateId).order('order_index', { ascending: true });
+      if (data && data.length > 0) {
+        await db.templateExercises.bulkPut(data);
+        templateExercises = data as any[];
+      }
+    }
 
     const userId = this.supabaseService.currentUserId;
     const now = new Date().toISOString();
@@ -65,7 +82,15 @@ export class WorkoutService {
     const exercisesState: ActiveWorkoutState['exercises'] = [];
 
     for (const te of templateExercises) {
-      const ex = await db.exercises.get(te.exercise_id);
+      let ex = await db.exercises.get(te.exercise_id);
+      if (!ex && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== 'local-user-id') {
+        const { data: remoteEx } = await client.from('exercises').select('*').eq('id', te.exercise_id).maybeSingle();
+        if (remoteEx) {
+          await db.exercises.put(remoteEx);
+          ex = remoteEx;
+        }
+      }
+
       const sets: WorkoutSet[] = [];
       
       // Lookup last weight used for this exercise
@@ -300,19 +325,72 @@ export class WorkoutService {
   }
 
   async getLastPerformanceForExercise(exerciseId: string): Promise<WorkoutSet[]> {
+    const currentUserId = this.supabaseService.currentUserId;
     const sets = await db.workoutSets.where('exercise_id').equals(exerciseId).reverse().toArray();
     if (sets.length === 0) return [];
-    
-    const lastSessionId = sets[0].session_id;
-    return sets.filter(s => s.session_id === lastSessionId);
+
+    for (const setItem of sets) {
+      const session = await db.workoutSessions.get(setItem.session_id);
+      if (session) {
+        const isUserSession = (currentUserId && currentUserId !== 'local-user-id')
+          ? session.user_id === currentUserId
+          : (!session.user_id || session.user_id === 'local-user-id');
+
+        if (isUserSession) {
+          return sets.filter(s => s.session_id === setItem.session_id);
+        }
+      }
+    }
+
+    return [];
   }
 
   async getRecentWorkoutSessions(limit: number = 10): Promise<WorkoutSession[]> {
-    const sessions = await db.workoutSessions.orderBy('start_time').reverse().limit(limit).toArray();
-    for (const s of sessions) {
+    const currentUserId = this.supabaseService.currentUserId;
+    const client = this.supabaseService.supabase;
+
+    // Se l'utente è autenticato su Supabase, allineiamo le sue sessioni personali da remoto
+    if (client && currentUserId && currentUserId !== 'local-user-id') {
+      try {
+        const { data: remoteSessions, error } = await client
+          .from('workout_sessions')
+          .select('*')
+          .eq('user_id', currentUserId)
+          .order('start_time', { ascending: false })
+          .limit(limit);
+
+        if (!error && remoteSessions && remoteSessions.length > 0) {
+          await db.workoutSessions.bulkPut(remoteSessions);
+
+          const sessionIds = remoteSessions.map(s => s.id);
+          const { data: remoteSets } = await client
+            .from('workout_sets')
+            .select('*')
+            .in('session_id', sessionIds);
+
+          if (remoteSets && remoteSets.length > 0) {
+            await db.workoutSets.bulkPut(remoteSets);
+          }
+        }
+      } catch (err) {
+        console.warn('FitSync: Errore allineamento remoto sessioni:', err);
+      }
+    }
+
+    const allSessions = await db.workoutSessions.orderBy('start_time').reverse().toArray();
+
+    // Filtriamo le sessioni garantendo la privacy (mostriamo solo le sessioni dell'utente loggato)
+    const userSessions = allSessions.filter(s => {
+      if (currentUserId && currentUserId !== 'local-user-id') {
+        return s.user_id === currentUserId;
+      }
+      return !s.user_id || s.user_id === 'local-user-id';
+    }).slice(0, limit);
+
+    for (const s of userSessions) {
       s.sets = await this.getSessionSetsWithExercises(s.id);
     }
-    return sessions;
+    return userSessions;
   }
 
   async getSessionSetsWithExercises(sessionId: string): Promise<WorkoutSetDetail[]> {
@@ -329,6 +407,15 @@ export class WorkoutService {
   }
 
   async deleteSession(sessionId: string): Promise<void> {
+    const session = await db.workoutSessions.get(sessionId);
+    if (!session) return;
+
+    const currentUserId = this.supabaseService.currentUserId;
+    if (session.user_id && session.user_id !== 'local-user-id' && session.user_id !== currentUserId) {
+      console.warn('Non puoi eliminare sessioni di altri utenti.');
+      return;
+    }
+
     await db.workoutSessions.delete(sessionId);
     await this.syncService.enqueue('workout_sessions', 'DELETE', { id: sessionId });
 

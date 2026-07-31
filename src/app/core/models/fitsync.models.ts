@@ -14,6 +14,7 @@ export interface Exercise {
   category: string; // Petto, Schiena, Gambe, Bicipiti, Tricipiti, Spalle, Core
   equipment?: string; // Bilanciere, Manubri, Cavi, Macchina, Corpo Libero
   is_custom: boolean;
+  is_public?: boolean; // true = Pubblico (visibile a tutti), false = Privato (visibile solo al creatore)
   created_at?: string;
 }
 
@@ -22,6 +23,7 @@ export interface WorkoutTemplate {
   user_id: string;
   name: string;
   description?: string;
+  is_public?: boolean; // true = Pubblica (visibile a tutti), false = Privata (visibile solo al creatore)
   created_at?: string;
   updated_at?: string;
   exercises?: TemplateExerciseDetail[];
