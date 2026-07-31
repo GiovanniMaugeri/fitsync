@@ -96,13 +96,13 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
                     <span class="set-number">#{{ s.set_number }}</span>
                   </td>
                   <td class="col-input">
-                    <input type="number" class="set-input" [(ngModel)]="s.weight" step="0.5" min="0">
+                    <input type="number" class="set-input" [(ngModel)]="s.weight" (ngModelChange)="onInputChange()" step="0.5" min="0">
                   </td>
                   <td class="col-input">
-                    <input type="number" class="set-input" [(ngModel)]="s.reps" step="1" min="1">
+                    <input type="number" class="set-input" [(ngModel)]="s.reps" (ngModelChange)="onInputChange()" step="1" min="1">
                   </td>
                   <td class="col-input">
-                    <input type="number" class="set-input rpe-input" [(ngModel)]="s.rpe" step="0.5" min="1" max="10">
+                    <input type="number" class="set-input rpe-input" [(ngModel)]="s.rpe" (ngModelChange)="onInputChange()" step="0.5" min="1" max="10">
                   </td>
                   <td class="col-check">
                     <button 
@@ -571,7 +571,12 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     const currentState = this.workoutService.currentActiveWorkout;
     if (currentState) {
       currentState.activeExerciseIndex = idx;
+      this.workoutService.saveCurrentState();
     }
+  }
+
+  onInputChange() {
+    this.workoutService.saveCurrentState();
   }
 
   getCompletedSetsCount(ex: ActiveWorkoutState['exercises'][0]): number {

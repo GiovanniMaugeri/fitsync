@@ -20,6 +20,9 @@ export interface ActiveWorkoutState {
   }[];
 }
 
+const ACTIVE_WORKOUT_STORAGE_KEY = 'fitsync_active_workout_state';
+const REST_TIMER_END_STORAGE_KEY = 'fitsync_rest_timer_end_timestamp';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -39,7 +42,57 @@ export class WorkoutService {
   constructor(
     private supabaseService: SupabaseService,
     private syncService: SyncService
-  ) {}
+  ) {
+    this.restoreActiveWorkoutFromStorage();
+  }
+
+  public updateActiveWorkoutState(state: ActiveWorkoutState | null) {
+    this.activeWorkoutSubject.next(state);
+    this.saveActiveWorkoutToStorage(state);
+  }
+
+  public saveCurrentState() {
+    const currentState = this.activeWorkoutSubject.value;
+    this.saveActiveWorkoutToStorage(currentState);
+  }
+
+  private saveActiveWorkoutToStorage(state: ActiveWorkoutState | null) {
+    try {
+      if (state) {
+        localStorage.setItem(ACTIVE_WORKOUT_STORAGE_KEY, JSON.stringify(state));
+      } else {
+        localStorage.removeItem(ACTIVE_WORKOUT_STORAGE_KEY);
+        localStorage.removeItem(REST_TIMER_END_STORAGE_KEY);
+      }
+    } catch (e) {
+      console.warn('FitSync: Errore durante il salvataggio dello stato allenamento:', e);
+    }
+  }
+
+  private restoreActiveWorkoutFromStorage() {
+    try {
+      const saved = localStorage.getItem(ACTIVE_WORKOUT_STORAGE_KEY);
+      if (saved) {
+        const state: ActiveWorkoutState = JSON.parse(saved);
+        if (state && state.session && state.exercises) {
+          this.activeWorkoutSubject.next(state);
+
+          const timerEnd = localStorage.getItem(REST_TIMER_END_STORAGE_KEY);
+          if (timerEnd) {
+            const endTs = parseInt(timerEnd, 10);
+            const remaining = Math.ceil((endTs - Date.now()) / 1000);
+            if (remaining > 0) {
+              this.startRestTimer(remaining);
+            } else {
+              localStorage.removeItem(REST_TIMER_END_STORAGE_KEY);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('FitSync: Errore ripristino allenamento attivo da localStorage:', e);
+    }
+  }
 
   public get currentActiveWorkout(): ActiveWorkoutState | null {
     return this.activeWorkoutSubject.value;
@@ -132,7 +185,7 @@ export class WorkoutService {
       exercises: exercisesState
     };
 
-    this.activeWorkoutSubject.next(state);
+    this.updateActiveWorkoutState(state);
     return state;
   }
 
@@ -156,7 +209,7 @@ export class WorkoutService {
       exercises: []
     };
 
-    this.activeWorkoutSubject.next(state);
+    this.updateActiveWorkoutState(state);
     return state;
   }
 
@@ -193,7 +246,7 @@ export class WorkoutService {
       rest_time_seconds: 90
     });
 
-    this.activeWorkoutSubject.next({ ...currentState });
+    this.updateActiveWorkoutState({ ...currentState });
   }
 
   async toggleSetCompleted(exerciseIndex: number, setIndex: number, completed?: boolean) {
@@ -203,7 +256,7 @@ export class WorkoutService {
     const setItem = state.exercises[exerciseIndex].sets[setIndex];
     setItem.is_completed = completed !== undefined ? completed : !setItem.is_completed;
 
-    this.activeWorkoutSubject.next({ ...state });
+    this.updateActiveWorkoutState({ ...state });
 
     // Start rest timer if set was completed
     if (setItem.is_completed) {
@@ -232,7 +285,7 @@ export class WorkoutService {
       created_at: new Date().toISOString()
     });
 
-    this.activeWorkoutSubject.next({ ...state });
+    this.updateActiveWorkoutState({ ...state });
   }
 
   removeSetFromExercise(exerciseIndex: number, setIndex: number) {
@@ -243,12 +296,18 @@ export class WorkoutService {
     // Re-index set numbers
     state.exercises[exerciseIndex].sets.forEach((s, idx) => s.set_number = idx + 1);
 
-    this.activeWorkoutSubject.next({ ...state });
+    this.updateActiveWorkoutState({ ...state });
   }
 
   // Rest Timer Controls
   startRestTimer(seconds: number) {
     this.stopRestTimer();
+
+    const endTimestamp = Date.now() + seconds * 1000;
+    try {
+      localStorage.setItem(REST_TIMER_END_STORAGE_KEY, endTimestamp.toString());
+    } catch (e) {}
+
     this.restTimerSecondsSubject.next(seconds);
     this.isTimerRunningSubject.next(true);
 
@@ -268,6 +327,9 @@ export class WorkoutService {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
+    try {
+      localStorage.removeItem(REST_TIMER_END_STORAGE_KEY);
+    } catch (e) {}
     this.isTimerRunningSubject.next(false);
     this.restTimerSecondsSubject.next(0);
   }
@@ -314,13 +376,13 @@ export class WorkoutService {
       }
     }
 
-    this.activeWorkoutSubject.next(null);
+    this.updateActiveWorkoutState(null);
     this.stopRestTimer();
     return finalSession;
   }
 
   cancelWorkout() {
-    this.activeWorkoutSubject.next(null);
+    this.updateActiveWorkoutState(null);
     this.stopRestTimer();
   }
 
