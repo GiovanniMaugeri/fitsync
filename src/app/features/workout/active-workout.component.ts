@@ -43,13 +43,13 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
         <!-- REST TIMER OVERLAY / BANNER -->
         <div *ngIf="isTimerRunning$ | async" class="timer-banner glass-card">
           <div class="timer-info">
-            <span class="timer-icon"><lucide-icon [img]="Timer" size="24"></lucide-icon></span>
+            <span class="timer-icon"><lucide-icon [img]="Timer" size="28"></lucide-icon></span>
             <div>
-              <span class="timer-label">Recupero in corso:</span>
+              <span class="timer-label">RECUPERO IN CORSO</span>
               <span class="timer-countdown">{{ formatTimer(restTimerSeconds$ | async) }}</span>
             </div>
           </div>
-          <button class="btn btn-outline btn-sm" (click)="stopTimer()">Salta / Stop</button>
+          <button class="btn btn-stop-timer" (click)="stopTimer()">Salta / Stop</button>
         </div>
 
         <!-- EXERCISES TABS / NAVIGATOR -->
@@ -72,8 +72,8 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
               <h2 class="ex-name">{{ currentEx.name }}</h2>
               <span class="ex-meta">{{ currentEx.category }} • {{ currentEx.equipment }} | Target: {{ currentEx.target_sets }}x{{ currentEx.target_reps }} ({{ currentEx.rest_time_seconds }}s rec)</span>
             </div>
-            <button class="btn btn-outline btn-sm" (click)="startTimer(currentEx.rest_time_seconds)">
-              <lucide-icon [img]="Timer" size="14"></lucide-icon> {{ currentEx.rest_time_seconds }}s Timer
+            <button class="btn timer-start-btn" (click)="startTimer(currentEx.rest_time_seconds)">
+              <lucide-icon [img]="Timer" size="16"></lucide-icon> Avvia Timer {{ currentEx.rest_time_seconds }}s
             </button>
           </div>
 
@@ -150,12 +150,12 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
               <lucide-icon [img]="X" size="20"></lucide-icon>
             </button>
           </div>
-          <input type="text" class="input-field" [(ngModel)]="searchQuery" placeholder="Cerca esercizio...">
+          <input type="text" class="input-field search-ex-input" [(ngModel)]="searchQuery" placeholder="🔍 Cerca esercizio per nome...">
           <div class="modal-ex-list">
             <div *ngFor="let ex of filteredExercises" class="modal-ex-item" (click)="addExerciseToWorkout(ex.id)">
               <div>
                 <div class="ex-title">{{ ex.name }}</div>
-                <div class="ex-sub">{{ ex.category }} • {{ ex.equipment }}</div>
+                <div class="ex-sub">{{ ex.category }} • {{ ex.equipment || 'Corpo Libero' }}</div>
               </div>
               <span class="add-txt">+ Aggiungi</span>
             </div>
@@ -232,23 +232,80 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
     }
 
     .timer-banner {
-      background: linear-gradient(90deg, rgba(6, 182, 212, 0.25) 0%, rgba(132, 204, 22, 0.25) 100%);
-      border: 1px solid var(--primary-cyan);
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(132, 204, 22, 0.35) 100%);
+      border: 2px solid var(--primary-cyan);
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.3);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.85rem 1.25rem;
+      padding: 0.9rem 1.25rem;
+      border-radius: var(--radius-md);
     }
 
     .timer-info {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      .timer-icon { font-size: 1.5rem; }
+      gap: 0.85rem;
+      .timer-icon { color: #38bdf8; display: flex; align-items: center; }
     }
 
-    .timer-label { font-size: 0.8rem; color: var(--text-muted); display: block; }
-    .timer-countdown { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 800; color: var(--accent-lime); }
+    .timer-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.06em;
+      display: block;
+    }
+
+    .timer-countdown {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 900;
+      color: #a3e635;
+      text-shadow: 0 0 12px rgba(163, 230, 53, 0.6);
+      line-height: 1.1;
+    }
+
+    .btn-stop-timer {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: #ffffff;
+        color: #ffffff;
+      }
+    }
+
+    .timer-start-btn {
+      background: rgba(6, 182, 212, 0.18);
+      border: 1.5px solid var(--primary-cyan);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+
+      &:hover {
+        background: rgba(6, 182, 212, 0.35);
+        border-color: #38bdf8;
+        color: #ffffff;
+        box-shadow: 0 0 14px rgba(6, 182, 212, 0.4);
+      }
+    }
 
     .exercise-tabs {
       display: flex;
@@ -258,9 +315,9 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
     }
 
     .tab-btn {
-      background: rgba(21, 28, 40, 0.8);
+      background: rgba(21, 28, 40, 0.85);
       border: 1px solid var(--border-color);
-      color: var(--text-muted);
+      color: #cbd5e1;
       padding: 0.6rem 0.9rem;
       border-radius: var(--radius-md);
       font-family: var(--font-main);
@@ -274,17 +331,28 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
 
       &.active {
         background: var(--primary-cyan-glow);
-        color: var(--text-main);
+        color: #ffffff;
         border-color: var(--primary-cyan);
+        font-weight: 700;
       }
 
-      .completed-count { font-size: 0.75rem; color: var(--accent-lime); font-family: var(--font-mono); }
+      .completed-count { font-size: 0.75rem; color: #a3e635; font-family: var(--font-mono); font-weight: 800; }
     }
 
     .add-tab {
-      background: rgba(132, 204, 22, 0.15);
-      color: var(--accent-lime);
-      border-color: rgba(132, 204, 22, 0.3);
+      background: rgba(132, 204, 22, 0.22);
+      color: #ffffff;
+      font-size: 0.9rem;
+      font-weight: 800;
+      border: 1.5px solid #84cc16;
+      box-shadow: 0 0 10px rgba(132, 204, 22, 0.2);
+
+      &:hover {
+        background: rgba(132, 204, 22, 0.4);
+        border-color: #a3e635;
+        color: #ffffff;
+        box-shadow: 0 0 14px rgba(163, 230, 53, 0.35);
+      }
     }
 
     .exercise-card {
@@ -463,18 +531,50 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
       gap: 0.5rem;
     }
 
+    .search-ex-input {
+      font-size: 0.95rem;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 0.5rem;
+
+      &:focus {
+        border-color: var(--primary-cyan);
+        box-shadow: 0 0 10px rgba(6, 182, 212, 0.25);
+      }
+    }
+
     .modal-ex-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.75rem;
-      background: rgba(15, 23, 42, 0.6);
-      border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
       cursor: pointer;
-      &:hover { background: rgba(6, 182, 212, 0.15); }
-      .ex-title { font-weight: 600; color: var(--text-main); }
-      .ex-sub { font-size: 0.75rem; color: var(--text-muted); }
-      .add-txt { color: var(--accent-lime); font-weight: 700; font-size: 0.85rem; }
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: #334155;
+        border-color: var(--primary-cyan);
+        transform: translateY(-1px);
+      }
+
+      .ex-title { font-weight: 700; color: #ffffff; font-size: 0.95rem; }
+      .ex-sub { font-size: 0.8rem; color: #94a3b8; margin-top: 0.15rem; }
+      .add-txt {
+        background: var(--accent-lime);
+        color: #0b0f17;
+        font-weight: 900;
+        font-size: 0.85rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: var(--radius-sm);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        box-shadow: 0 2px 6px rgba(132, 204, 22, 0.3);
+      }
     }
 
     @media (max-width: 600px) {
