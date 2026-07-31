@@ -232,9 +232,9 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
     }
 
     .timer-banner {
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(132, 204, 22, 0.35) 100%);
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.4) 0%, rgba(14, 165, 233, 0.4) 100%);
       border: 2px solid var(--primary-cyan);
-      box-shadow: 0 0 16px rgba(6, 182, 212, 0.3);
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.35);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -261,8 +261,8 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
       font-family: var(--font-mono);
       font-size: 2rem;
       font-weight: 900;
-      color: #a3e635;
-      text-shadow: 0 0 12px rgba(163, 230, 53, 0.6);
+      color: #ffffff;
+      text-shadow: 0 0 12px rgba(56, 189, 248, 0.7);
       line-height: 1.1;
     }
 
@@ -336,22 +336,22 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
         font-weight: 700;
       }
 
-      .completed-count { font-size: 0.75rem; color: #a3e635; font-family: var(--font-mono); font-weight: 800; }
+      .completed-count { font-size: 0.75rem; color: #38bdf8; font-family: var(--font-mono); font-weight: 800; }
     }
 
     .add-tab {
-      background: rgba(132, 204, 22, 0.22);
+      background: rgba(6, 182, 212, 0.22);
       color: #ffffff;
       font-size: 0.9rem;
       font-weight: 800;
-      border: 1.5px solid #84cc16;
-      box-shadow: 0 0 10px rgba(132, 204, 22, 0.2);
+      border: 1.5px solid var(--primary-cyan);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.25);
 
       &:hover {
-        background: rgba(132, 204, 22, 0.4);
-        border-color: #a3e635;
+        background: rgba(6, 182, 212, 0.4);
+        border-color: #38bdf8;
         color: #ffffff;
-        box-shadow: 0 0 14px rgba(163, 230, 53, 0.35);
+        box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
       }
     }
 
@@ -564,16 +564,16 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
       .ex-title { font-weight: 700; color: #ffffff; font-size: 0.95rem; }
       .ex-sub { font-size: 0.8rem; color: #94a3b8; margin-top: 0.15rem; }
       .add-txt {
-        background: var(--accent-lime);
-        color: #0b0f17;
-        font-weight: 900;
+        background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
+        color: #ffffff;
+        font-weight: 800;
         font-size: 0.85rem;
-        padding: 0.35rem 0.75rem;
+        padding: 0.4rem 0.8rem;
         border-radius: var(--radius-sm);
         display: inline-flex;
         align-items: center;
         gap: 0.2rem;
-        box-shadow: 0 2px 6px rgba(132, 204, 22, 0.3);
+        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.35);
       }
     }
 
