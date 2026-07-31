@@ -62,16 +62,20 @@ CREATE TABLE IF NOT EXISTS public.exercises (
     category TEXT NOT NULL, -- Petto, Schiena, Gambe, Braccia, Spalle, Core
     equipment TEXT,         -- Bilanciere, Manubri, Cavi, Macchina, Corpo Libero
     is_custom BOOLEAN NOT NULL DEFAULT false,
+    is_public BOOLEAN NOT NULL DEFAULT true, -- true = Pubblico (visibile a tutti), false = Privato
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Assicura che la colonna is_public sia presente per database già esistenti
+ALTER TABLE public.exercises ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT true;
 
 -- RLS Exercises
 ALTER TABLE public.exercises ENABLE ROW LEVEL SECURITY;
 
--- Users can read global exercises (user_id IS NULL) OR their own custom exercises
+DROP POLICY IF EXISTS "Users can view public or own custom exercises" ON public.exercises;
 CREATE POLICY "Users can view public or own custom exercises" 
     ON public.exercises FOR SELECT 
-    USING (user_id IS NULL OR user_id = auth.uid());
+    USING (user_id IS NULL OR is_public = true OR user_id = auth.uid());
 
 CREATE POLICY "Users can insert own custom exercises" 
     ON public.exercises FOR INSERT 
@@ -94,17 +98,33 @@ CREATE TABLE IF NOT EXISTS public.workout_templates (
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
+    is_public BOOLEAN NOT NULL DEFAULT true, -- true = Pubblica (visibile a tutti), false = Privata (visibile solo al creatore)
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Assicura che la colonna is_public sia presente per database già esistenti
+ALTER TABLE public.workout_templates ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT true;
+
 -- RLS Workout Templates
 ALTER TABLE public.workout_templates ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can manage own workout templates" 
-    ON public.workout_templates FOR ALL 
-    USING (user_id = auth.uid())
+DROP POLICY IF EXISTS "Users can view public or own workout templates" ON public.workout_templates;
+CREATE POLICY "Users can view public or own workout templates" 
+    ON public.workout_templates FOR SELECT 
+    USING (is_public = true OR user_id = auth.uid());
+
+CREATE POLICY "Users can insert own workout templates" 
+    ON public.workout_templates FOR INSERT 
     WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can update own workout templates" 
+    ON public.workout_templates FOR UPDATE 
+    USING (user_id = auth.uid());
+
+CREATE POLICY "Users can delete own workout templates" 
+    ON public.workout_templates FOR DELETE 
+    USING (user_id = auth.uid());
 
 
 -- ------------------------------------------
@@ -122,6 +142,17 @@ CREATE TABLE IF NOT EXISTS public.template_exercises (
 
 -- RLS Template Exercises
 ALTER TABLE public.template_exercises ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view template exercises for public or own templates" ON public.template_exercises;
+CREATE POLICY "Users can view template exercises for public or own templates" 
+    ON public.template_exercises FOR SELECT 
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.workout_templates t 
+            WHERE t.id = template_exercises.template_id 
+            AND (t.is_public = true OR t.user_id = auth.uid())
+        )
+    );
 
 CREATE POLICY "Users can manage template exercises for their own templates" 
     ON public.template_exercises FOR ALL 

@@ -12,11 +12,10 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
   template: `
     <div class="exercises-container">
       <div class="header-row">
-        <div>
+        <div class="title-group">
           <h1 class="page-title">Libreria Esercizi</h1>
           <p class="page-subtitle">Visualizza gli esercizi di sistema o aggiungi le tue varianti custom.</p>
         </div>
-        <button class="btn btn-accent" (click)="showCreateModal = true"><lucide-icon [img]="Plus" size="16"></lucide-icon> Nuovo Custom</button>
       </div>
 
       <!-- SEARCH & FILTER BAR -->
@@ -39,7 +38,12 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
         <div *ngFor="let ex of filteredExercises" class="ex-card glass-card">
           <div class="ex-top">
             <h3 class="ex-title">{{ ex.name }}</h3>
-            <span *ngIf="ex.is_custom" class="custom-badge">CUSTOM</span>
+            <div *ngIf="ex.is_custom" class="badges-row">
+              <span class="custom-badge">CUSTOM</span>
+              <span class="vis-tag" [class.private]="ex.is_public === false">
+                {{ ex.is_public === false ? '🔒 PRIVATO' : '🌐 PUBBLICO' }}
+              </span>
+            </div>
           </div>
           <div class="ex-details">
             <span class="detail-tag"><lucide-icon [img]="Dumbbell" size="12"></lucide-icon> {{ ex.category }}</span>
@@ -48,12 +52,19 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
         </div>
       </div>
 
+      <!-- FLOATING ACTION BUTTON (FAB) IN BASSO A DESTRA -->
+      <button class="fab-btn" (click)="showCreateModal = true" title="Nuovo Esercizio Custom" aria-label="Nuovo Esercizio Custom">
+        <lucide-icon [img]="Plus" size="28"></lucide-icon>
+      </button>
+
       <!-- CREATE CUSTOM EXERCISE MODAL -->
-      <div *ngIf="showCreateModal" class="modal-backdrop">
-        <div class="modal-card glass-card">
+      <div *ngIf="showCreateModal" class="modal-backdrop" (click)="showCreateModal = false">
+        <div class="modal-card glass-card" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <h3>Nuovo Esercizio Personalizzato</h3>
-            <button class="icon-btn" (click)="showCreateModal = false"><lucide-icon [img]="X" size="20"></lucide-icon></button>
+            <button class="modal-close-btn" (click)="showCreateModal = false" title="Chiudi" aria-label="Chiudi">
+              <lucide-icon [img]="X" size="20"></lucide-icon>
+            </button>
           </div>
 
           <div class="form-group">
@@ -85,6 +96,28 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
             </select>
           </div>
 
+          <div class="form-group">
+            <label>Visibilità Esercizio *</label>
+            <div class="visibility-toggle">
+              <button 
+                type="button" 
+                class="vis-btn" 
+                [class.active]="newExIsPublic === true" 
+                (click)="newExIsPublic = true">
+                🌐 Pubblico
+                <small>Visibile a tutti nella creazione schede</small>
+              </button>
+              <button 
+                type="button" 
+                class="vis-btn" 
+                [class.active]="newExIsPublic === false" 
+                (click)="newExIsPublic = false">
+                🔒 Privato
+                <small>Visibile solo a te</small>
+              </button>
+            </div>
+          </div>
+
           <div class="modal-actions">
             <button class="btn btn-outline" (click)="showCreateModal = false">Annulla</button>
             <button class="btn btn-accent" (click)="createExercise()" [disabled]="!newExName.trim()">Crea Esercizio</button>
@@ -102,12 +135,41 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
 
     .header-row {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
     }
 
-    .page-title { font-size: 1.4rem; font-weight: 800; color: var(--text-main); }
-    .page-subtitle { font-size: 0.85rem; color: var(--text-muted); }
+    .title-group {
+      text-align: center;
+    }
+
+    .page-title { font-size: 1.4rem; font-weight: 800; color: var(--text-main); line-height: 1.2; }
+    .page-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+    .fab-btn {
+      position: fixed;
+      bottom: calc(64px + 1.25rem + env(safe-area-inset-bottom, 0px));
+      right: max(1.25rem, calc(50vw - 400px + 1.25rem));
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #ffffff;
+      color: #121212;
+      border: none;
+      box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25), 0 4px 12px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 999;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, box-shadow 0.2s ease;
+
+      &:hover, &:active {
+        transform: scale(1.1);
+        background: #f4f4f5;
+        box-shadow: 0 8px 26px rgba(255, 255, 255, 0.35), 0 6px 16px rgba(0, 0, 0, 0.5);
+      }
+    }
 
     .filters-card {
       display: flex;
@@ -117,25 +179,27 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
 
     .pills-row {
       display: flex;
-      gap: 0.4rem;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 0.25rem;
-      margin: 0 -0.5rem;
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
+      flex-wrap: wrap;
+      gap: 0.35rem;
     }
 
     .pill-btn {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border-color);
       color: var(--text-muted);
-      padding: 0.35rem 0.8rem;
-      font-size: 0.8rem;
+      padding: 0.3rem 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 500;
       border-radius: 14px;
-      white-space: nowrap;
       cursor: pointer;
-      &.active { background: rgba(255, 255, 255, 0.15); color: var(--text-main); border-color: #52525b; }
+      transition: all 0.15s ease;
+
+      &.active {
+        background: #ffffff;
+        color: #121212;
+        border-color: #ffffff;
+        font-weight: 700;
+      }
     }
 
     .exercises-grid {
@@ -153,19 +217,81 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
 
     .ex-top {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: flex-start;
+      gap: 0.3rem;
     }
 
     .ex-title { font-size: 1rem; font-weight: 700; color: var(--text-main); }
 
+    .badges-row {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
     .custom-badge {
+      display: inline-block;
       background: rgba(249, 115, 22, 0.2);
       color: var(--accent-orange);
+      border: 1px solid rgba(249, 115, 22, 0.35);
       font-size: 0.65rem;
       font-weight: 800;
-      padding: 0.15rem 0.4rem;
+      padding: 0.1rem 0.45rem;
       border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .vis-tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+
+      &.private {
+        background: rgba(168, 85, 247, 0.15);
+        color: #c084fc;
+        border-color: rgba(168, 85, 247, 0.3);
+      }
+    }
+
+    .visibility-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .vis-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.6rem;
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+
+      small {
+        font-size: 0.7rem;
+        font-weight: 400;
+        opacity: 0.8;
+      }
+
+      &.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: var(--text-main);
+        border-color: #52525b;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
     }
 
     .ex-details {
@@ -207,7 +333,32 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
       display: flex;
       justify-content: space-between;
       align-items: center;
-      h3 { color: var(--text-main); }
+      h3 { color: var(--text-main); font-weight: 700; }
+    }
+
+    .modal-close-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.35);
+        color: #ffffff;
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
     }
 
     .modal-actions {
@@ -232,6 +383,7 @@ export class ExerciseListComponent implements OnInit {
   newExName = '';
   newExCategory = 'Petto';
   newExEquipment = 'Bilanciere';
+  newExIsPublic = true;
 
   constructor(private exerciseService: ExerciseService) {}
 
@@ -257,10 +409,12 @@ export class ExerciseListComponent implements OnInit {
     await this.exerciseService.createCustomExercise(
       this.newExName,
       this.newExCategory,
-      this.newExEquipment
+      this.newExEquipment,
+      this.newExIsPublic
     );
 
     this.newExName = '';
+    this.newExIsPublic = true;
     this.showCreateModal = false;
     await this.loadExercises();
   }

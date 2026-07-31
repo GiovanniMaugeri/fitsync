@@ -14,7 +14,16 @@ export class ExerciseService {
   ) {}
 
   async getAllExercises(): Promise<Exercise[]> {
-    return await db.exercises.toArray();
+    const currentUserId = this.supabaseService.currentUserId;
+    const all = await db.exercises.toArray();
+    return all.filter(ex => {
+      // Esercizi di default del sistema (non custom)
+      if (!ex.is_custom) return true;
+      // Esercizi custom pubblici (visibili a tutti durante la creazione delle schede)
+      if (ex.is_public !== false) return true;
+      // Esercizi custom privati (visibili solo al creatore)
+      return ex.user_id === currentUserId;
+    });
   }
 
   async getExerciseById(id: string): Promise<Exercise | undefined> {
@@ -22,10 +31,11 @@ export class ExerciseService {
   }
 
   async getExercisesByCategory(category: string): Promise<Exercise[]> {
-    return await db.exercises.where('category').equalsIgnoreCase(category).toArray();
+    const all = await this.getAllExercises();
+    return all.filter(ex => ex.category.toLowerCase() === category.toLowerCase());
   }
 
-  async createCustomExercise(name: string, category: string, equipment?: string): Promise<Exercise> {
+  async createCustomExercise(name: string, category: string, equipment?: string, isPublic: boolean = true): Promise<Exercise> {
     const userId = this.supabaseService.currentUserId;
     const newExercise: Exercise = {
       id: generateUUID(),
@@ -34,6 +44,7 @@ export class ExerciseService {
       category,
       equipment: equipment || 'Corpo Libero',
       is_custom: true,
+      is_public: isPublic,
       created_at: new Date().toISOString()
     };
 

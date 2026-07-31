@@ -43,6 +43,18 @@ body {
   overscroll-behavior-y: none;
 }
 
+lucide-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+
+  svg {
+    display: block;
+  }
+}
+
 /* Glassmorphism utility */
 .glass-card {
   background: var(--bg-card);
@@ -96,10 +108,11 @@ body {
 .btn-accent {
   background: #27272a;
   color: #f4f4f5;
-  border: 1px solid #3f3f46;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
 
   &:hover {
     background: #3f3f46;
+    border-color: rgba(255, 255, 255, 0.6);
   }
 }
 

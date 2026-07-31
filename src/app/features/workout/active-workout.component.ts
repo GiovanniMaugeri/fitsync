@@ -20,7 +20,7 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
         <h2>Nessun allenamento attivo</h2>
         <p>Inizia una sessione libera o seleziona una scheda per partire!</p>
         <div class="actions-row">
-          <button class="btn btn-accent" (click)="startFree()"><lucide-icon [img]="Zap" size="16"></lucide-icon> Allenamento Libero</button>
+          <button class="btn btn-accent free-workout-btn" (click)="startFree()"><lucide-icon [img]="Zap" size="16"></lucide-icon> Allenamento Libero</button>
           <button class="btn btn-primary" routerLink="/templates"><lucide-icon [img]="ClipboardList" size="16"></lucide-icon> Scegli da Scheda</button>
         </div>
       </div>
@@ -142,11 +142,13 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
       </div>
 
       <!-- ADD EXERCISE MODAL -->
-      <div *ngIf="showAddExerciseModal" class="modal-backdrop">
-        <div class="modal-card glass-card">
+      <div *ngIf="showAddExerciseModal" class="modal-backdrop" (click)="showAddExerciseModal = false">
+        <div class="modal-card glass-card" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <h3>Aggiungi Esercizio all'Allenamento</h3>
-            <button class="icon-btn" (click)="showAddExerciseModal = false"><lucide-icon [img]="X" size="20"></lucide-icon></button>
+            <button class="modal-close-btn" (click)="showAddExerciseModal = false" title="Chiudi" aria-label="Chiudi">
+              <lucide-icon [img]="X" size="20"></lucide-icon>
+            </button>
           </div>
           <input type="text" class="input-field" [(ngModel)]="searchQuery" placeholder="Cerca esercizio...">
           <div class="modal-ex-list">
@@ -177,7 +179,25 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
       align-items: center;
       gap: 1rem;
       .empty-icon { font-size: 3.5rem; }
-      .actions-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+      .actions-row {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .free-workout-btn {
+        border: 2px solid rgba(255, 255, 255, 0.45) !important;
+        background: rgba(39, 39, 42, 0.9);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 10px rgba(255, 255, 255, 0.08);
+
+        &:hover, &:active {
+          border-color: #ffffff !important;
+          background: #3f3f46;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 14px rgba(255, 255, 255, 0.2);
+        }
+      }
     }
 
     .workout-content {
@@ -369,8 +389,9 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
 
     .table-actions {
       display: flex;
-      justify-content: flex-start;
-      margin-top: 0.5rem;
+      justify-content: center;
+      width: 100%;
+      margin-top: 0.75rem;
     }
 
     /* Modal Backdrop */
@@ -397,14 +418,41 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
 
     .modal-actions {
       display: flex;
-      justify-content: flex-end;
+      justify-content: center;
+      flex-wrap: wrap;
       gap: 0.75rem;
+      width: 100%;
     }
 
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    .modal-close-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.35);
+        color: #ffffff;
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
     }
 
     .modal-ex-list {
@@ -427,6 +475,51 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
       .ex-title { font-weight: 600; color: var(--text-main); }
       .ex-sub { font-size: 0.75rem; color: var(--text-muted); }
       .add-txt { color: var(--accent-lime); font-weight: 700; font-size: 0.85rem; }
+    }
+
+    @media (max-width: 600px) {
+      .workout-top-bar {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.75rem;
+      }
+
+      .top-controls {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .ex-card-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.75rem;
+
+        button {
+          align-self: center;
+        }
+      }
+
+      .timer-banner {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.75rem;
+      }
+
+      .empty-state {
+        .actions-row {
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+
+          .btn {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+      }
     }
   `]
 })

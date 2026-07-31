@@ -14,11 +14,46 @@ export class TemplateService {
   ) {}
 
   async getTemplates(): Promise<WorkoutTemplate[]> {
-    const templates = await db.workoutTemplates.toArray();
-    for (const t of templates) {
+    const currentUserId = this.supabaseService.currentUserId;
+    const client = this.supabaseService.supabase;
+
+    // Se l'utente è autenticato su Supabase, allineiamo le schede pubbliche + le proprie schede da remoto
+    if (client && currentUserId && currentUserId !== 'local-user-id') {
+      try {
+        const { data: remoteTemplates, error } = await client
+          .from('workout_templates')
+          .select('*')
+          .or(`is_public.eq.true,user_id.eq.${currentUserId}`);
+
+        if (!error && remoteTemplates && remoteTemplates.length > 0) {
+          await db.workoutTemplates.bulkPut(remoteTemplates);
+
+          const templateIds = remoteTemplates.map(t => t.id);
+          const { data: remoteExercises } = await client
+            .from('template_exercises')
+            .select('*')
+            .in('template_id', templateIds);
+
+          if (remoteExercises && remoteExercises.length > 0) {
+            await db.templateExercises.bulkPut(remoteExercises);
+          }
+        }
+      } catch (err) {
+        console.warn('FitSync: Allineamento remoto schede pubbliche:', err);
+      }
+    }
+
+    const all = await db.workoutTemplates.toArray();
+    const visible = all.filter(t => {
+      // Schede pubbliche (is_public !== false)
+      if (t.is_public !== false) return true;
+      // Schede private: visibili solo al creatore o schede create in locale
+      return !t.user_id || t.user_id === 'local-user-id' || t.user_id === currentUserId;
+    });
+    for (const t of visible) {
       t.exercises = await this.getTemplateExercises(t.id);
     }
-    return templates;
+    return visible;
   }
 
   async getTemplateById(id: string): Promise<WorkoutTemplate | undefined> {
@@ -30,17 +65,63 @@ export class TemplateService {
   }
 
   async getTemplateExercises(templateId: string): Promise<TemplateExerciseDetail[]> {
-    const items = await db.templateExercises
+    let items = await db.templateExercises
       .where('template_id')
       .equals(templateId)
       .sortBy('order_index');
 
+    // Se in locale non ci sono esercizi per questa scheda (es. scheda pubblica di altro utente),
+    // proviamo a recuperarli direttamente da Supabase
+    const client = this.supabaseService.supabase;
+    if (items.length === 0 && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== 'local-user-id') {
+      try {
+        const { data, error } = await client
+          .from('template_exercises')
+          .select('*')
+          .eq('template_id', templateId)
+          .order('order_index', { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          await db.templateExercises.bulkPut(data);
+          items = data as any[];
+        }
+      } catch (err) {
+        console.warn('FitSync: Errore durante il recupero remoto degli esercizi scheda:', err);
+      }
+    }
+
     const result: TemplateExerciseDetail[] = [];
     for (const item of items) {
-      const exercise = await db.exercises.get(item.exercise_id);
+      let exercise = await db.exercises.get(item.exercise_id);
+
+      // Se l'esercizio non è presente nel DB locale IndexedDB, lo cerchiamo da Supabase
+      if (!exercise && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== 'local-user-id') {
+        try {
+          const { data: remoteEx } = await client
+            .from('exercises')
+            .select('*')
+            .eq('id', item.exercise_id)
+            .maybeSingle();
+
+          if (remoteEx) {
+            await db.exercises.put(remoteEx);
+            exercise = remoteEx;
+          }
+        } catch (err) {
+          console.warn('FitSync: Errore durante il recupero dell\'esercizio remoto:', err);
+        }
+      }
+
       result.push({
         ...item,
-        exercise
+        exercise: exercise || {
+          id: item.exercise_id,
+          name: 'Esercizio',
+          category: 'Generale',
+          equipment: 'Varie',
+          is_custom: false,
+          is_public: true
+        }
       });
     }
     return result;
@@ -50,7 +131,8 @@ export class TemplateService {
     templateId: string | null,
     name: string,
     description: string,
-    exercisesList: { exercise_id: string; target_sets: number; target_reps: number; rest_time_seconds: number }[]
+    exercisesList: { exercise_id: string; target_sets: number; target_reps: number; rest_time_seconds: number }[],
+    isPublic: boolean = true
   ): Promise<WorkoutTemplate> {
     const userId = this.supabaseService.currentUserId;
     const now = new Date().toISOString();
@@ -62,6 +144,7 @@ export class TemplateService {
       user_id: userId,
       name,
       description,
+      is_public: isPublic,
       created_at: templateId ? undefined : now,
       updated_at: now
     };
