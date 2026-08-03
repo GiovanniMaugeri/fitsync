@@ -232,6 +232,77 @@ CREATE POLICY "Users can manage workout sets for their own sessions"
 
 
 -- ------------------------------------------
+-- 7. DIET_LOGS TABLE
+-- ------------------------------------------
+CREATE TABLE IF NOT EXISTS public.diet_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    target_calories INTEGER DEFAULT 2000,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (user_id, date)
+);
+
+ALTER TABLE public.diet_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can manage own diet logs" ON public.diet_logs;
+CREATE POLICY "Users can manage own diet logs" 
+    ON public.diet_logs FOR ALL 
+    USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
+
+
+-- ------------------------------------------
+-- 8. DIET_MEALS TABLE
+-- ------------------------------------------
+CREATE TABLE IF NOT EXISTS public.diet_meals (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    diet_log_id UUID NOT NULL REFERENCES public.diet_logs(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    order_index INTEGER NOT NULL DEFAULT 0
+);
+
+-- Assicura che user_id sia presente anche per tabelle già create
+ALTER TABLE public.diet_meals ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+ALTER TABLE public.diet_meals ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can manage diet meals for own logs" ON public.diet_meals;
+DROP POLICY IF EXISTS "Users can manage own diet meals" ON public.diet_meals;
+CREATE POLICY "Users can manage own diet meals" 
+    ON public.diet_meals FOR ALL 
+    USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
+
+
+-- ------------------------------------------
+-- 9. DIET_LOG_ITEMS TABLE
+-- ------------------------------------------
+CREATE TABLE IF NOT EXISTS public.diet_log_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    meal_id UUID NOT NULL REFERENCES public.diet_meals(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    calories INTEGER NOT NULL DEFAULT 0,
+    amount_note TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Assicura che user_id sia presente anche per tabelle già create
+ALTER TABLE public.diet_log_items ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+ALTER TABLE public.diet_log_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can manage food items for own meals" ON public.diet_log_items;
+DROP POLICY IF EXISTS "Users can manage own diet log items" ON public.diet_log_items;
+CREATE POLICY "Users can manage own diet log items" 
+    ON public.diet_log_items FOR ALL 
+    USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
+
+
+-- ------------------------------------------
 -- SEED DATA: DEFAULT GLOBAL EXERCISES
 -- ------------------------------------------
 INSERT INTO public.exercises (id, name, category, equipment, is_custom, user_id) VALUES

@@ -6,6 +6,8 @@ import { ActiveWorkoutComponent } from './features/workout/active-workout.compon
 import { HistoryComponent } from './features/history/history.component';
 import { AuthComponent } from './features/auth/auth.component';
 import { ExerciseListComponent } from './features/exercises/exercise-list.component';
+import { DietLogComponent } from './features/diet/diet-log.component';
+import { DietHistoryComponent } from './features/diet/diet-history.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -15,6 +17,8 @@ export const routes: Routes = [
   { path: 'workout/active', component: ActiveWorkoutComponent },
   { path: 'history', component: HistoryComponent },
   { path: 'exercises', component: ExerciseListComponent },
+  { path: 'diet', component: DietLogComponent },
+  { path: 'diet/history', component: DietHistoryComponent },
   { path: 'auth', component: AuthComponent },
   { path: '**', redirectTo: '' }
 ];

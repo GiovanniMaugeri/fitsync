@@ -6,7 +6,10 @@ import {
   TemplateExercise, 
   WorkoutSession, 
   WorkoutSet, 
-  SyncQueueItem 
+  SyncQueueItem,
+  DietLog,
+  DietMeal,
+  DietLogItem
 } from '../models/fitsync.models';
 
 export function generateUUID(): string {
@@ -28,11 +31,14 @@ export class FitSyncDatabase extends Dexie {
   workoutSessions!: Table<WorkoutSession, string>;
   workoutSets!: Table<WorkoutSet, string>;
   syncQueue!: Table<SyncQueueItem, string>;
+  dietLogs!: Table<DietLog, string>;
+  dietMeals!: Table<DietMeal, string>;
+  dietLogItems!: Table<DietLogItem, string>;
 
   constructor() {
     super('FitSyncDB');
 
-    const schema = {
+    const schemaV1 = {
       profiles: 'id, username',
       exercises: 'id, user_id, name, category, equipment, is_custom, is_public',
       workoutTemplates: 'id, user_id, name, is_public, created_at',
@@ -42,9 +48,17 @@ export class FitSyncDatabase extends Dexie {
       syncQueue: 'id, table_name, action, timestamp, status'
     };
 
-    this.version(1).stores(schema);
+    const schemaV5 = {
+      ...schemaV1,
+      dietLogs: 'id, user_id, date, [user_id+date]',
+      dietMeals: 'id, user_id, diet_log_id, order_index',
+      dietLogItems: 'id, user_id, meal_id'
+    };
 
-    this.version(2).stores(schema).upgrade(async tx => {
+    this.version(1).stores(schemaV1);
+    this.version(5).stores(schemaV5);
+
+    this.version(2).stores(schemaV1).upgrade(async tx => {
       // Migrazione degli esercizi esistenti da 'Braccia' a 'Bicipiti' o 'Tricipiti'
       await tx.table('exercises').where('id').anyOf(['ex-020', 'ex-021']).modify({ category: 'Bicipiti' });
       await tx.table('exercises').where('id').anyOf(['ex-022', 'ex-023']).modify({ category: 'Tricipiti' });
@@ -53,7 +67,7 @@ export class FitSyncDatabase extends Dexie {
       await tx.table('exercises').where('category').equals('Braccia').modify({ category: 'Bicipiti' });
     });
 
-    this.version(3).stores(schema).upgrade(async tx => {
+    this.version(3).stores(schemaV1).upgrade(async tx => {
       const EX_MIGRATION_MAP: Record<string, string> = {
         'ex-001': 'd8970cee-e3d6-4dd0-ab09-c569f3f750f2',
         'ex-002': 'd9a5c5c4-fe5b-44c2-b380-adc5aacda21f',
@@ -102,7 +116,7 @@ export class FitSyncDatabase extends Dexie {
       });
     });
 
-    this.version(4).stores(schema).upgrade(async tx => {
+    this.version(4).stores(schemaV1).upgrade(async tx => {
       console.log('FitSyncDB: Avvio migrazione schema Versione 4 (migrazione ID testuali -> UUID)...');
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const isUuid = (id: any) => typeof id === 'string' && uuidRegex.test(id);
