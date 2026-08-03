@@ -71,9 +71,41 @@ export interface WorkoutSetDetail extends WorkoutSet {
   exercise?: Exercise;
 }
 
+export interface DietLog {
+  id: string;
+  user_id: string;
+  date: string; // 'YYYY-MM-DD'
+  target_calories?: number;
+  created_at?: string;
+  meals?: DietMealDetail[];
+}
+
+export interface DietMeal {
+  id: string;
+  user_id?: string;
+  diet_log_id: string;
+  name: string; // e.g. "Pasto 1", "Colazione", "Pranzo", "Cena", "Spuntino"
+  order_index: number;
+}
+
+export interface DietLogItem {
+  id: string;
+  user_id?: string;
+  meal_id: string;
+  name: string; // e.g. "Petto di Pollo e Riso"
+  calories: number; // kcal
+  amount_note?: string; // e.g. "200g" or "1 porzione"
+  created_at?: string;
+}
+
+export interface DietMealDetail extends DietMeal {
+  items: DietLogItem[];
+  total_calories: number;
+}
+
 export interface SyncQueueItem {
   id: string;
-  table_name: 'profiles' | 'exercises' | 'workout_templates' | 'template_exercises' | 'workout_sessions' | 'workout_sets';
+  table_name: 'profiles' | 'exercises' | 'workout_templates' | 'template_exercises' | 'workout_sessions' | 'workout_sets' | 'diet_logs' | 'diet_meals' | 'diet_log_items';
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   payload: any;
   timestamp: number;

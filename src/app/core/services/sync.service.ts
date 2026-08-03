@@ -96,13 +96,15 @@ export class SyncService {
         .toArray();
 
       // Ordiniamo le tabelle in base alle dipendenze di Foreign Key (genitori prima dei figli):
-      // 1: exercises, 2: workout_templates, 3: template_exercises, 4: workout_sessions, 5: workout_sets
       const tablePriority: Record<string, number> = {
         'exercises': 1,
         'workout_templates': 2,
         'template_exercises': 3,
         'workout_sessions': 4,
-        'workout_sets': 5
+        'workout_sets': 5,
+        'diet_logs': 6,
+        'diet_meals': 7,
+        'diet_log_items': 8
       };
 
       pendingItems.sort((a, b) => {
@@ -121,7 +123,7 @@ export class SyncService {
 
           // Se l'utente è autenticato su Supabase e l'oggetto richiede user_id, colleghiamo l'utente corrente
           if (isRealUser && item.payload && typeof item.payload === 'object') {
-            if (['exercises', 'workout_templates', 'workout_sessions'].includes(item.table_name)) {
+            if (['exercises', 'workout_templates', 'workout_sessions', 'diet_logs', 'diet_meals', 'diet_log_items'].includes(item.table_name)) {
               if (!item.payload.user_id || item.payload.user_id === 'local-user-id') {
                 item.payload.user_id = currentUserId;
               }
@@ -137,11 +139,16 @@ export class SyncService {
             res = await client.from(item.table_name).delete().eq('id', item.payload.id || item.payload);
           }
 
-          // Fallback Failsafe: Se il DB Supabase remoto non possiede ancora la colonna 'is_public' (PGRST204), riproviamo omettendo is_public
-          if (res?.error && (res.error.code === 'PGRST204' || res.error.message?.includes('is_public'))) {
-            console.warn(`FitSync Sync Fallback: La colonna 'is_public' non è ancora presente su Supabase per '${item.table_name}'. Eseguo il caricamento senza il campo is_public...`);
+          // Fallback Failsafe: Se il DB Supabase remoto non possiede ancora la colonna 'is_public' o 'user_id' (PGRST204), riproviamo omettendo il campo mancante
+          if (res?.error && res.error.code === 'PGRST204') {
+            console.warn(`FitSync Sync Fallback: Colonna mancante nello schema Supabase per '${item.table_name}'. Riprovo l'invio...`);
             const fallbackPayload = { ...item.payload };
-            delete fallbackPayload.is_public;
+            if (res.error.message?.includes('is_public')) {
+              delete fallbackPayload.is_public;
+            }
+            if (res.error.message?.includes('user_id')) {
+              delete fallbackPayload.user_id;
+            }
 
             if (item.action === 'INSERT') {
               res = await client.from(item.table_name).upsert(fallbackPayload);
@@ -151,11 +158,22 @@ export class SyncService {
           }
 
           if (res?.error) {
-            console.error(`Sync error for item ${item.id} (${item.table_name}):`, res.error);
-            await db.syncQueue.update(item.id, {
-              status: 'ERROR',
-              error_message: res.error.message
-            });
+            if (res.error.code === '23503') {
+              console.warn(`FitSync Sync Warning: L'elemento genitore per '${item.table_name}' non esiste su Supabase (FK 23503). Rimuovo l'elemento orfano dalla coda.`);
+              await db.syncQueue.delete(item.id);
+            } else if (res.status === 404 || res.error.code === '42P01' || res.error.message?.includes('relation') || res.error.message?.includes('does not exist')) {
+              console.warn(`FitSync Sync Warning: La tabella '${item.table_name}' non è ancora stata creata sul database Supabase remoto. Esegui lo script SQL nel Supabase Dashboard per crearla.`);
+              await db.syncQueue.update(item.id, {
+                status: 'ERROR',
+                error_message: res.error.message
+              });
+            } else {
+              console.error(`Sync error for item ${item.id} (${item.table_name}):`, res.error);
+              await db.syncQueue.update(item.id, {
+                status: 'ERROR',
+                error_message: res.error.message
+              });
+            }
           } else {
             console.log(`FitSync Sync: caricamento riuscito per elemento ${item.id} (${item.table_name})`);
             await db.syncQueue.delete(item.id);
@@ -279,6 +297,42 @@ export class SyncService {
         }
         if (sets.length > 0) {
           await db.workoutSets.bulkPut(sets);
+        }
+      }
+
+      // 6. Pull Diet Logs dell'utente
+      if (userId && userId !== 'local-user-id') {
+        try {
+          const { data: dietLogs, error: dlErr } = await client.from('diet_logs').select('*').eq('user_id', userId);
+          if (!dlErr && dietLogs) {
+            const remoteLogIds = new Set(dietLogs.map(l => l.id));
+            const localLogs = await db.dietLogs.where('user_id').equals(userId).toArray();
+            const toDelLogs = localLogs.filter(l => !remoteLogIds.has(l.id)).map(l => l.id);
+            if (toDelLogs.length > 0) {
+              await db.dietLogs.bulkDelete(toDelLogs);
+            }
+            if (dietLogs.length > 0) {
+              await db.dietLogs.bulkPut(dietLogs);
+            }
+          }
+
+          const { data: dietMeals, error: dmErr } = await client.from('diet_meals').select('*');
+          if (!dmErr && dietMeals) {
+            const userMeals = dietMeals.filter(m => !m.user_id || m.user_id === userId);
+            if (userMeals.length > 0) {
+              await db.dietMeals.bulkPut(userMeals);
+            }
+          }
+
+          const { data: dietLogItems, error: dliErr } = await client.from('diet_log_items').select('*');
+          if (!dliErr && dietLogItems) {
+            const userItems = dietLogItems.filter(i => !i.user_id || i.user_id === userId);
+            if (userItems.length > 0) {
+              await db.dietLogItems.bulkPut(userItems);
+            }
+          }
+        } catch (dErr) {
+          console.warn('FitSync: Pull tabella dieta non riuscito:', dErr);
         }
       }
 

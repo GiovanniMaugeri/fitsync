@@ -1,11 +1,27 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { Observable } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { SyncService } from './core/services/sync.service';
 import { WorkoutService, ActiveWorkoutState } from './core/services/workout.service';
 import { SupabaseService } from './core/services/supabase.service';
-import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, History, BicepsFlexed, Radio, User } from 'lucide-angular';
+import { 
+  LucideAngularModule, 
+  Dumbbell, 
+  Settings, 
+  Activity, 
+  ClipboardList, 
+  History, 
+  BicepsFlexed, 
+  Radio, 
+  User, 
+  Utensils, 
+  ChevronRight,
+  X,
+  Calendar,
+  Flame
+} from 'lucide-angular';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +29,70 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
   imports: [CommonModule, RouterModule, LucideAngularModule],
   template: `
     <div class="app-shell">
+      <!-- BACKDROP OVERLAY FOR SIDE DRAWER -->
+      <div *ngIf="isSettingsOpen" class="settings-backdrop" (click)="closeSettingsMenu()"></div>
+
+      <!-- SIDE DRAWER NAVIGATION (MOBILE & DESKTOP) -->
+      <div *ngIf="isSettingsOpen" class="settings-drawer" (click)="$event.stopPropagation()">
+        <div class="drawer-header">
+          <div class="drawer-title">
+            <lucide-icon [img]="Settings" size="20" class="title-icon"></lucide-icon>
+            <span>Impostazioni</span>
+          </div>
+          <button class="drawer-close-btn" (click)="closeSettingsMenu()" title="Chiudi">
+            <lucide-icon [img]="X" size="20"></lucide-icon>
+          </button>
+        </div>
+
+        <!-- Current User Info Card -->
+        <div class="drawer-user-card" *ngIf="currentUser$ | async as user">
+          <div class="user-avatar">
+            <lucide-icon [img]="User" size="20"></lucide-icon>
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ user.user_metadata?.['username'] || 'Utente FitSync' }}</span>
+            <span class="user-email">{{ user.email }}</span>
+          </div>
+        </div>
+
+        <div class="drawer-section-label">NAVIGAZIONE PRINCIPALE</div>
+
+        <div class="drawer-menu-list">
+          <a routerLink="/auth" class="drawer-item" (click)="closeSettingsMenu()">
+            <div class="item-icon icon-profile">
+              <lucide-icon [img]="User" size="22"></lucide-icon>
+            </div>
+            <div class="item-content">
+              <span class="item-title">Profilo</span>
+              <span class="item-subtitle">Gestisci account e sincronizzazione</span>
+            </div>
+            <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
+          </a>
+
+          <a routerLink="/" class="drawer-item" (click)="closeSettingsMenu()">
+            <div class="item-icon icon-workout">
+              <lucide-icon [img]="Dumbbell" size="22"></lucide-icon>
+            </div>
+            <div class="item-content">
+              <span class="item-title">Allenamento</span>
+              <span class="item-subtitle">Dashboard ed esercizi</span>
+            </div>
+            <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
+          </a>
+
+          <a routerLink="/diet" class="drawer-item" (click)="closeSettingsMenu()">
+            <div class="item-icon icon-diet">
+              <lucide-icon [img]="Utensils" size="22"></lucide-icon>
+            </div>
+            <div class="item-content">
+              <span class="item-title">Dieta</span>
+              <span class="item-subtitle">Nutrizione e pasti</span>
+            </div>
+            <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
+          </a>
+        </div>
+      </div>
+
       <!-- TOP NAVIGATION BAR -->
       <header class="app-header">
         <div class="header-content">
@@ -32,14 +112,9 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
               <span *ngIf="count > 0" class="pending-tag">{{ count }} in coda</span>
             </div>
 
-
-
-            <!-- Account Link -->
-            <button *ngIf="currentUser$ | async" class="btn btn-sm btn-outline header-account-btn" routerLink="/auth" title="Profilo & Sync">
-              <lucide-icon [img]="User" size="14"></lucide-icon> Profilo
-            </button>
-            <button *ngIf="!(currentUser$ | async)" class="btn btn-sm btn-primary header-account-btn" routerLink="/auth">
-              <lucide-icon [img]="User" size="14"></lucide-icon> Accedi
+            <!-- Settings Gear Button -->
+            <button class="settings-btn" [class.active]="isSettingsOpen" (click)="toggleSettingsMenu($event)" title="Apri Impostazioni">
+              <lucide-icon [img]="Settings" size="20"></lucide-icon>
             </button>
           </div>
         </div>
@@ -59,8 +134,8 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
         <router-outlet></router-outlet>
       </main>
 
-      <!-- MOBILE BOTTOM NAVIGATION BAR -->
-      <nav class="bottom-nav">
+      <!-- WORKOUT BOTTOM NAVIGATION BAR -->
+      <nav *ngIf="!isDietMode" class="bottom-nav">
         <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
           <span class="nav-icon"><lucide-icon [img]="Activity" size="24"></lucide-icon></span>
           <span class="nav-label">Home</span>
@@ -84,6 +159,18 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
           <span class="nav-label">Esercizi</span>
         </a>
       </nav>
+
+      <!-- DIET CUSTOM BOTTOM NAVIGATION BAR -->
+      <nav *ngIf="isDietMode" class="bottom-nav diet-bottom-nav">
+        <a routerLink="/diet" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+          <span class="nav-icon"><lucide-icon [img]="Utensils" size="24"></lucide-icon></span>
+          <span class="nav-label">Diario</span>
+        </a>
+        <a routerLink="/diet/history" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon"><lucide-icon [img]="Calendar" size="24"></lucide-icon></span>
+          <span class="nav-label">Storico</span>
+        </a>
+      </nav>
     </div>
   `,
   styles: [`
@@ -92,14 +179,14 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
       flex-direction: column;
       min-height: 100vh;
       background-color: var(--bg-dark);
-      padding-bottom: 80px; /* Space for bottom nav */
+      padding-bottom: 80px;
     }
 
     .app-header {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(11, 15, 23, 0.9);
+      background: rgba(11, 15, 23, 0.95);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-color);
     }
@@ -142,16 +229,221 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
       flex-shrink: 0;
     }
 
-    .header-account-btn {
+    .settings-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main, #ffffff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover, &.active {
+        background: rgba(6, 182, 212, 0.15);
+        border-color: var(--primary-cyan, #06b6d4);
+        color: var(--primary-cyan, #06b6d4);
+      }
+    }
+
+    /* BACKDROP OVERLAY (NO BLUR, CRISP DARK DIM) */
+    .settings-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1999;
+      background: rgba(0, 0, 0, 0.65);
+    }
+
+    /* SIDE DRAWER NAVIGATION PANEL */
+    .settings-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 320px;
+      max-width: 85vw;
+      background: #14171f;
+      border-left: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.85);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem;
+      gap: 1.25rem;
+      animation: slideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .drawer-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+
+      .title-icon {
+        color: var(--primary-cyan, #06b6d4);
+      }
+    }
+
+    .drawer-close-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #a1a1aa;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+      }
+    }
+
+    .drawer-user-card {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0.75rem;
+      border-radius: 12px;
+    }
+
+    .user-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--primary-cyan, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-details {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .user-name {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #ffffff;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-email {
+      font-size: 0.725rem;
+      color: #a1a1aa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .drawer-section-label {
+      font-size: 0.675rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #71717a;
+      margin-top: 0.25rem;
+    }
+
+    .drawer-menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .drawer-item {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.85rem;
+      border-radius: 12px;
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.15);
+        transform: translateX(-2px);
+      }
+    }
+
+    .item-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }
 
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: currentColor;
+    .icon-profile {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+    }
+
+    .icon-workout {
+      background: rgba(6, 182, 212, 0.15);
+      color: #38bdf8;
+    }
+
+    .icon-diet {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+    }
+
+    .item-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .item-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .item-subtitle {
+      font-size: 0.725rem;
+      color: #a1a1aa;
+      margin-top: 0.15rem;
+    }
+
+    .arrow-icon {
+      color: #71717a;
     }
 
     .syncing-badge {
@@ -179,21 +471,6 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
       border-radius: 10px;
       font-weight: 700;
       cursor: pointer;
-    }
-
-    .icon-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 0.4rem;
-      border-radius: 6px;
-      transition: background 0.2s ease;
-      &:hover { background: rgba(255, 255, 255, 0.1); }
     }
 
     .active-workout-banner {
@@ -297,6 +574,16 @@ import { LucideAngularModule, Dumbbell, Settings, Activity, ClipboardList, Histo
         box-shadow: 0 6px 18px rgba(255, 255, 255, 0.3);
       }
     }
+
+    .diet-bottom-nav {
+      .nav-item.active {
+        color: #10b981;
+      }
+      .switch-fab {
+        background: #06b6d4;
+        color: #ffffff;
+      }
+    }
   `]
 })
 export class AppComponent implements OnInit {
@@ -308,6 +595,14 @@ export class AppComponent implements OnInit {
   readonly BicepsFlexed = BicepsFlexed;
   readonly Radio = Radio;
   readonly User = User;
+  readonly Utensils = Utensils;
+  readonly ChevronRight = ChevronRight;
+  readonly X = X;
+  readonly Calendar = Calendar;
+  readonly Flame = Flame;
+
+  isSettingsOpen = false;
+  isDietMode = false;
 
   isOnline$: Observable<boolean>;
   isSyncing$: Observable<boolean>;
@@ -318,7 +613,8 @@ export class AppComponent implements OnInit {
   constructor(
     private syncService: SyncService,
     private workoutService: WorkoutService,
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
+    private router: Router
   ) {
     this.isOnline$ = this.syncService.isOnline$;
     this.isSyncing$ = this.syncService.isSyncing$;
@@ -329,9 +625,26 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.syncService.syncNow();
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      this.isDietMode = event.url.startsWith('/diet');
+    });
+
+    this.isDietMode = this.router.url.startsWith('/diet');
   }
 
   forceSync() {
     this.syncService.syncNow();
+  }
+
+  toggleSettingsMenu(event: MouseEvent) {
+    event.stopPropagation();
+    this.isSettingsOpen = !this.isSettingsOpen;
+  }
+
+  closeSettingsMenu() {
+    this.isSettingsOpen = false;
   }
 }
