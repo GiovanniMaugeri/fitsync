@@ -77,6 +77,135 @@ export async function fetchRemoteRows<T>(
   return [];
 }
 
+/**
+ * Migra i vecchi ID testuali (es. 'ex-001') a UUID su esercizi personalizzati, schede,
+ * collegamenti scheda-esercizio, sessioni e set, accodando ogni riga migrata alla sync queue.
+ * Usata sia dalla migrazione Dexie versione 4 (dentro la sua transazione di upgrade) sia dal
+ * controllo failsafe eseguito ad ogni avvio app — stessa logica, due punti di ingresso diversi
+ * (una transazione di upgrade Dexie e l'istanza `db` stessa espongono entrambe `.table(name)`).
+ */
+async function migrateLegacyIds(source: { table(name: string): Table<any, string> }, logLabel: string) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const isUuid = (id: any) => typeof id === 'string' && uuidRegex.test(id);
+
+  const exercisesTable = source.table('exercises');
+  const templatesTable = source.table('workoutTemplates');
+  const templateExercisesTable = source.table('templateExercises');
+  const sessionsTable = source.table('workoutSessions');
+  const setsTable = source.table('workoutSets');
+  const syncQueueTable = source.table('syncQueue');
+
+  const enqueueSync = (table_name: string, payload: any) =>
+    syncQueueTable.add({
+      id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
+      table_name,
+      action: 'INSERT',
+      payload,
+      timestamp: Date.now(),
+      status: 'PENDING'
+    });
+
+  const exerciseMap: Record<string, string> = {};
+  const templateMap: Record<string, string> = {};
+  const sessionMap: Record<string, string> = {};
+
+  // 1. Migra gli esercizi personalizzati (is_custom === true) non-UUID
+  const exercises = await exercisesTable.toArray();
+  for (const ex of exercises) {
+    if (ex.is_custom && !isUuid(ex.id)) {
+      const newId = generateUUID();
+      exerciseMap[ex.id] = newId;
+
+      const migratedEx = { ...ex, id: newId };
+      await exercisesTable.add(migratedEx);
+      await enqueueSync('exercises', migratedEx);
+      await exercisesTable.delete(ex.id);
+      console.log(`FitSyncDB ${logLabel}: Migrato esercizio personalizzato "${ex.name}" (${ex.id} -> ${newId})`);
+    }
+  }
+
+  // 2. Migra le schede (workoutTemplates) non-UUID
+  const templates = await templatesTable.toArray();
+  for (const t of templates) {
+    if (!isUuid(t.id)) {
+      const newId = generateUUID();
+      templateMap[t.id] = newId;
+
+      const migratedTpl = { ...t, id: newId };
+      await templatesTable.add(migratedTpl);
+      await enqueueSync('workout_templates', migratedTpl);
+      await templatesTable.delete(t.id);
+      console.log(`FitSyncDB ${logLabel}: Migrata scheda "${t.name}" (${t.id} -> ${newId})`);
+    }
+  }
+
+  // 3. Migra i template exercises associati
+  const tempExs = await templateExercisesTable.toArray();
+  for (const te of tempExs) {
+    const needsMigrate = !isUuid(te.id) || exerciseMap[te.exercise_id] || templateMap[te.template_id];
+    if (needsMigrate) {
+      const newId = isUuid(te.id) ? te.id : generateUUID();
+      const newExId = exerciseMap[te.exercise_id] || te.exercise_id;
+      const newTplId = templateMap[te.template_id] || te.template_id;
+
+      const migratedTe = { ...te, id: newId, exercise_id: newExId, template_id: newTplId };
+
+      if (newId !== te.id) {
+        await templateExercisesTable.add(migratedTe);
+        await templateExercisesTable.delete(te.id);
+      } else {
+        await templateExercisesTable.put(migratedTe);
+      }
+      await enqueueSync('template_exercises', migratedTe);
+    }
+  }
+
+  // 4. Migra le sessioni di allenamento non-UUID
+  const sessions = await sessionsTable.toArray();
+  for (const s of sessions) {
+    const needsMigrate = !isUuid(s.id) || (s.template_id && templateMap[s.template_id]);
+    if (needsMigrate) {
+      const newId = isUuid(s.id) ? s.id : generateUUID();
+      if (!isUuid(s.id)) {
+        sessionMap[s.id] = newId;
+      }
+      const newTplId = s.template_id ? (templateMap[s.template_id] || s.template_id) : s.template_id;
+
+      const migratedSession = { ...s, id: newId, template_id: newTplId };
+
+      if (newId !== s.id) {
+        await sessionsTable.add(migratedSession);
+        await sessionsTable.delete(s.id);
+      } else {
+        await sessionsTable.put(migratedSession);
+      }
+      await enqueueSync('workout_sessions', migratedSession);
+      console.log(`FitSyncDB ${logLabel}: Migrata sessione di allenamento "${s.name}" (${s.id} -> ${newId})`);
+    }
+  }
+
+  // 5. Migra i set completati non-UUID
+  const sets = await setsTable.toArray();
+  for (const set of sets) {
+    const needsMigrate = !isUuid(set.id) || sessionMap[set.session_id] || exerciseMap[set.exercise_id];
+    if (needsMigrate) {
+      const newId = isUuid(set.id) ? set.id : generateUUID();
+      const newSessionId = sessionMap[set.session_id] || set.session_id;
+      const newExId = exerciseMap[set.exercise_id] || set.exercise_id;
+
+      const migratedSet = { ...set, id: newId, session_id: newSessionId, exercise_id: newExId };
+
+      if (newId !== set.id) {
+        await setsTable.add(migratedSet);
+        await setsTable.delete(set.id);
+      } else {
+        await setsTable.put(migratedSet);
+      }
+      await enqueueSync('workout_sets', migratedSet);
+    }
+  }
+}
+
 export class FitSyncDatabase extends Dexie {
   profiles!: Table<Profile, string>;
   exercises!: Table<Exercise, string>;
@@ -172,189 +301,7 @@ export class FitSyncDatabase extends Dexie {
 
     this.version(4).stores(schemaV1).upgrade(async tx => {
       console.log('FitSyncDB: Avvio migrazione schema Versione 4 (migrazione ID testuali -> UUID)...');
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const isUuid = (id: any) => typeof id === 'string' && uuidRegex.test(id);
-
-      const exerciseMap: Record<string, string> = {};
-      const templateMap: Record<string, string> = {};
-      const sessionMap: Record<string, string> = {};
-
-      // 1. Migra gli esercizi personalizzati (is_custom === true) non-UUID
-      const exercises = await tx.table('exercises').toArray();
-      let migratedExercisesCount = 0;
-      for (const ex of exercises) {
-        if (ex.is_custom && !isUuid(ex.id)) {
-          const newId = generateUUID();
-          exerciseMap[ex.id] = newId;
-
-          const migratedEx = { ...ex, id: newId };
-          await tx.table('exercises').add(migratedEx);
-
-          await tx.table('syncQueue').add({
-            id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-            table_name: 'exercises',
-            action: 'INSERT',
-            payload: migratedEx,
-            timestamp: Date.now(),
-            status: 'PENDING'
-          });
-
-          await tx.table('exercises').delete(ex.id);
-          migratedExercisesCount++;
-          console.log(`FitSyncDB: Migrato esercizio personalizzato "${ex.name}" (${ex.id} -> ${newId})`);
-        }
-      }
-      if (migratedExercisesCount > 0) {
-        console.log(`FitSyncDB: Migrati con successo ${migratedExercisesCount} esercizi personalizzati.`);
-      }
-
-      // 2. Migra le schede (workoutTemplates) non-UUID
-      const templates = await tx.table('workoutTemplates').toArray();
-      let migratedTemplatesCount = 0;
-      for (const t of templates) {
-        if (!isUuid(t.id)) {
-          const newId = generateUUID();
-          templateMap[t.id] = newId;
-
-          const migratedTpl = { ...t, id: newId };
-          await tx.table('workoutTemplates').add(migratedTpl);
-
-          await tx.table('syncQueue').add({
-            id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-            table_name: 'workout_templates',
-            action: 'INSERT',
-            payload: migratedTpl,
-            timestamp: Date.now(),
-            status: 'PENDING'
-          });
-
-          await tx.table('workoutTemplates').delete(t.id);
-          migratedTemplatesCount++;
-          console.log(`FitSyncDB: Migrata scheda "${t.name}" (${t.id} -> ${newId})`);
-        }
-      }
-      if (migratedTemplatesCount > 0) {
-        console.log(`FitSyncDB: Migrate con successo ${migratedTemplatesCount} schede.`);
-      }
-
-      // 3. Migra i template exercises associati
-      const tempExs = await tx.table('templateExercises').toArray();
-      let migratedTempExsCount = 0;
-      for (const te of tempExs) {
-        const needsMigrate = !isUuid(te.id) || exerciseMap[te.exercise_id] || templateMap[te.template_id];
-        if (needsMigrate) {
-          const newId = isUuid(te.id) ? te.id : generateUUID();
-          const newExId = exerciseMap[te.exercise_id] || te.exercise_id;
-          const newTplId = templateMap[te.template_id] || te.template_id;
-
-          const migratedTe = {
-            ...te,
-            id: newId,
-            exercise_id: newExId,
-            template_id: newTplId
-          };
-
-          if (newId !== te.id) {
-            await tx.table('templateExercises').add(migratedTe);
-            await tx.table('templateExercises').delete(te.id);
-          } else {
-            await tx.table('templateExercises').put(migratedTe);
-          }
-
-          await tx.table('syncQueue').add({
-            id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-            table_name: 'template_exercises',
-            action: 'INSERT',
-            payload: migratedTe,
-            timestamp: Date.now(),
-            status: 'PENDING'
-          });
-          migratedTempExsCount++;
-        }
-      }
-      if (migratedTempExsCount > 0) {
-        console.log(`FitSyncDB: Aggiornati con successo ${migratedTempExsCount} collegamenti scheda-esercizio.`);
-      }
-
-      // 4. Migra le sessioni di allenamento non-UUID
-      const sessions = await tx.table('workoutSessions').toArray();
-      let migratedSessionsCount = 0;
-      for (const s of sessions) {
-        const needsMigrate = !isUuid(s.id) || (s.template_id && templateMap[s.template_id]);
-        if (needsMigrate) {
-          const newId = isUuid(s.id) ? s.id : generateUUID();
-          if (!isUuid(s.id)) {
-            sessionMap[s.id] = newId;
-          }
-          const newTplId = s.template_id ? (templateMap[s.template_id] || s.template_id) : s.template_id;
-
-          const migratedSession = {
-            ...s,
-            id: newId,
-            template_id: newTplId
-          };
-
-          if (newId !== s.id) {
-            await tx.table('workoutSessions').add(migratedSession);
-            await tx.table('workoutSessions').delete(s.id);
-          } else {
-            await tx.table('workoutSessions').put(migratedSession);
-          }
-
-          await tx.table('syncQueue').add({
-            id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-            table_name: 'workout_sessions',
-            action: 'INSERT',
-            payload: migratedSession,
-            timestamp: Date.now(),
-            status: 'PENDING'
-          });
-          migratedSessionsCount++;
-          console.log(`FitSyncDB: Migrata sessione di allenamento "${s.name}" (${s.id} -> ${newId})`);
-        }
-      }
-      if (migratedSessionsCount > 0) {
-        console.log(`FitSyncDB: Migrate con successo ${migratedSessionsCount} sessioni di allenamento.`);
-      }
-
-      // 5. Migra i set completati non-UUID
-      const sets = await tx.table('workoutSets').toArray();
-      let migratedSetsCount = 0;
-      for (const set of sets) {
-        const needsMigrate = !isUuid(set.id) || sessionMap[set.session_id] || exerciseMap[set.exercise_id];
-        if (needsMigrate) {
-          const newId = isUuid(set.id) ? set.id : generateUUID();
-          const newSessionId = sessionMap[set.session_id] || set.session_id;
-          const newExId = exerciseMap[set.exercise_id] || set.exercise_id;
-
-          const migratedSet = {
-            ...set,
-            id: newId,
-            session_id: newSessionId,
-            exercise_id: newExId
-          };
-
-          if (newId !== set.id) {
-            await tx.table('workoutSets').add(migratedSet);
-            await tx.table('workoutSets').delete(set.id);
-          } else {
-            await tx.table('workoutSets').put(migratedSet);
-          }
-
-          await tx.table('syncQueue').add({
-            id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-            table_name: 'workout_sets',
-            action: 'INSERT',
-            payload: migratedSet,
-            timestamp: Date.now(),
-            status: 'PENDING'
-          });
-          migratedSetsCount++;
-        }
-      }
-      if (migratedSetsCount > 0) {
-        console.log(`FitSyncDB: Aggiornati con successo ${migratedSetsCount} set di allenamento.`);
-      }
+      await migrateLegacyIds(tx, 'Versione 4');
       console.log('FitSyncDB: Migrazione schema Versione 4 completata con successo!');
     });
 
@@ -390,160 +337,7 @@ export class FitSyncDatabase extends Dexie {
 
   private async performLegacyMigrationCheck() {
     try {
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const isUuid = (id: any) => typeof id === 'string' && uuidRegex.test(id);
-
-      const exerciseMap: Record<string, string> = {};
-      const templateMap: Record<string, string> = {};
-      const sessionMap: Record<string, string> = {};
-
-      // 1. Esercizi personalizzati
-      const exercises = await this.exercises.toArray();
-      for (const ex of exercises) {
-        if (ex.is_custom && !isUuid(ex.id)) {
-          const newId = generateUUID();
-          exerciseMap[ex.id] = newId;
-
-          const migratedEx = { ...ex, id: newId };
-          await this.exercises.add(migratedEx);
-          await this.syncQueue.add({
-            id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-            table_name: 'exercises',
-            action: 'INSERT',
-            payload: migratedEx,
-            timestamp: Date.now(),
-            status: 'PENDING'
-          });
-          await this.exercises.delete(ex.id);
-          console.log(`FitSyncDB [Runtime Failsafe]: Migrato esercizio personalizzato "${ex.name}" (${ex.id} -> ${newId})`);
-        }
-      }
-
-      // 2. Schede (Templates)
-      const templates = await this.workoutTemplates.toArray();
-      for (const t of templates) {
-        if (!isUuid(t.id)) {
-          const newId = generateUUID();
-          templateMap[t.id] = newId;
-
-          const migratedTpl = { ...t, id: newId };
-          await this.workoutTemplates.add(migratedTpl);
-          await this.syncQueue.add({
-            id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-            table_name: 'workout_templates',
-            action: 'INSERT',
-            payload: migratedTpl,
-            timestamp: Date.now(),
-            status: 'PENDING'
-          });
-          await this.workoutTemplates.delete(t.id);
-          console.log(`FitSyncDB [Runtime Failsafe]: Migrata scheda "${t.name}" (${t.id} -> ${newId})`);
-        }
-      }
-
-      // 3. Template Exercises
-      const tempExs = await this.templateExercises.toArray();
-      for (const te of tempExs) {
-        const needsMigrate = !isUuid(te.id) || exerciseMap[te.exercise_id] || templateMap[te.template_id];
-        if (needsMigrate) {
-          const newId = isUuid(te.id) ? te.id : generateUUID();
-          const newExId = exerciseMap[te.exercise_id] || te.exercise_id;
-          const newTplId = templateMap[te.template_id] || te.template_id;
-
-          const migratedTe = {
-            ...te,
-            id: newId,
-            exercise_id: newExId,
-            template_id: newTplId
-          };
-
-          if (newId !== te.id) {
-            await this.templateExercises.add(migratedTe);
-            await this.templateExercises.delete(te.id);
-          } else {
-            await this.templateExercises.put(migratedTe);
-          }
-
-          await this.syncQueue.add({
-            id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-            table_name: 'template_exercises',
-            action: 'INSERT',
-            payload: migratedTe,
-            timestamp: Date.now(),
-            status: 'PENDING'
-          });
-        }
-      }
-
-      // 4. Sessioni di allenamento
-      const sessions = await this.workoutSessions.toArray();
-      for (const s of sessions) {
-        const needsMigrate = !isUuid(s.id) || (s.template_id && templateMap[s.template_id]);
-        if (needsMigrate) {
-          const newId = isUuid(s.id) ? s.id : generateUUID();
-          if (!isUuid(s.id)) {
-            sessionMap[s.id] = newId;
-          }
-          const newTplId = s.template_id ? (templateMap[s.template_id] || s.template_id) : s.template_id;
-
-          const migratedSession = {
-            ...s,
-            id: newId,
-            template_id: newTplId
-          };
-
-          if (newId !== s.id) {
-            await this.workoutSessions.add(migratedSession);
-            await this.workoutSessions.delete(s.id);
-          } else {
-            await this.workoutSessions.put(migratedSession);
-          }
-
-          await this.syncQueue.add({
-            id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-            table_name: 'workout_sessions',
-            action: 'INSERT',
-            payload: migratedSession,
-            timestamp: Date.now(),
-            status: 'PENDING'
-          });
-          console.log(`FitSyncDB [Runtime Failsafe]: Migrata sessione di allenamento "${s.name}" (${s.id} -> ${newId})`);
-        }
-      }
-
-      // 5. Set completati
-      const sets = await this.workoutSets.toArray();
-      for (const set of sets) {
-        const needsMigrate = !isUuid(set.id) || sessionMap[set.session_id] || exerciseMap[set.exercise_id];
-        if (needsMigrate) {
-          const newId = isUuid(set.id) ? set.id : generateUUID();
-          const newSessionId = sessionMap[set.session_id] || set.session_id;
-          const newExId = exerciseMap[set.exercise_id] || set.exercise_id;
-
-          const migratedSet = {
-            ...set,
-            id: newId,
-            session_id: newSessionId,
-            exercise_id: newExId
-          };
-
-          if (newId !== set.id) {
-            await this.workoutSets.add(migratedSet);
-            await this.workoutSets.delete(set.id);
-          } else {
-            await this.workoutSets.put(migratedSet);
-          }
-
-          await this.syncQueue.add({
-            id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-            table_name: 'workout_sets',
-            action: 'INSERT',
-            payload: migratedSet,
-            timestamp: Date.now(),
-            status: 'PENDING'
-          });
-        }
-      }
+      await migrateLegacyIds(this, '[Runtime Failsafe]');
     } catch (e) {
       console.error('Errore durante la migrazione failsafe in esecuzione:', e);
     }
