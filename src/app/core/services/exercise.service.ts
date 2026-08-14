@@ -35,7 +35,7 @@ export class ExerciseService {
     return all.filter(ex => ex.category.toLowerCase() === category.toLowerCase());
   }
 
-  async createCustomExercise(name: string, category: string, equipment?: string, isPublic: boolean = true): Promise<Exercise> {
+  async createCustomExercise(name: string, category: string, equipment?: string, isPublic: boolean = false): Promise<Exercise> {
     const userId = this.supabaseService.currentUserId;
     const newExercise: Exercise = {
       id: generateUUID(),
