@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { TemplateService } from '../../core/services/template.service';
 import { WorkoutService } from '../../core/services/workout.service';
-import { SupabaseService } from '../../core/services/supabase.service';
+import { SupabaseService, LOCAL_USER_ID } from '../../core/services/supabase.service';
 import { WorkoutTemplate } from '../../core/models/fitsync.models';
 import { LucideAngularModule, ClipboardList, Pencil, Trash2, Zap, Plus } from 'lucide-angular';
 
@@ -340,14 +340,14 @@ export class TemplateListComponent implements OnInit {
 
   canEdit(t: WorkoutTemplate): boolean {
     if (!t.user_id) return true;
-    if (t.user_id === 'local-user-id') return true;
-    if (!this.currentUserId || this.currentUserId === 'local-user-id') return true;
+    if (t.user_id === LOCAL_USER_ID) return true;
+    if (!this.currentUserId || this.currentUserId === LOCAL_USER_ID) return true;
     return t.user_id === this.currentUserId;
   }
 
   isOtherAuthor(t: WorkoutTemplate): boolean {
-    if (!t.user_id || t.user_id === 'local-user-id') return false;
-    if (!this.currentUserId || this.currentUserId === 'local-user-id') return false;
+    if (!t.user_id || t.user_id === LOCAL_USER_ID) return false;
+    if (!this.currentUserId || this.currentUserId === LOCAL_USER_ID) return false;
     return t.user_id !== this.currentUserId;
   }
 

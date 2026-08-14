@@ -1,4 +1,5 @@
 import Dexie, { Table } from 'dexie';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { 
   Profile, 
   Exercise, 
@@ -21,6 +22,59 @@ export function generateUUID(): string {
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
+}
+
+/**
+ * Recupera una singola riga da Supabase (per colonna = valore) e la salva in locale.
+ * Usata come fallback quando un dato non è (ancora) presente nel DB locale IndexedDB
+ * (es. una scheda pubblica di un altro utente mai sincronizzata prima).
+ */
+export async function fetchRemoteRow<T>(
+  client: SupabaseClient,
+  table: string,
+  column: string,
+  value: string,
+  dexieTable: Table<T, string>
+): Promise<T | undefined> {
+  try {
+    const { data, error } = await client.from(table).select('*').eq(column, value).maybeSingle();
+    if (!error && data) {
+      await dexieTable.put(data as T);
+      return data as T;
+    }
+  } catch (err) {
+    console.warn(`FitSync: recupero remoto fallito per ${table}.${column}=${value}:`, err);
+  }
+  return undefined;
+}
+
+/**
+ * Recupera più righe da Supabase filtrate per colonna = valore e le salva in locale.
+ * Stesso scopo di fetchRemoteRow, per i casi in cui il fallback restituisce una lista
+ * (es. gli esercizi di una scheda) invece di un singolo elemento.
+ */
+export async function fetchRemoteRows<T>(
+  client: SupabaseClient,
+  table: string,
+  column: string,
+  value: string,
+  dexieTable: Table<T, string>,
+  orderBy?: string
+): Promise<T[]> {
+  try {
+    let query = client.from(table).select('*').eq(column, value);
+    if (orderBy) {
+      query = query.order(orderBy, { ascending: true }) as typeof query;
+    }
+    const { data, error } = await query;
+    if (!error && data && data.length > 0) {
+      await dexieTable.bulkPut(data as T[]);
+      return data as T[];
+    }
+  } catch (err) {
+    console.warn(`FitSync: recupero remoto fallito per ${table} dove ${column}=${value}:`, err);
+  }
+  return [];
 }
 
 export class FitSyncDatabase extends Dexie {

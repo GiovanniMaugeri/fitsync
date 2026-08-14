@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { db, generateUUID } from '../db/app-db';
 import { DietLog, DietMeal, DietLogItem, DietMealDetail } from '../models/fitsync.models';
-import { SupabaseService } from './supabase.service';
+import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
 import { SyncService } from './sync.service';
 
 @Injectable({
@@ -59,7 +59,7 @@ export class DietService {
     const isOnline = navigator.onLine && this.supabaseService.isConfigured;
 
     // Se l'utente è online ed autenticato su Supabase, effettua prima il pull dei dati remoti
-    if (isOnline && userId && userId !== 'local-user-id') {
+    if (isOnline && userId && userId !== LOCAL_USER_ID) {
       try {
         await this.syncService.pullRemoteData();
       } catch (e) {

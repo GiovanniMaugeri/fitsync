@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { db, generateUUID } from '../db/app-db';
+import { db, generateUUID, fetchRemoteRow, fetchRemoteRows } from '../db/app-db';
 import { WorkoutTemplate, TemplateExercise, TemplateExerciseDetail } from '../models/fitsync.models';
-import { SupabaseService } from './supabase.service';
+import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
 import { SyncService } from './sync.service';
 
 @Injectable({
@@ -18,7 +18,7 @@ export class TemplateService {
     const client = this.supabaseService.supabase;
 
     // Se l'utente è autenticato su Supabase, allineiamo le schede pubbliche + le proprie schede da remoto
-    if (client && currentUserId && currentUserId !== 'local-user-id') {
+    if (client && currentUserId && currentUserId !== LOCAL_USER_ID) {
       try {
         const { data: remoteTemplates, error } = await client
           .from('workout_templates')
@@ -48,7 +48,7 @@ export class TemplateService {
       // Schede pubbliche (is_public !== false)
       if (t.is_public !== false) return true;
       // Schede private: visibili solo al creatore o schede create in locale
-      return !t.user_id || t.user_id === 'local-user-id' || t.user_id === currentUserId;
+      return !t.user_id || t.user_id === LOCAL_USER_ID || t.user_id === currentUserId;
     });
     for (const t of visible) {
       t.exercises = await this.getTemplateExercises(t.id);
@@ -73,20 +73,10 @@ export class TemplateService {
     // Se in locale non ci sono esercizi per questa scheda (es. scheda pubblica di altro utente),
     // proviamo a recuperarli direttamente da Supabase
     const client = this.supabaseService.supabase;
-    if (items.length === 0 && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== 'local-user-id') {
-      try {
-        const { data, error } = await client
-          .from('template_exercises')
-          .select('*')
-          .eq('template_id', templateId)
-          .order('order_index', { ascending: true });
-
-        if (!error && data && data.length > 0) {
-          await db.templateExercises.bulkPut(data);
-          items = data as any[];
-        }
-      } catch (err) {
-        console.warn('FitSync: Errore durante il recupero remoto degli esercizi scheda:', err);
+    if (items.length === 0 && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== LOCAL_USER_ID) {
+      const remoteItems = await fetchRemoteRows(client, 'template_exercises', 'template_id', templateId, db.templateExercises, 'order_index');
+      if (remoteItems.length > 0) {
+        items = remoteItems;
       }
     }
 
@@ -95,21 +85,8 @@ export class TemplateService {
       let exercise = await db.exercises.get(item.exercise_id);
 
       // Se l'esercizio non è presente nel DB locale IndexedDB, lo cerchiamo da Supabase
-      if (!exercise && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== 'local-user-id') {
-        try {
-          const { data: remoteEx } = await client
-            .from('exercises')
-            .select('*')
-            .eq('id', item.exercise_id)
-            .maybeSingle();
-
-          if (remoteEx) {
-            await db.exercises.put(remoteEx);
-            exercise = remoteEx;
-          }
-        } catch (err) {
-          console.warn('FitSync: Errore durante il recupero dell\'esercizio remoto:', err);
-        }
+      if (!exercise && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== LOCAL_USER_ID) {
+        exercise = await fetchRemoteRow(client, 'exercises', 'id', item.exercise_id, db.exercises);
       }
 
       result.push({
