@@ -8,6 +8,9 @@ import { environment } from '../../../environments/environment';
 export const SUPABASE_URL = environment.supabaseUrl;
 export const SUPABASE_ANON_KEY = environment.supabaseAnonKey;
 
+// Identifica i dati creati offline prima del login, poi "reclamati" dall'utente reale al primo accesso.
+export const LOCAL_USER_ID = 'local-user-id';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -60,7 +63,7 @@ export class SupabaseService {
   }
 
   public get currentUserId(): string {
-    return this.currentUserSubject.value?.id || 'local-user-id';
+    return this.currentUserSubject.value?.id || LOCAL_USER_ID;
   }
 
   private async syncUserProfile(user: User) {

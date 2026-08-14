@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { db, generateUUID } from '../db/app-db';
+import { db, generateUUID, fetchRemoteRow, fetchRemoteRows } from '../db/app-db';
 import { WorkoutSession, WorkoutSet, WorkoutSetDetail, TemplateExerciseDetail } from '../models/fitsync.models';
-import { SupabaseService } from './supabase.service';
+import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
 import { SyncService } from './sync.service';
 
 export interface ActiveWorkoutState {
@@ -102,21 +102,13 @@ export class WorkoutService {
     const client = this.supabaseService.supabase;
 
     let template = await db.workoutTemplates.get(templateId);
-    if (!template && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== 'local-user-id') {
-      const { data } = await client.from('workout_templates').select('*').eq('id', templateId).maybeSingle();
-      if (data) {
-        await db.workoutTemplates.put(data);
-        template = data;
-      }
+    if (!template && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== LOCAL_USER_ID) {
+      template = await fetchRemoteRow(client, 'workout_templates', 'id', templateId, db.workoutTemplates);
     }
 
     let templateExercises = await db.templateExercises.where('template_id').equals(templateId).sortBy('order_index');
-    if (templateExercises.length === 0 && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== 'local-user-id') {
-      const { data } = await client.from('template_exercises').select('*').eq('template_id', templateId).order('order_index', { ascending: true });
-      if (data && data.length > 0) {
-        await db.templateExercises.bulkPut(data);
-        templateExercises = data as any[];
-      }
+    if (templateExercises.length === 0 && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== LOCAL_USER_ID) {
+      templateExercises = await fetchRemoteRows(client, 'template_exercises', 'template_id', templateId, db.templateExercises, 'order_index');
     }
 
     const userId = this.supabaseService.currentUserId;
@@ -136,12 +128,8 @@ export class WorkoutService {
 
     for (const te of templateExercises) {
       let ex = await db.exercises.get(te.exercise_id);
-      if (!ex && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== 'local-user-id') {
-        const { data: remoteEx } = await client.from('exercises').select('*').eq('id', te.exercise_id).maybeSingle();
-        if (remoteEx) {
-          await db.exercises.put(remoteEx);
-          ex = remoteEx;
-        }
+      if (!ex && client && this.supabaseService.currentUserId && this.supabaseService.currentUserId !== LOCAL_USER_ID) {
+        ex = await fetchRemoteRow(client, 'exercises', 'id', te.exercise_id, db.exercises);
       }
 
       const sets: WorkoutSet[] = [];
@@ -394,9 +382,9 @@ export class WorkoutService {
     for (const setItem of sets) {
       const session = await db.workoutSessions.get(setItem.session_id);
       if (session) {
-        const isUserSession = (currentUserId && currentUserId !== 'local-user-id')
+        const isUserSession = (currentUserId && currentUserId !== LOCAL_USER_ID)
           ? session.user_id === currentUserId
-          : (!session.user_id || session.user_id === 'local-user-id');
+          : (!session.user_id || session.user_id === LOCAL_USER_ID);
 
         if (isUserSession) {
           return sets.filter(s => s.session_id === setItem.session_id);
@@ -412,7 +400,7 @@ export class WorkoutService {
     const client = this.supabaseService.supabase;
 
     // Se l'utente è autenticato su Supabase, allineiamo le sue sessioni personali da remoto
-    if (client && currentUserId && currentUserId !== 'local-user-id') {
+    if (client && currentUserId && currentUserId !== LOCAL_USER_ID) {
       try {
         const { data: remoteSessions, error } = await client
           .from('workout_sessions')
@@ -443,10 +431,10 @@ export class WorkoutService {
 
     // Filtriamo le sessioni garantendo la privacy (mostriamo solo le sessioni dell'utente loggato)
     const userSessions = allSessions.filter(s => {
-      if (currentUserId && currentUserId !== 'local-user-id') {
+      if (currentUserId && currentUserId !== LOCAL_USER_ID) {
         return s.user_id === currentUserId;
       }
-      return !s.user_id || s.user_id === 'local-user-id';
+      return !s.user_id || s.user_id === LOCAL_USER_ID;
     }).slice(0, limit);
 
     for (const s of userSessions) {
@@ -473,7 +461,7 @@ export class WorkoutService {
     if (!session) return;
 
     const currentUserId = this.supabaseService.currentUserId;
-    if (session.user_id && session.user_id !== 'local-user-id' && session.user_id !== currentUserId) {
+    if (session.user_id && session.user_id !== LOCAL_USER_ID && session.user_id !== currentUserId) {
       console.warn('Non puoi eliminare sessioni di altri utenti.');
       return;
     }

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { db } from '../db/app-db';
 import { SyncQueueItem } from '../models/fitsync.models';
-import { SupabaseService } from './supabase.service';
+import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
 
 @Injectable({
   providedIn: 'root'
@@ -115,7 +115,7 @@ export class SyncService {
       });
 
       const currentUserId = this.supabaseService.currentUserId;
-      const isRealUser = currentUserId && currentUserId !== 'local-user-id';
+      const isRealUser = currentUserId && currentUserId !== LOCAL_USER_ID;
 
       for (const item of pendingItems) {
         try {
@@ -124,7 +124,7 @@ export class SyncService {
           // Se l'utente è autenticato su Supabase e l'oggetto richiede user_id, colleghiamo l'utente corrente
           if (isRealUser && item.payload && typeof item.payload === 'object') {
             if (['exercises', 'workout_templates', 'workout_sessions', 'diet_logs', 'diet_meals', 'diet_log_items'].includes(item.table_name)) {
-              if (!item.payload.user_id || item.payload.user_id === 'local-user-id') {
+              if (!item.payload.user_id || item.payload.user_id === LOCAL_USER_ID) {
                 item.payload.user_id = currentUserId;
               }
             }
@@ -222,7 +222,7 @@ export class SyncService {
 
       // 2. Pull Templates (Pubbliche + dell'utente)
       let query = client.from('workout_templates').select('*');
-      if (userId && userId !== 'local-user-id') {
+      if (userId && userId !== LOCAL_USER_ID) {
         query = query.or(`is_public.eq.true,user_id.eq.${userId}`);
       } else {
         query = query.eq('is_public', true);
@@ -266,7 +266,7 @@ export class SyncService {
       }
 
       // 4. Pull Workout Sessions dell'utente
-      if (userId && userId !== 'local-user-id') {
+      if (userId && userId !== LOCAL_USER_ID) {
         const { data: sessions, error: sErr } = await client.from('workout_sessions').select('*').eq('user_id', userId);
         if (sErr) {
           console.warn('FitSync: Errore durante il pull delle sessioni da Supabase:', sErr);
@@ -301,7 +301,7 @@ export class SyncService {
       }
 
       // 6. Pull Diet Logs dell'utente
-      if (userId && userId !== 'local-user-id') {
+      if (userId && userId !== LOCAL_USER_ID) {
         try {
           const { data: dietLogs, error: dlErr } = await client.from('diet_logs').select('*').eq('user_id', userId);
           if (!dlErr && dietLogs) {
