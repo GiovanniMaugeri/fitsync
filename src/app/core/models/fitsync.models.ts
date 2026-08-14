@@ -111,4 +111,6 @@ export interface SyncQueueItem {
   timestamp: number;
   status: 'PENDING' | 'SYNCING' | 'ERROR';
   error_message?: string;
+  retry_count?: number;
+  next_retry_at?: number;
 }

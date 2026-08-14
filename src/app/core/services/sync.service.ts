@@ -17,9 +17,20 @@ export class SyncService {
   private pendingCountSubject = new BehaviorSubject<number>(0);
   public pendingCount$: Observable<number> = this.pendingCountSubject.asObservable();
 
+  private static readonly RETRY_BASE_DELAY_MS = 30_000;
+  private static readonly RETRY_MAX_DELAY_MS = 30 * 60_000;
+  private static readonly RETRY_TIMER_INTERVAL_MS = 5 * 60_000;
+
   constructor(private supabaseService: SupabaseService) {
     this.initNetworkListeners();
     this.updatePendingCount();
+
+    // Retry periodico degli item in ERROR il cui backoff è scaduto, anche senza un trigger esterno (enqueue/online/login)
+    setInterval(() => {
+      if (this.isOnlineSubject.value) {
+        this.syncNow();
+      }
+    }, SyncService.RETRY_TIMER_INTERVAL_MS);
 
     // Reagisce all'autenticazione dell'utente scaricando i dati reali dal database Supabase
     this.supabaseService.currentUser$.subscribe(user => {
@@ -27,6 +38,17 @@ export class SyncService {
         console.log('FitSync Auth State Changed: Utente autenticato. Avvio sync e pull dal DB remoto Supabase...');
         this.syncNow();
       }
+    });
+  }
+
+  /** Calcola il prossimo istante di retry con backoff esponenziale (30s, 1m, 2m, 4m... cap 30min) */
+  private async markError(itemId: string, retryCountSoFar: number, message: string | undefined): Promise<void> {
+    const delayMs = Math.min(SyncService.RETRY_BASE_DELAY_MS * Math.pow(2, retryCountSoFar), SyncService.RETRY_MAX_DELAY_MS);
+    await db.syncQueue.update(itemId, {
+      status: 'ERROR',
+      error_message: message,
+      retry_count: retryCountSoFar + 1,
+      next_retry_at: Date.now() + delayMs
     });
   }
 
@@ -84,10 +106,13 @@ export class SyncService {
     this.isSyncingSubject.next(true);
 
     try {
-      // 1. Ripristina eventuali elementi in stato ERROR in modo che possano essere riprovati con le correzioni del user_id
+      // 1. Ripristina gli elementi in stato ERROR il cui backoff è scaduto, così possano essere riprovati
+      const now = Date.now();
       const errorItems = await db.syncQueue.where('status').equals('ERROR').toArray();
       for (const errItem of errorItems) {
-        await db.syncQueue.update(errItem.id, { status: 'PENDING', error_message: undefined });
+        if (!errItem.next_retry_at || errItem.next_retry_at <= now) {
+          await db.syncQueue.update(errItem.id, { status: 'PENDING', error_message: undefined });
+        }
       }
 
       const pendingItems = await db.syncQueue
@@ -163,16 +188,10 @@ export class SyncService {
               await db.syncQueue.delete(item.id);
             } else if (res.status === 404 || res.error.code === '42P01' || res.error.message?.includes('relation') || res.error.message?.includes('does not exist')) {
               console.warn(`FitSync Sync Warning: La tabella '${item.table_name}' non è ancora stata creata sul database Supabase remoto. Esegui lo script SQL nel Supabase Dashboard per crearla.`);
-              await db.syncQueue.update(item.id, {
-                status: 'ERROR',
-                error_message: res.error.message
-              });
+              await this.markError(item.id, item.retry_count || 0, res.error.message);
             } else {
               console.error(`Sync error for item ${item.id} (${item.table_name}):`, res.error);
-              await db.syncQueue.update(item.id, {
-                status: 'ERROR',
-                error_message: res.error.message
-              });
+              await this.markError(item.id, item.retry_count || 0, res.error.message);
             }
           } else {
             console.log(`FitSync Sync: caricamento riuscito per elemento ${item.id} (${item.table_name})`);
@@ -180,10 +199,7 @@ export class SyncService {
           }
         } catch (err: any) {
           console.error(`Execution error syncing item ${item.id}:`, err);
-          await db.syncQueue.update(item.id, {
-            status: 'ERROR',
-            error_message: err?.message || 'Unknown error'
-          });
+          await this.markError(item.id, item.retry_count || 0, err?.message || 'Unknown error');
         }
       }
 
