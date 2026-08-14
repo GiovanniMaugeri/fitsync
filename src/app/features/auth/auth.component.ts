@@ -77,7 +77,7 @@ import { LucideAngularModule, User, Globe, WifiOff, AlertTriangle, CheckCircle, 
 
           <div class="form-group">
             <label>Password *</label>
-            <input type="password" class="input-field" [(ngModel)]="password" name="password" placeholder="••••••••" required>
+            <input type="password" class="input-field" [(ngModel)]="password" name="password" placeholder="••••••••" required minlength="6">
           </div>
 
           <button type="submit" class="btn btn-primary btn-block">

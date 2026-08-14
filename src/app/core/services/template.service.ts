@@ -109,7 +109,7 @@ export class TemplateService {
     name: string,
     description: string,
     exercisesList: { exercise_id: string; target_sets: number; target_reps: number; rest_time_seconds: number }[],
-    isPublic: boolean = true
+    isPublic: boolean = false
   ): Promise<WorkoutTemplate> {
     const userId = this.supabaseService.currentUserId;
     const now = new Date().toISOString();

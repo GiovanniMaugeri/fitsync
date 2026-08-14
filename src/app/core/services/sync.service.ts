@@ -284,19 +284,24 @@ export class SyncService {
         }
       }
 
-      // 5. Pull Workout Sets
-      const { data: sets, error: setErr } = await client.from('workout_sets').select('*');
-      if (setErr) {
-        console.warn('FitSync: Errore durante il pull dei set da Supabase:', setErr);
-      } else if (sets) {
-        const remoteIds = new Set(sets.map(s => s.id));
-        const localSets = await db.workoutSets.toArray();
-        const toDelete = localSets.filter(s => !remoteIds.has(s.id)).map(s => s.id);
-        if (toDelete.length > 0) {
-          await db.workoutSets.bulkDelete(toDelete);
-        }
-        if (sets.length > 0) {
-          await db.workoutSets.bulkPut(sets);
+      // 5. Pull Workout Sets (solo per le sessioni dell'utente corrente, dati sensibili)
+      if (userId && userId !== LOCAL_USER_ID) {
+        const userSessionIds = (await db.workoutSessions.where('user_id').equals(userId).toArray()).map(s => s.id);
+        if (userSessionIds.length > 0) {
+          const { data: sets, error: setErr } = await client.from('workout_sets').select('*').in('session_id', userSessionIds);
+          if (setErr) {
+            console.warn('FitSync: Errore durante il pull dei set da Supabase:', setErr);
+          } else if (sets) {
+            const remoteIds = new Set(sets.map(s => s.id));
+            const localSets = await db.workoutSets.where('session_id').anyOf(userSessionIds).toArray();
+            const toDelete = localSets.filter(s => !remoteIds.has(s.id)).map(s => s.id);
+            if (toDelete.length > 0) {
+              await db.workoutSets.bulkDelete(toDelete);
+            }
+            if (sets.length > 0) {
+              await db.workoutSets.bulkPut(sets);
+            }
+          }
         }
       }
 
