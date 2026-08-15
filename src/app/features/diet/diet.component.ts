@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule } from '@angular/router';
 import { LucideAngularModule, Utensils, Apple, Flame, CheckCircle2, Dumbbell, Sparkles, ArrowLeft } from 'lucide-angular';
 
 @Component({
   selector: 'app-diet',
   standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule],
+  imports: [RouterModule, LucideAngularModule],
   template: `
     <div class="diet-container">
       <!-- HEADER CARD -->

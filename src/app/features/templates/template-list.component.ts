@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule, Router } from '@angular/router';
 import { TemplateService } from '../../core/services/template.service';
 import { WorkoutService } from '../../core/services/workout.service';
@@ -11,7 +11,7 @@ import { LucideAngularModule, ClipboardList, Pencil, Trash2, Zap, Plus } from 'l
   selector: 'app-template-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, LucideAngularModule],
+  imports: [RouterModule, LucideAngularModule],
   template: `
     <div class="templates-container">
       <div class="header-row">
@@ -20,79 +20,91 @@ import { LucideAngularModule, ClipboardList, Pencil, Trash2, Zap, Plus } from 'l
           <p class="page-subtitle">Crea e gestisci le tue routine personalizzate per la palestra.</p>
         </div>
       </div>
-
+    
       <!-- VISIBILITY FILTER BAR -->
       <div class="filter-bar">
         <div class="pills-row">
-          <button 
-            class="pill-btn" 
-            [class.active]="filterVisibility === 'Tutte'" 
+          <button
+            class="pill-btn"
+            [class.active]="filterVisibility === 'Tutte'"
             (click)="filterVisibility = 'Tutte'">
             Tutte
           </button>
-          <button 
-            class="pill-btn" 
-            [class.active]="filterVisibility === 'Pubbliche'" 
+          <button
+            class="pill-btn"
+            [class.active]="filterVisibility === 'Pubbliche'"
             (click)="filterVisibility = 'Pubbliche'">
             🌐 Pubbliche
           </button>
-          <button 
-            class="pill-btn" 
-            [class.active]="filterVisibility === 'Private'" 
+          <button
+            class="pill-btn"
+            [class.active]="filterVisibility === 'Private'"
             (click)="filterVisibility = 'Private'">
             🔒 Private
           </button>
         </div>
       </div>
-
-      <div *ngIf="filteredTemplates.length === 0" class="empty-card glass-card">
-        <div class="empty-icon"><lucide-icon [img]="ClipboardList" size="48"></lucide-icon></div>
-        <h3>Nessuna scheda trovata</h3>
-        <p *ngIf="filterVisibility === 'Private'">Non hai nessuna scheda privata salvata.</p>
-        <p *ngIf="filterVisibility !== 'Private'">Crea la tua prima scheda (es. "Push A", "Leg Day") per tracciare le tue serie con carichi target e recuperi.</p>
-        <button class="btn btn-primary" routerLink="/templates/new"><lucide-icon [img]="Plus" size="16"></lucide-icon> Crea Scheda</button>
-      </div>
-
-      <div class="templates-grid">
-        <div *ngFor="let t of filteredTemplates" class="template-card glass-card">
-          <div class="card-header">
-            <div>
-              <h3 class="card-title">{{ t.name }}</h3>
-              <p class="card-desc">{{ t.description || 'Nessuna descrizione' }}</p>
-              <div class="badge-row">
-                <span class="vis-badge" [class.private]="t.is_public === false">
-                  {{ t.is_public === false ? '🔒 PRIVATA' : '🌐 PUBBLICA' }}
-                </span>
-                <span *ngIf="isOtherAuthor(t)" class="author-tag">CREATA DA ALTRI</span>
-              </div>
-            </div>
-            <div class="card-actions" *ngIf="canEdit(t)">
-              <button class="icon-btn" [routerLink]="['/templates/edit', t.id]" title="Modifica"><lucide-icon [img]="Pencil" size="16"></lucide-icon></button>
-              <button class="icon-btn danger" (click)="deleteTemplate(t.id)" title="Elimina"><lucide-icon [img]="Trash2" size="16"></lucide-icon></button>
-            </div>
-          </div>
-
-          <div class="exercises-preview">
-            <div *ngFor="let item of t.exercises" class="ex-preview-tag">
-              <span class="ex-name">{{ item.exercise?.name || 'Esercizio' }}</span>
-              <span class="ex-detail">{{ item.target_sets }}x{{ item.target_reps }} ({{ item.rest_time_seconds }}s)</span>
-            </div>
-          </div>
-
-          <div class="card-footer">
-            <button class="btn btn-accent btn-block" (click)="startWorkout(t.id)">
-              <lucide-icon [img]="Zap" size="16"></lucide-icon> Avvia Allenamento
-            </button>
-          </div>
+    
+      @if (filteredTemplates.length === 0) {
+        <div class="empty-card glass-card">
+          <div class="empty-icon"><lucide-icon [img]="ClipboardList" size="48"></lucide-icon></div>
+          <h3>Nessuna scheda trovata</h3>
+          @if (filterVisibility === 'Private') {
+            <p>Non hai nessuna scheda privata salvata.</p>
+          }
+          @if (filterVisibility !== 'Private') {
+            <p>Crea la tua prima scheda (es. "Push A", "Leg Day") per tracciare le tue serie con carichi target e recuperi.</p>
+          }
+          <button class="btn btn-primary" routerLink="/templates/new"><lucide-icon [img]="Plus" size="16"></lucide-icon> Crea Scheda</button>
         </div>
+      }
+    
+      <div class="templates-grid">
+        @for (t of filteredTemplates; track t) {
+          <div class="template-card glass-card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">{{ t.name }}</h3>
+                <p class="card-desc">{{ t.description || 'Nessuna descrizione' }}</p>
+                <div class="badge-row">
+                  <span class="vis-badge" [class.private]="t.is_public === false">
+                    {{ t.is_public === false ? '🔒 PRIVATA' : '🌐 PUBBLICA' }}
+                  </span>
+                  @if (isOtherAuthor(t)) {
+                    <span class="author-tag">CREATA DA ALTRI</span>
+                  }
+                </div>
+              </div>
+              @if (canEdit(t)) {
+                <div class="card-actions">
+                  <button class="icon-btn" [routerLink]="['/templates/edit', t.id]" title="Modifica"><lucide-icon [img]="Pencil" size="16"></lucide-icon></button>
+                  <button class="icon-btn danger" (click)="deleteTemplate(t.id)" title="Elimina"><lucide-icon [img]="Trash2" size="16"></lucide-icon></button>
+                </div>
+              }
+            </div>
+            <div class="exercises-preview">
+              @for (item of t.exercises; track item) {
+                <div class="ex-preview-tag">
+                  <span class="ex-name">{{ item.exercise?.name || 'Esercizio' }}</span>
+                  <span class="ex-detail">{{ item.target_sets }}x{{ item.target_reps }} ({{ item.rest_time_seconds }}s)</span>
+                </div>
+              }
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-accent btn-block" (click)="startWorkout(t.id)">
+                <lucide-icon [img]="Zap" size="16"></lucide-icon> Avvia Allenamento
+              </button>
+            </div>
+          </div>
+        }
       </div>
-
+    
       <!-- FLOATING ACTION BUTTON (FAB) IN BASSO A DESTRA -->
       <button class="fab-btn" routerLink="/templates/new" title="Nuova Scheda" aria-label="Crea Nuova Scheda">
         <lucide-icon [img]="Plus" size="28"></lucide-icon>
       </button>
     </div>
-  `,
+    `,
   styles: [`
     .templates-container {
       display: flex;

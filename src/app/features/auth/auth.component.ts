@@ -18,82 +18,88 @@ import { LucideAngularModule, User, Globe, WifiOff, AlertTriangle, CheckCircle, 
           <p class="page-subtitle">Gestisci l'autenticazione Supabase ed il motore Offline-First.</p>
         </div>
       </div>
-
+    
       <!-- LOGGED IN USER PROFILE CARD -->
-      <div *ngIf="currentUser$ | async as user" class="glass-card profile-card">
-        <div class="profile-header">
-          <div class="avatar-circle"><lucide-icon [img]="User" size="24"></lucide-icon></div>
-          <div>
-            <h2 class="user-email">{{ user.user_metadata?.['username'] || user.email?.split('@')?.[0] }}</h2>
-            <span class="user-id">ID: {{ user.id }}</span>
+      @if (currentUser$ | async; as user) {
+        <div class="glass-card profile-card">
+          <div class="profile-header">
+            <div class="avatar-circle"><lucide-icon [img]="User" size="24"></lucide-icon></div>
+            <div>
+              <h2 class="user-email">{{ user.user_metadata?.['username'] || user.email?.split('@')?.[0] }}</h2>
+              <span class="user-id">ID: {{ user.id }}</span>
+            </div>
+          </div>
+          <div class="sync-status-box">
+            <div class="status-row">
+              <span>Stato Connessione:</span>
+              <strong [class.text-green]="isOnline()" [class.text-orange]="!isOnline()">
+                @if (isOnline()) {
+                  <lucide-icon [img]="Globe" size="14"></lucide-icon>
+                }
+                @if (!isOnline()) {
+                  <lucide-icon [img]="WifiOff" size="14"></lucide-icon>
+                }
+                {{ isOnline() ? ' Online' : ' Offline' }}
+              </strong>
+            </div>
+            <div class="status-row">
+              <span>Modifiche in coda di Sync:</span>
+              <strong>{{ pendingCount() || 0 }} elementi</strong>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button class="btn btn-primary" (click)="syncNow()" [disabled]="!isOnline()"><lucide-icon [img]="Zap" size="16"></lucide-icon> Sincronizza Ora</button>
+            <button class="btn btn-outline" (click)="signOut()">Disconnetti</button>
           </div>
         </div>
-
-        <div class="sync-status-box">
-          <div class="status-row">
-            <span>Stato Connessione:</span>
-            <strong [class.text-green]="isOnline()" [class.text-orange]="!isOnline()">
-              <lucide-icon *ngIf="isOnline()" [img]="Globe" size="14"></lucide-icon>
-              <lucide-icon *ngIf="!isOnline()" [img]="WifiOff" size="14"></lucide-icon>
-              {{ isOnline() ? ' Online' : ' Offline' }}
-            </strong>
-          </div>
-          <div class="status-row">
-            <span>Modifiche in coda di Sync:</span>
-            <strong>{{ pendingCount() || 0 }} elementi</strong>
-          </div>
-        </div>
-
-        <div class="profile-actions">
-          <button class="btn btn-primary" (click)="syncNow()" [disabled]="!isOnline()"><lucide-icon [img]="Zap" size="16"></lucide-icon> Sincronizza Ora</button>
-          <button class="btn btn-outline" (click)="signOut()">Disconnetti</button>
-        </div>
-      </div>
-
+      }
+    
       <!-- LOGIN / SIGNUP FORM -->
-      <div *ngIf="!(currentUser$ | async)" class="glass-card auth-card">
-        <div class="tabs-header">
-          <button class="auth-tab" [class.active]="isLoginMode" (click)="isLoginMode = true">Accedi</button>
-          <button class="auth-tab" [class.active]="!isLoginMode" (click)="isLoginMode = false">Registrati</button>
-        </div>
-
-        <div *ngIf="errorMessage" class="error-banner">
-          <lucide-icon [img]="AlertTriangle" size="16"></lucide-icon> {{ errorMessage }}
-        </div>
-
-        <div *ngIf="successMessage" class="success-banner">
-          <lucide-icon [img]="CheckCircle" size="16"></lucide-icon> {{ successMessage }}
-        </div>
-
-        <form (ngSubmit)="handleSubmit()">
-          <div *ngIf="!isLoginMode" class="form-group">
-            <label>Nome Completo</label>
-            <input type="text" class="input-field" [(ngModel)]="fullName" name="fullName" placeholder="es. Mario Rossi">
+      @if (!(currentUser$ | async)) {
+        <div class="glass-card auth-card">
+          <div class="tabs-header">
+            <button class="auth-tab" [class.active]="isLoginMode" (click)="isLoginMode = true">Accedi</button>
+            <button class="auth-tab" [class.active]="!isLoginMode" (click)="isLoginMode = false">Registrati</button>
           </div>
-
-          <div class="form-group">
-            <label>Nome Utente *</label>
-            <input type="text" class="input-field" [(ngModel)]="username" name="username" placeholder="nome_utente" required>
-          </div>
-
-          <div class="form-group">
-            <label>Password *</label>
-            <input type="password" class="input-field" [(ngModel)]="password" name="password" placeholder="••••••••" required minlength="6">
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-block">
-            {{ isLoginMode ? 'Accedi a Supabase' : 'Crea Account' }}
-          </button>
-        </form>
-      </div>
-
+          @if (errorMessage) {
+            <div class="error-banner">
+              <lucide-icon [img]="AlertTriangle" size="16"></lucide-icon> {{ errorMessage }}
+            </div>
+          }
+          @if (successMessage) {
+            <div class="success-banner">
+              <lucide-icon [img]="CheckCircle" size="16"></lucide-icon> {{ successMessage }}
+            </div>
+          }
+          <form (ngSubmit)="handleSubmit()">
+            @if (!isLoginMode) {
+              <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" class="input-field" [(ngModel)]="fullName" name="fullName" placeholder="es. Mario Rossi">
+              </div>
+            }
+            <div class="form-group">
+              <label>Nome Utente *</label>
+              <input type="text" class="input-field" [(ngModel)]="username" name="username" placeholder="nome_utente" required>
+            </div>
+            <div class="form-group">
+              <label>Password *</label>
+              <input type="password" class="input-field" [(ngModel)]="password" name="password" placeholder="••••••••" required minlength="6">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">
+              {{ isLoginMode ? 'Accedi a Supabase' : 'Crea Account' }}
+            </button>
+          </form>
+        </div>
+      }
+    
       <!-- LOCAL DEMO INFO CARD -->
       <div class="glass-card info-card">
         <h3><lucide-icon [img]="CheckCircle" size="18"></lucide-icon> Architettura Offline-First FitSync</h3>
         <p>Tutti i tuoi dati (schede, allenamenti, set) vengono **salvati istantaneamente su IndexedDB** nel browser con Dexie.js. Se non sei connesso ad internet o non hai configurato Supabase, l'app continuerà a funzionare normalmente in locale senza interruzioni.</p>
       </div>
     </div>
-  `,
+    `,
   styles: [`
     .auth-container {
       display: flex;

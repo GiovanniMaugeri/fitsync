@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterModule } from '@angular/router';
 import { LucideAngularModule, Calendar, Flame, ChevronRight, CheckCircle2, AlertCircle, Trash2 } from 'lucide-angular';
 import { DietService } from '../../core/services/diet.service';
@@ -15,7 +15,7 @@ interface HistoryRecord {
   selector: 'app-diet-history',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, LucideAngularModule],
+  imports: [RouterModule, LucideAngularModule],
   template: `
     <div class="diet-history-container">
       <div class="page-header">
@@ -25,54 +25,58 @@ interface HistoryRecord {
         </h1>
         <p class="page-subtitle">Consulta o elimina i pasti e il totale calorico dei giorni precedenti.</p>
       </div>
-
+    
       <!-- HISTORY LIST -->
-      <div class="history-list" *ngIf="historyRecords.length > 0">
-        <div 
-          class="history-card" 
-          *ngFor="let item of historyRecords" 
-          (click)="selectDate(item.date)"
-        >
-          <div class="card-left">
-            <div class="date-badge">
-              <span class="day-number">{{ getDayNumber(item.date) }}</span>
-              <span class="month-name">{{ getMonthName(item.date) }}</span>
+      @if (historyRecords.length > 0) {
+        <div class="history-list">
+          @for (item of historyRecords; track item) {
+            <div
+              class="history-card"
+              (click)="selectDate(item.date)"
+              >
+              <div class="card-left">
+                <div class="date-badge">
+                  <span class="day-number">{{ getDayNumber(item.date) }}</span>
+                  <span class="month-name">{{ getMonthName(item.date) }}</span>
+                </div>
+                <div class="record-info">
+                  <span class="full-date">{{ formatFullDate(item.date) }}</span>
+                  <span class="meals-count">{{ item.meal_count }} pasti registrati</span>
+                </div>
+              </div>
+              <div class="card-right">
+                <div class="calorie-tag">
+                  <span class="flame-icon"><lucide-icon [img]="Flame" size="16"></lucide-icon></span>
+                  <span class="cal-val">{{ item.total_calories }}</span>
+                  <span class="cal-target">/ {{ item.target_calories }} kcal</span>
+                </div>
+                <div class="status-indicator" [class.success]="item.total_calories <= item.target_calories && item.total_calories > 0" [class.over]="item.total_calories > item.target_calories">
+                  @if (item.total_calories <= item.target_calories && item.total_calories > 0) {
+                    <lucide-icon [img]="CheckCircle2" size="16"></lucide-icon>
+                  }
+                  @if (item.total_calories > item.target_calories) {
+                    <lucide-icon [img]="AlertCircle" size="16"></lucide-icon>
+                  }
+                </div>
+                <button class="delete-history-btn" (click)="deleteRecord($event, item.date)" title="Elimina questo giorno dallo storico">
+                  <lucide-icon [img]="Trash2" size="16"></lucide-icon>
+                </button>
+                <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
+              </div>
             </div>
-            
-            <div class="record-info">
-              <span class="full-date">{{ formatFullDate(item.date) }}</span>
-              <span class="meals-count">{{ item.meal_count }} pasti registrati</span>
-            </div>
-          </div>
-
-          <div class="card-right">
-            <div class="calorie-tag">
-              <span class="flame-icon"><lucide-icon [img]="Flame" size="16"></lucide-icon></span>
-              <span class="cal-val">{{ item.total_calories }}</span>
-              <span class="cal-target">/ {{ item.target_calories }} kcal</span>
-            </div>
-
-            <div class="status-indicator" [class.success]="item.total_calories <= item.target_calories && item.total_calories > 0" [class.over]="item.total_calories > item.target_calories">
-              <lucide-icon [img]="CheckCircle2" size="16" *ngIf="item.total_calories <= item.target_calories && item.total_calories > 0"></lucide-icon>
-              <lucide-icon [img]="AlertCircle" size="16" *ngIf="item.total_calories > item.target_calories"></lucide-icon>
-            </div>
-
-            <button class="delete-history-btn" (click)="deleteRecord($event, item.date)" title="Elimina questo giorno dallo storico">
-              <lucide-icon [img]="Trash2" size="16"></lucide-icon>
-            </button>
-
-            <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
-          </div>
+          }
         </div>
-      </div>
-
-      <div *ngIf="historyRecords.length === 0" class="empty-state">
-        <lucide-icon [img]="Calendar" size="48" class="empty-icon"></lucide-icon>
-        <p>Nessuna registrazione passata trovata.</p>
-        <a routerLink="/diet" class="btn btn-primary btn-sm">Vai a Oggi</a>
-      </div>
+      }
+    
+      @if (historyRecords.length === 0) {
+        <div class="empty-state">
+          <lucide-icon [img]="Calendar" size="48" class="empty-icon"></lucide-icon>
+          <p>Nessuna registrazione passata trovata.</p>
+          <a routerLink="/diet" class="btn btn-primary btn-sm">Vai a Oggi</a>
+        </div>
+      }
     </div>
-  `,
+    `,
   styles: [`
     .diet-history-container {
       display: flex;

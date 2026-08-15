@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { WorkoutService } from '../../core/services/workout.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { SyncService } from '../../core/services/sync.service';
@@ -10,7 +10,7 @@ import { LucideAngularModule, History, Calendar, Clock, Dumbbell, ChevronUp, Che
   selector: 'app-history',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [LucideAngularModule],
   template: `
     <div class="history-container">
       <div class="header-row">
@@ -19,54 +19,72 @@ import { LucideAngularModule, History, Calendar, Clock, Dumbbell, ChevronUp, Che
           <p class="page-subtitle">Rivedi le sessioni completate e controlla i tuoi progressi.</p>
         </div>
       </div>
-
-      <div *ngIf="sessions.length === 0" class="empty-card glass-card">
-        <div class="empty-icon"><lucide-icon [img]="HistoryIcon" size="48"></lucide-icon></div>
-        <h3>Nessuna sessione nello storico</h3>
-        <p>Completa il tuo primo allenamento per vedere l'elenco dei tuoi set e volumi qui.</p>
-      </div>
-
+    
+      @if (sessions.length === 0) {
+        <div class="empty-card glass-card">
+          <div class="empty-icon"><lucide-icon [img]="HistoryIcon" size="48"></lucide-icon></div>
+          <h3>Nessuna sessione nello storico</h3>
+          <p>Completa il tuo primo allenamento per vedere l'elenco dei tuoi set e volumi qui.</p>
+        </div>
+      }
+    
       <div class="sessions-list">
-        <div *ngFor="let s of sessions" class="session-card glass-card">
-          <div class="session-header" (click)="toggleExpand(s.id)">
-            <div>
-              <h3 class="session-title">{{ s.name }}</h3>
-              <div class="session-meta">
-                <span><lucide-icon [img]="Calendar" size="14"></lucide-icon> {{ formatDate(s.start_time) }}</span>
-                <span *ngIf="s.end_time"><lucide-icon [img]="Clock" size="14"></lucide-icon> {{ calculateDuration(s.start_time, s.end_time) }} min</span>
-                <span><lucide-icon [img]="Dumbbell" size="14"></lucide-icon> {{ s.sets?.length || 0 }} set</span>
-              </div>
-            </div>
-            <div class="header-right">
-              <button class="expand-btn" (click)="toggleExpand(s.id)" [title]="expandedSessionId === s.id ? 'Comprimi' : 'Espandi Dettagli'" aria-label="Dettagli sessione">
-                <lucide-icon *ngIf="expandedSessionId === s.id" [img]="ChevronUp" size="18"></lucide-icon>
-                <lucide-icon *ngIf="expandedSessionId !== s.id" [img]="ChevronDown" size="18"></lucide-icon>
-              </button>
-              <button class="icon-btn danger" (click)="deleteSession($event, s.id)" title="Elimina Sessione" aria-label="Elimina Sessione">
-                <lucide-icon [img]="Trash2" size="18"></lucide-icon>
-              </button>
-            </div>
-          </div>
-
-          <!-- EXPANDED SET DETAILS -->
-          <div *ngIf="expandedSessionId === s.id" class="session-details">
-            <p *ngIf="s.notes" class="notes-quote"><lucide-icon [img]="MessageSquare" size="14"></lucide-icon> "{{ s.notes }}"</p>
-
-            <div class="sets-by-exercise">
-              <div *ngFor="let group of groupSetsByExercise(s.sets)" class="ex-group">
-                <h4 class="group-ex-name">{{ group.exerciseName }}</h4>
-                <div class="sets-chips">
-                  <span *ngFor="let setItem of group.sets" class="set-chip">
-                    Set {{ setItem.set_number }}: <strong>{{ setItem.weight }} kg</strong> × {{ setItem.reps }} reps <small *ngIf="setItem.rpe">(RPE {{ setItem.rpe }})</small>
-                  </span>
+        @for (s of sessions; track s) {
+          <div class="session-card glass-card">
+            <div class="session-header" (click)="toggleExpand(s.id)">
+              <div>
+                <h3 class="session-title">{{ s.name }}</h3>
+                <div class="session-meta">
+                  <span><lucide-icon [img]="Calendar" size="14"></lucide-icon> {{ formatDate(s.start_time) }}</span>
+                  @if (s.end_time) {
+                    <span><lucide-icon [img]="Clock" size="14"></lucide-icon> {{ calculateDuration(s.start_time, s.end_time) }} min</span>
+                  }
+                  <span><lucide-icon [img]="Dumbbell" size="14"></lucide-icon> {{ s.sets?.length || 0 }} set</span>
                 </div>
               </div>
+              <div class="header-right">
+                <button class="expand-btn" (click)="toggleExpand(s.id)" [title]="expandedSessionId === s.id ? 'Comprimi' : 'Espandi Dettagli'" aria-label="Dettagli sessione">
+                  @if (expandedSessionId === s.id) {
+                    <lucide-icon [img]="ChevronUp" size="18"></lucide-icon>
+                  }
+                  @if (expandedSessionId !== s.id) {
+                    <lucide-icon [img]="ChevronDown" size="18"></lucide-icon>
+                  }
+                </button>
+                <button class="icon-btn danger" (click)="deleteSession($event, s.id)" title="Elimina Sessione" aria-label="Elimina Sessione">
+                  <lucide-icon [img]="Trash2" size="18"></lucide-icon>
+                </button>
+              </div>
             </div>
-          </div>
+            <!-- EXPANDED SET DETAILS -->
+            @if (expandedSessionId === s.id) {
+              <div class="session-details">
+                @if (s.notes) {
+                  <p class="notes-quote"><lucide-icon [img]="MessageSquare" size="14"></lucide-icon> "{{ s.notes }}"</p>
+                }
+                <div class="sets-by-exercise">
+                  @for (group of groupSetsByExercise(s.sets); track group) {
+                    <div class="ex-group">
+                      <h4 class="group-ex-name">{{ group.exerciseName }}</h4>
+                      <div class="sets-chips">
+                        @for (setItem of group.sets; track setItem) {
+                          <span class="set-chip">
+                            Set {{ setItem.set_number }}: <strong>{{ setItem.weight }} kg</strong> × {{ setItem.reps }} reps @if (setItem.rpe) {
+                            <small>(RPE {{ setItem.rpe }})</small>
+                          }
+                        </span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </div>
-      </div>
+      }
     </div>
-  `,
+    </div>
+    `,
   styles: [`
     .history-container {
       display: flex;

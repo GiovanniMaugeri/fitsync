@@ -16,155 +16,168 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
   template: `
     <div class="active-workout-container">
       <!-- NO ACTIVE WORKOUT STATE -->
-      <div *ngIf="!activeState()" class="empty-state glass-card">
-        <div class="empty-icon"><lucide-icon [img]="Dumbbell" size="48"></lucide-icon></div>
-        <h2>Nessun allenamento attivo</h2>
-        <p>Inizia una sessione libera o seleziona una scheda per partire!</p>
-        <div class="actions-row">
-          <button class="btn btn-accent free-workout-btn" (click)="startFree()"><lucide-icon [img]="Zap" size="16"></lucide-icon> Allenamento Libero</button>
-          <button class="btn btn-primary" routerLink="/templates"><lucide-icon [img]="ClipboardList" size="16"></lucide-icon> Scegli da Scheda</button>
+      @if (!activeState()) {
+        <div class="empty-state glass-card">
+          <div class="empty-icon"><lucide-icon [img]="Dumbbell" size="48"></lucide-icon></div>
+          <h2>Nessun allenamento attivo</h2>
+          <p>Inizia una sessione libera o seleziona una scheda per partire!</p>
+          <div class="actions-row">
+            <button class="btn btn-accent free-workout-btn" (click)="startFree()"><lucide-icon [img]="Zap" size="16"></lucide-icon> Allenamento Libero</button>
+            <button class="btn btn-primary" routerLink="/templates"><lucide-icon [img]="ClipboardList" size="16"></lucide-icon> Scegli da Scheda</button>
+          </div>
         </div>
-      </div>
-
+      }
+    
       <!-- ACTIVE WORKOUT INTERFACE -->
-      <div *ngIf="activeState() as state" class="workout-content">
-        <!-- TOP WORKOUT BAR -->
-        <div class="workout-top-bar glass-card">
-          <div>
-            <span class="live-pill"><lucide-icon [img]="Radio" size="12"></lucide-icon> IN CORSO</span>
-            <h1 class="workout-title">{{ state.session.name }}</h1>
-          </div>
-
-          <div class="top-controls">
-            <button class="btn btn-danger btn-sm" (click)="cancelWorkout()">Annulla</button>
-            <button class="btn btn-accent btn-sm" (click)="showFinishModal = true"><lucide-icon [img]="Flag" size="14"></lucide-icon> Termina</button>
-          </div>
-        </div>
-
-        <!-- REST TIMER OVERLAY / BANNER -->
-        <div *ngIf="isTimerRunning$ | async" class="timer-banner glass-card">
-          <div class="timer-info">
-            <span class="timer-icon"><lucide-icon [img]="Timer" size="28"></lucide-icon></span>
+      @if (activeState(); as state) {
+        <div class="workout-content">
+          <!-- TOP WORKOUT BAR -->
+          <div class="workout-top-bar glass-card">
             <div>
-              <span class="timer-label">RECUPERO IN CORSO</span>
-              <span class="timer-countdown">{{ formatTimer(restTimerSeconds$ | async) }}</span>
+              <span class="live-pill"><lucide-icon [img]="Radio" size="12"></lucide-icon> IN CORSO</span>
+              <h1 class="workout-title">{{ state.session.name }}</h1>
+            </div>
+            <div class="top-controls">
+              <button class="btn btn-danger btn-sm" (click)="cancelWorkout()">Annulla</button>
+              <button class="btn btn-accent btn-sm" (click)="showFinishModal = true"><lucide-icon [img]="Flag" size="14"></lucide-icon> Termina</button>
             </div>
           </div>
-          <button class="btn btn-stop-timer" (click)="stopTimer()">Salta / Stop</button>
-        </div>
-
-        <!-- EXERCISES TABS / NAVIGATOR -->
-        <div class="exercise-tabs">
-          <button 
-            *ngFor="let ex of state.exercises; let idx = index" 
-            class="tab-btn"
-            [class.active]="state.activeExerciseIndex === idx"
-            (click)="selectExerciseTab(idx)">
-            <span>{{ idx + 1 }}. {{ ex.name }}</span>
-            <span class="completed-count">({{ getCompletedSetsCount(ex) }}/{{ ex.sets.length }})</span>
-          </button>
-          <button class="tab-btn add-tab" (click)="showAddExerciseModal = true">+ Esercizio</button>
-        </div>
-
-        <!-- CURRENT EXERCISE WORKOUT AREA -->
-        <div *ngIf="state.exercises[state.activeExerciseIndex] as currentEx" class="exercise-card glass-card">
-          <div class="ex-card-header">
-            <div>
-              <h2 class="ex-name">{{ currentEx.name }}</h2>
-              <span class="ex-meta">{{ currentEx.category }} • {{ currentEx.equipment }} | Target: {{ currentEx.target_sets }}x{{ currentEx.target_reps }} ({{ currentEx.rest_time_seconds }}s rec)</span>
-            </div>
-            <button class="btn timer-start-btn" (click)="startTimer(currentEx.rest_time_seconds)">
-              <lucide-icon [img]="Timer" size="16"></lucide-icon> Avvia Timer {{ currentEx.rest_time_seconds }}s
-            </button>
-          </div>
-
-          <!-- SETS TABLE -->
-          <div class="sets-table-wrapper">
-            <table class="sets-table">
-              <thead>
-                <tr>
-                  <th class="col-set">SET</th>
-                  <th class="col-input">PESO (KG)</th>
-                  <th class="col-input">REPS</th>
-                  <th class="col-input">RPE (1-10)</th>
-                  <th class="col-check">FATTO</th>
-                  <th class="col-action"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let s of currentEx.sets; let setIdx = index" [class.completed-row]="s.is_completed">
-                  <td class="col-set">
-                    <span class="set-number">#{{ s.set_number }}</span>
-                  </td>
-                  <td class="col-input">
-                    <input type="number" class="set-input" [(ngModel)]="s.weight" (ngModelChange)="onInputChange()" step="0.5" min="0">
-                  </td>
-                  <td class="col-input">
-                    <input type="number" class="set-input" [(ngModel)]="s.reps" (ngModelChange)="onInputChange()" step="1" min="1">
-                  </td>
-                  <td class="col-input">
-                    <input type="number" class="set-input rpe-input" [(ngModel)]="s.rpe" (ngModelChange)="onInputChange()" step="0.5" min="1" max="10">
-                  </td>
-                  <td class="col-check">
-                    <button 
-                      class="check-btn" 
-                      [class.checked]="s.is_completed" 
-                      (click)="toggleSet(state.activeExerciseIndex, setIdx)">
-                      <lucide-icon *ngIf="s.is_completed" [img]="Check" size="18"></lucide-icon>
-                    </button>
-                  </td>
-                  <td class="col-action">
-                    <button class="icon-btn danger" (click)="removeSet(state.activeExerciseIndex, setIdx)"><lucide-icon [img]="Trash2" size="18"></lucide-icon></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="table-actions">
-            <button class="btn btn-outline btn-sm" (click)="addSet(state.activeExerciseIndex)">
-              + Aggiungi Serie (Set)
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- FINISH WORKOUT MODAL -->
-      <div *ngIf="showFinishModal" class="modal-backdrop">
-        <div class="modal-card glass-card">
-          <h3>Termina e Salva Allenamento <lucide-icon [img]="Trophy" size="20"></lucide-icon></h3>
-          <p>Ottimo lavoro! Inserisci note o sensazioni (opzionale):</p>
-          <textarea class="input-field" [(ngModel)]="sessionNotes" rows="3" placeholder="es. Ottime sensazioni sulla panca piana, aumentato carico..."></textarea>
-          <div class="modal-actions">
-            <button class="btn btn-outline" (click)="showFinishModal = false">Torna all'Allenamento</button>
-            <button class="btn btn-accent" (click)="finishWorkout()"><lucide-icon [img]="Save" size="16"></lucide-icon> Salva e Concludi</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ADD EXERCISE MODAL -->
-      <div *ngIf="showAddExerciseModal" class="modal-backdrop" (click)="showAddExerciseModal = false">
-        <div class="modal-card glass-card" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Aggiungi Esercizio all'Allenamento</h3>
-            <button class="modal-close-btn" (click)="showAddExerciseModal = false" title="Chiudi" aria-label="Chiudi">
-              <lucide-icon [img]="X" size="20"></lucide-icon>
-            </button>
-          </div>
-          <input type="text" class="input-field search-ex-input" [(ngModel)]="searchQuery" placeholder="🔍 Cerca esercizio per nome...">
-          <div class="modal-ex-list">
-            <div *ngFor="let ex of filteredExercises" class="modal-ex-item" (click)="addExerciseToWorkout(ex.id)">
-              <div>
-                <div class="ex-title">{{ ex.name }}</div>
-                <div class="ex-sub">{{ ex.category }} • {{ ex.equipment || 'Corpo Libero' }}</div>
+          <!-- REST TIMER OVERLAY / BANNER -->
+          @if (isTimerRunning$ | async) {
+            <div class="timer-banner glass-card">
+              <div class="timer-info">
+                <span class="timer-icon"><lucide-icon [img]="Timer" size="28"></lucide-icon></span>
+                <div>
+                  <span class="timer-label">RECUPERO IN CORSO</span>
+                  <span class="timer-countdown">{{ formatTimer(restTimerSeconds$ | async) }}</span>
+                </div>
               </div>
-              <span class="add-txt">+ Aggiungi</span>
+              <button class="btn btn-stop-timer" (click)="stopTimer()">Salta / Stop</button>
+            </div>
+          }
+          <!-- EXERCISES TABS / NAVIGATOR -->
+          <div class="exercise-tabs">
+            @for (ex of state.exercises; track ex; let idx = $index) {
+              <button
+                class="tab-btn"
+                [class.active]="state.activeExerciseIndex === idx"
+                (click)="selectExerciseTab(idx)">
+                <span>{{ idx + 1 }}. {{ ex.name }}</span>
+                <span class="completed-count">({{ getCompletedSetsCount(ex) }}/{{ ex.sets.length }})</span>
+              </button>
+            }
+            <button class="tab-btn add-tab" (click)="showAddExerciseModal = true">+ Esercizio</button>
+          </div>
+          <!-- CURRENT EXERCISE WORKOUT AREA -->
+          @if (state.exercises[state.activeExerciseIndex]; as currentEx) {
+            <div class="exercise-card glass-card">
+              <div class="ex-card-header">
+                <div>
+                  <h2 class="ex-name">{{ currentEx.name }}</h2>
+                  <span class="ex-meta">{{ currentEx.category }} • {{ currentEx.equipment }} | Target: {{ currentEx.target_sets }}x{{ currentEx.target_reps }} ({{ currentEx.rest_time_seconds }}s rec)</span>
+                </div>
+                <button class="btn timer-start-btn" (click)="startTimer(currentEx.rest_time_seconds)">
+                  <lucide-icon [img]="Timer" size="16"></lucide-icon> Avvia Timer {{ currentEx.rest_time_seconds }}s
+                </button>
+              </div>
+              <!-- SETS TABLE -->
+              <div class="sets-table-wrapper">
+                <table class="sets-table">
+                  <thead>
+                    <tr>
+                      <th class="col-set">SET</th>
+                      <th class="col-input">PESO (KG)</th>
+                      <th class="col-input">REPS</th>
+                      <th class="col-input">RPE (1-10)</th>
+                      <th class="col-check">FATTO</th>
+                      <th class="col-action"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (s of currentEx.sets; track s; let setIdx = $index) {
+                      <tr [class.completed-row]="s.is_completed">
+                        <td class="col-set">
+                          <span class="set-number">#{{ s.set_number }}</span>
+                        </td>
+                        <td class="col-input">
+                          <input type="number" class="set-input" [(ngModel)]="s.weight" (ngModelChange)="onInputChange()" step="0.5" min="0">
+                        </td>
+                        <td class="col-input">
+                          <input type="number" class="set-input" [(ngModel)]="s.reps" (ngModelChange)="onInputChange()" step="1" min="1">
+                        </td>
+                        <td class="col-input">
+                          <input type="number" class="set-input rpe-input" [(ngModel)]="s.rpe" (ngModelChange)="onInputChange()" step="0.5" min="1" max="10">
+                        </td>
+                        <td class="col-check">
+                          <button
+                            class="check-btn"
+                            [class.checked]="s.is_completed"
+                            (click)="toggleSet(state.activeExerciseIndex, setIdx)">
+                            @if (s.is_completed) {
+                              <lucide-icon [img]="Check" size="18"></lucide-icon>
+                            }
+                          </button>
+                        </td>
+                        <td class="col-action">
+                          <button class="icon-btn danger" (click)="removeSet(state.activeExerciseIndex, setIdx)"><lucide-icon [img]="Trash2" size="18"></lucide-icon></button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-actions">
+                <button class="btn btn-outline btn-sm" (click)="addSet(state.activeExerciseIndex)">
+                  + Aggiungi Serie (Set)
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    
+      <!-- FINISH WORKOUT MODAL -->
+      @if (showFinishModal) {
+        <div class="modal-backdrop">
+          <div class="modal-card glass-card">
+            <h3>Termina e Salva Allenamento <lucide-icon [img]="Trophy" size="20"></lucide-icon></h3>
+            <p>Ottimo lavoro! Inserisci note o sensazioni (opzionale):</p>
+            <textarea class="input-field" [(ngModel)]="sessionNotes" rows="3" placeholder="es. Ottime sensazioni sulla panca piana, aumentato carico..."></textarea>
+            <div class="modal-actions">
+              <button class="btn btn-outline" (click)="showFinishModal = false">Torna all'Allenamento</button>
+              <button class="btn btn-accent" (click)="finishWorkout()"><lucide-icon [img]="Save" size="16"></lucide-icon> Salva e Concludi</button>
             </div>
           </div>
         </div>
-      </div>
+      }
+    
+      <!-- ADD EXERCISE MODAL -->
+      @if (showAddExerciseModal) {
+        <div class="modal-backdrop" (click)="showAddExerciseModal = false">
+          <div class="modal-card glass-card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Aggiungi Esercizio all'Allenamento</h3>
+              <button class="modal-close-btn" (click)="showAddExerciseModal = false" title="Chiudi" aria-label="Chiudi">
+                <lucide-icon [img]="X" size="20"></lucide-icon>
+              </button>
+            </div>
+            <input type="text" class="input-field search-ex-input" [(ngModel)]="searchQuery" placeholder="🔍 Cerca esercizio per nome...">
+            <div class="modal-ex-list">
+              @for (ex of filteredExercises; track ex) {
+                <div class="modal-ex-item" (click)="addExerciseToWorkout(ex.id)">
+                  <div>
+                    <div class="ex-title">{{ ex.name }}</div>
+                    <div class="ex-sub">{{ ex.category }} • {{ ex.equipment || 'Corpo Libero' }}</div>
+                  </div>
+                  <span class="add-txt">+ Aggiungi</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
     </div>
-  `,
+    `,
   styles: [`
     .active-workout-container {
       display: flex;
