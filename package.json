@@ -5,6 +5,7 @@
   "scripts": {
     "ng": "npx ng",
     "config": "node set-env.js",
+    "gen:seed": "node scripts/generate-exercises-seed.js",
     "start": "npm run config && npx ng serve",
     "build": "npm run config && npx ng build",
     "watch": "npm run config && npx ng build --watch --configuration development"
