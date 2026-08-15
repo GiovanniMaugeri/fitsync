@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -16,7 +16,7 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
   template: `
     <div class="active-workout-container">
       <!-- NO ACTIVE WORKOUT STATE -->
-      <div *ngIf="!(activeState$ | async)" class="empty-state glass-card">
+      <div *ngIf="!activeState()" class="empty-state glass-card">
         <div class="empty-icon"><lucide-icon [img]="Dumbbell" size="48"></lucide-icon></div>
         <h2>Nessun allenamento attivo</h2>
         <p>Inizia una sessione libera o seleziona una scheda per partire!</p>
@@ -27,7 +27,7 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
       </div>
 
       <!-- ACTIVE WORKOUT INTERFACE -->
-      <div *ngIf="activeState$ | async as state" class="workout-content">
+      <div *ngIf="activeState() as state" class="workout-content">
         <!-- TOP WORKOUT BAR -->
         <div class="workout-top-bar glass-card">
           <div>
@@ -637,7 +637,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   readonly Save = Save;
   readonly X = X;
 
-  activeState$: Observable<ActiveWorkoutState | null>;
+  activeState: Signal<ActiveWorkoutState | null>;
   restTimerSeconds$: Observable<number>;
   isTimerRunning$: Observable<boolean>;
 
@@ -654,7 +654,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {
-    this.activeState$ = this.workoutService.activeWorkout$;
+    this.activeState = this.workoutService.activeWorkout;
     this.restTimerSeconds$ = this.workoutService.restTimerSeconds$;
     this.isTimerRunning$ = this.workoutService.isTimerRunning$;
   }

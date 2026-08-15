@@ -34,4 +34,4 @@ Protocollo completo: `D:\Obsdian\_Protocollo con Claude.md`. In sintesi: a fine 
 - `src/app/core/services/` — servizi (workout, diet, template, exercise, sync, supabase)
 - `src/app/core/db/app-db.ts` — schema Dexie
 - `src/app/features/` — componenti standalone per feature (auth, diet, exercises, history, home, templates, workout)
-- `supabase/schema.sql` — schema del database remoto
+- `supabase/migrations/` — schema del database remoto, come migrazioni SQL numerate (vedi `supabase/README.md` per la convenzione)

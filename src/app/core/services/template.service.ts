@@ -3,6 +3,7 @@ import { db, generateUUID, fetchRemoteRow, fetchRemoteRows } from '../db/app-db'
 import { WorkoutTemplate, TemplateExercise, TemplateExerciseDetail } from '../models/fitsync.models';
 import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
 import { SyncService } from './sync.service';
+import { logger } from '../utils/logger';
 
 @Injectable({
   providedIn: 'root'
@@ -39,7 +40,7 @@ export class TemplateService {
           }
         }
       } catch (err) {
-        console.warn('FitSync: Allineamento remoto schede pubbliche:', err);
+        logger.warn('FitSync: Allineamento remoto schede pubbliche:', err);
       }
     }
 
@@ -128,7 +129,7 @@ export class TemplateService {
 
     if (templateId) {
       await db.workoutTemplates.put(template);
-      await this.syncService.enqueue('workout_templates', 'UPDATE', template);
+      await this.syncService.enqueue('workout_templates', 'UPDATE', { ...template });
       // Delete existing template_exercises in local db
       const existingItems = await db.templateExercises.where('template_id').equals(templateId).toArray();
       for (const item of existingItems) {
@@ -137,7 +138,7 @@ export class TemplateService {
       }
     } else {
       await db.workoutTemplates.add(template);
-      await this.syncService.enqueue('workout_templates', 'INSERT', template);
+      await this.syncService.enqueue('workout_templates', 'INSERT', { ...template });
     }
 
     // Add new template exercises
@@ -153,7 +154,7 @@ export class TemplateService {
         rest_time_seconds: item.rest_time_seconds
       };
       await db.templateExercises.add(tempEx);
-      await this.syncService.enqueue('template_exercises', 'INSERT', tempEx);
+      await this.syncService.enqueue('template_exercises', 'INSERT', { ...tempEx });
     }
 
     template.exercises = await this.getTemplateExercises(id);

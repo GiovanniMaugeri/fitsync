@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -104,12 +104,12 @@ import {
 
           <div class="status-area">
             <!-- Syncing indicator -->
-            <div *ngIf="isSyncing$ | async" class="syncing-badge">
+            <div *ngIf="isSyncing()" class="syncing-badge">
               <span class="spinner"><lucide-icon [img]="Settings" size="16"></lucide-icon></span> Sync...
             </div>
 
             <!-- Pending Sync Items Count -->
-            <div *ngIf="(pendingCount$ | async) as count" class="pending-badge" (click)="forceSync()">
+            <div *ngIf="pendingCount() as count" class="pending-badge" (click)="forceSync()">
               <span *ngIf="count > 0" class="pending-tag">{{ count }} in coda</span>
             </div>
 
@@ -121,7 +121,7 @@ import {
         </div>
 
         <!-- Active Workout Floating Bar banner -->
-        <div *ngIf="activeWorkout$ | async as activeState" class="active-workout-banner" routerLink="/workout/active">
+        <div *ngIf="activeWorkout() as activeState" class="active-workout-banner" routerLink="/workout/active">
           <div class="banner-info">
             <span class="pulse-icon"><lucide-icon [img]="Radio" size="18"></lucide-icon></span>
             <span class="banner-text">ALLENAMENTO IN CORSO: <strong>{{ activeState.session.name }}</strong></span>
@@ -605,10 +605,10 @@ export class AppComponent implements OnInit {
   isSettingsOpen = false;
   isDietMode = false;
 
-  isOnline$: Observable<boolean>;
-  isSyncing$: Observable<boolean>;
-  pendingCount$: Observable<number>;
-  activeWorkout$: Observable<ActiveWorkoutState | null>;
+  isOnline: Signal<boolean>;
+  isSyncing: Signal<boolean>;
+  pendingCount: Signal<number>;
+  activeWorkout: Signal<ActiveWorkoutState | null>;
   currentUser$: Observable<any>;
 
   constructor(
@@ -618,10 +618,10 @@ export class AppComponent implements OnInit {
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {
-    this.isOnline$ = this.syncService.isOnline$;
-    this.isSyncing$ = this.syncService.isSyncing$;
-    this.pendingCount$ = this.syncService.pendingCount$;
-    this.activeWorkout$ = this.workoutService.activeWorkout$;
+    this.isOnline = this.syncService.isOnline;
+    this.isSyncing = this.syncService.isSyncing;
+    this.pendingCount = this.syncService.pendingCount;
+    this.activeWorkout = this.workoutService.activeWorkout;
     this.currentUser$ = this.supabaseService.currentUser$;
   }
 
@@ -629,8 +629,8 @@ export class AppComponent implements OnInit {
     this.syncService.syncNow();
 
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe((event) => {
       this.isDietMode = event.url.startsWith('/diet');
       this.cdr.markForCheck();
     });

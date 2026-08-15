@@ -107,7 +107,7 @@ export interface SyncQueueItem {
   id: string;
   table_name: 'profiles' | 'exercises' | 'workout_templates' | 'template_exercises' | 'workout_sessions' | 'workout_sets' | 'diet_logs' | 'diet_meals' | 'diet_log_items';
   action: 'INSERT' | 'UPDATE' | 'DELETE';
-  payload: any;
+  payload: Record<string, unknown>;
   timestamp: number;
   status: 'PENDING' | 'SYNCING' | 'ERROR';
   error_message?: string;

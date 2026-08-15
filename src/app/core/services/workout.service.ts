@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { db, generateUUID, fetchRemoteRow, fetchRemoteRows } from '../db/app-db';
 import { WorkoutSession, WorkoutSet, WorkoutSetDetail, TemplateExerciseDetail } from '../models/fitsync.models';
 import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
+import { logger } from '../utils/logger';
 import { SyncService } from './sync.service';
 
 export interface ActiveWorkoutState {
@@ -31,8 +32,7 @@ const REST_TIMER_END_STORAGE_KEY = 'fitsync_rest_timer_end_timestamp';
   providedIn: 'root'
 })
 export class WorkoutService {
-  private activeWorkoutSubject = new BehaviorSubject<ActiveWorkoutState | null>(null);
-  public activeWorkout$: Observable<ActiveWorkoutState | null> = this.activeWorkoutSubject.asObservable();
+  public activeWorkout = signal<ActiveWorkoutState | null>(null);
 
   // Rest Timer State
   private restTimerSecondsSubject = new BehaviorSubject<number>(0);
@@ -41,7 +41,7 @@ export class WorkoutService {
   private isTimerRunningSubject = new BehaviorSubject<boolean>(false);
   public isTimerRunning$: Observable<boolean> = this.isTimerRunningSubject.asObservable();
   
-  private timerInterval: any = null;
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private supabaseService: SupabaseService,
@@ -51,12 +51,12 @@ export class WorkoutService {
   }
 
   public updateActiveWorkoutState(state: ActiveWorkoutState | null) {
-    this.activeWorkoutSubject.next(state);
+    this.activeWorkout.set(state);
     this.saveActiveWorkoutToStorage(state);
   }
 
   public saveCurrentState() {
-    const currentState = this.activeWorkoutSubject.value;
+    const currentState = this.activeWorkout();
     this.saveActiveWorkoutToStorage(currentState);
   }
 
@@ -69,7 +69,7 @@ export class WorkoutService {
         localStorage.removeItem(REST_TIMER_END_STORAGE_KEY);
       }
     } catch (e) {
-      console.warn('FitSync: Errore durante il salvataggio dello stato allenamento:', e);
+      logger.warn('FitSync: Errore durante il salvataggio dello stato allenamento:', e);
     }
   }
 
@@ -79,7 +79,7 @@ export class WorkoutService {
       if (saved) {
         const state: ActiveWorkoutState = JSON.parse(saved);
         if (state && state.session && state.exercises) {
-          this.activeWorkoutSubject.next(state);
+          this.activeWorkout.set(state);
 
           const timerEnd = localStorage.getItem(REST_TIMER_END_STORAGE_KEY);
           if (timerEnd) {
@@ -94,12 +94,12 @@ export class WorkoutService {
         }
       }
     } catch (e) {
-      console.warn('FitSync: Errore ripristino allenamento attivo da localStorage:', e);
+      logger.warn('FitSync: Errore ripristino allenamento attivo da localStorage:', e);
     }
   }
 
   public get currentActiveWorkout(): ActiveWorkoutState | null {
-    return this.activeWorkoutSubject.value;
+    return this.activeWorkout();
   }
 
   async startWorkoutFromTemplate(templateId: string): Promise<ActiveWorkoutState> {
@@ -206,7 +206,7 @@ export class WorkoutService {
   }
 
   async addExerciseToActiveWorkout(exerciseId: string) {
-    const currentState = this.activeWorkoutSubject.value;
+    const currentState = this.activeWorkout();
     if (!currentState) return;
 
     const ex = await db.exercises.get(exerciseId);
@@ -242,7 +242,7 @@ export class WorkoutService {
   }
 
   async toggleSetCompleted(exerciseIndex: number, setIndex: number, completed?: boolean) {
-    const state = this.activeWorkoutSubject.value;
+    const state = this.activeWorkout();
     if (!state) return;
 
     const setItem = state.exercises[exerciseIndex].sets[setIndex];
@@ -258,7 +258,7 @@ export class WorkoutService {
   }
 
   addSetToExercise(exerciseIndex: number) {
-    const state = this.activeWorkoutSubject.value;
+    const state = this.activeWorkout();
     if (!state) return;
 
     const exItem = state.exercises[exerciseIndex];
@@ -281,7 +281,7 @@ export class WorkoutService {
   }
 
   removeSetFromExercise(exerciseIndex: number, setIndex: number) {
-    const state = this.activeWorkoutSubject.value;
+    const state = this.activeWorkout();
     if (!state) return;
 
     state.exercises[exerciseIndex].sets.splice(setIndex, 1);
@@ -339,12 +339,12 @@ export class WorkoutService {
       osc.start();
       osc.stop(audioCtx.currentTime + 0.5);
     } catch (e) {
-      console.log('Timer finished beep!');
+      logger.log('Timer finished beep!');
     }
   }
 
   async finishWorkout(notes?: string): Promise<WorkoutSession | null> {
-    const state = this.activeWorkoutSubject.value;
+    const state = this.activeWorkout();
     if (!state) return null;
 
     const endTime = new Date().toISOString();
@@ -356,14 +356,14 @@ export class WorkoutService {
 
     // Save session locally in Dexie
     await db.workoutSessions.add(finalSession);
-    await this.syncService.enqueue('workout_sessions', 'INSERT', finalSession);
+    await this.syncService.enqueue('workout_sessions', 'INSERT', { ...finalSession });
 
     // Save completed sets
     for (const ex of state.exercises) {
       for (const setItem of ex.sets) {
         if (setItem.is_completed) {
           await db.workoutSets.add(setItem);
-          await this.syncService.enqueue('workout_sets', 'INSERT', setItem);
+          await this.syncService.enqueue('workout_sets', 'INSERT', { ...setItem });
         }
       }
     }
@@ -427,7 +427,7 @@ export class WorkoutService {
           }
         }
       } catch (err) {
-        console.warn('FitSync: Errore allineamento remoto sessioni:', err);
+        logger.warn('FitSync: Errore allineamento remoto sessioni:', err);
       }
     }
 
@@ -466,7 +466,7 @@ export class WorkoutService {
 
     const currentUserId = this.supabaseService.currentUserId;
     if (session.user_id && session.user_id !== LOCAL_USER_ID && session.user_id !== currentUserId) {
-      console.warn('Non puoi eliminare sessioni di altri utenti.');
+      logger.warn('Non puoi eliminare sessioni di altri utenti.');
       return;
     }
 
