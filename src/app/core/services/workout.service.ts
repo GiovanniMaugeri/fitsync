@@ -20,6 +20,10 @@ export interface ActiveWorkoutState {
   }[];
 }
 
+// Stato effimero, locale al device (non sync-ato su Supabase né su Dexie): a differenza
+// dei dati di dominio, deve sopravvivere a un refresh e il rest timer va ricalcolato subito
+// da questo timestamp senza attendere una query async a IndexedDB. Vedi ADR nel vault:
+// "Persistenza stato allenamento attivo in localStorage".
 const ACTIVE_WORKOUT_STORAGE_KEY = 'fitsync_active_workout_state';
 const REST_TIMER_END_STORAGE_KEY = 'fitsync_rest_timer_end_timestamp';
 
