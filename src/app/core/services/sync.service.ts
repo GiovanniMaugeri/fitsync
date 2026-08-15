@@ -1,5 +1,4 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
 import { db } from '../db/app-db';
 import { SyncQueueItem } from '../models/fitsync.models';
 import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
@@ -8,14 +7,9 @@ import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
   providedIn: 'root'
 })
 export class SyncService {
-  private isOnlineSubject = new BehaviorSubject<boolean>(navigator.onLine);
-  public isOnline$: Observable<boolean> = this.isOnlineSubject.asObservable();
-
-  private isSyncingSubject = new BehaviorSubject<boolean>(false);
-  public isSyncing$: Observable<boolean> = this.isSyncingSubject.asObservable();
-
-  private pendingCountSubject = new BehaviorSubject<number>(0);
-  public pendingCount$: Observable<number> = this.pendingCountSubject.asObservable();
+  public isOnline = signal<boolean>(navigator.onLine);
+  public isSyncing = signal<boolean>(false);
+  public pendingCount = signal<number>(0);
 
   private static readonly RETRY_BASE_DELAY_MS = 30_000;
   private static readonly RETRY_MAX_DELAY_MS = 30 * 60_000;
@@ -27,7 +21,7 @@ export class SyncService {
 
     // Retry periodico degli item in ERROR il cui backoff è scaduto, anche senza un trigger esterno (enqueue/online/login)
     setInterval(() => {
-      if (this.isOnlineSubject.value) {
+      if (this.isOnline()) {
         this.syncNow();
       }
     }, SyncService.RETRY_TIMER_INTERVAL_MS);
@@ -55,19 +49,19 @@ export class SyncService {
   private initNetworkListeners() {
     window.addEventListener('online', () => {
       console.log('Network connected. FitSync is ONLINE.');
-      this.isOnlineSubject.next(true);
+      this.isOnline.set(true);
       this.syncNow();
     });
 
     window.addEventListener('offline', () => {
       console.log('Network lost. FitSync is OFFLINE.');
-      this.isOnlineSubject.next(false);
+      this.isOnline.set(false);
     });
   }
 
   public async updatePendingCount(): Promise<number> {
     const count = await db.syncQueue.where('status').equals('PENDING').count();
-    this.pendingCountSubject.next(count);
+    this.pendingCount.set(count);
     return count;
   }
 
@@ -88,7 +82,7 @@ export class SyncService {
     await db.syncQueue.add(queueItem);
     await this.updatePendingCount();
 
-    if (this.isOnlineSubject.value && this.supabaseService.isConfigured) {
+    if (this.isOnline() && this.supabaseService.isConfigured) {
       this.syncNow();
     }
 
@@ -96,14 +90,14 @@ export class SyncService {
   }
 
   public async syncNow(): Promise<void> {
-    if (!this.isOnlineSubject.value || !this.supabaseService.isConfigured) {
+    if (!this.isOnline() || !this.supabaseService.isConfigured) {
       return;
     }
 
     const client = this.supabaseService.supabase;
     if (!client) return;
 
-    this.isSyncingSubject.next(true);
+    this.isSyncing.set(true);
 
     try {
       // 1. Ripristina gli elementi in stato ERROR il cui backoff è scaduto, così possano essere riprovati
@@ -206,13 +200,13 @@ export class SyncService {
       await this.pullRemoteData();
     } finally {
       await this.updatePendingCount();
-      this.isSyncingSubject.next(false);
+      this.isSyncing.set(false);
     }
   }
 
   public async pullRemoteData(): Promise<void> {
     const client = this.supabaseService.supabase;
-    if (!client || !this.isOnlineSubject.value) return;
+    if (!client || !this.isOnline()) return;
 
     const userId = this.supabaseService.currentUserId;
 
