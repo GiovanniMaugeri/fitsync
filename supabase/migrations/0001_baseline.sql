@@ -304,7 +304,10 @@ CREATE POLICY "Users can manage own diet log items"
 
 -- ------------------------------------------
 -- SEED DATA: DEFAULT GLOBAL EXERCISES
+-- Generato da src/app/core/data/default-exercises.json — non modificare a mano,
+-- rilanciare `npm run gen:seed` dopo aver modificato il JSON.
 -- ------------------------------------------
+-- BEGIN GENERATED EXERCISES SEED
 INSERT INTO public.exercises (id, name, category, equipment, is_custom, user_id) VALUES
 -- Petto
 ('d8970cee-e3d6-4dd0-ab09-c569f3f750f2', 'Panca Piana con Bilanciere', 'Petto', 'Bilanciere', false, NULL),
@@ -346,3 +349,4 @@ INSERT INTO public.exercises (id, name, category, equipment, is_custom, user_id)
 ('00dd5fdd-76cf-4823-bfd3-0d88cff2fbc0', 'Plank Addominale', 'Core', 'Corpo Libero', false, NULL),
 ('8391ec26-3a48-422a-899a-1710cb72f18a', 'Leg Raise alla Sbarra', 'Core', 'Corpo Libero', false, NULL)
 ON CONFLICT (id) DO NOTHING;
+-- END GENERATED EXERCISES SEED

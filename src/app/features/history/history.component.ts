@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { WorkoutService } from '../../core/services/workout.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { SyncService } from '../../core/services/sync.service';
-import { WorkoutSession } from '../../core/models/fitsync.models';
+import { WorkoutSession, WorkoutSetDetail } from '../../core/models/fitsync.models';
 import { LucideAngularModule, History, Calendar, Clock, Dumbbell, ChevronUp, ChevronDown, Trash2, MessageSquare } from 'lucide-angular';
 
 @Component({
@@ -281,9 +281,9 @@ export class HistoryComponent implements OnInit {
     this.expandedSessionId = this.expandedSessionId === id ? null : id;
   }
 
-  groupSetsByExercise(sets?: any[]) {
+  groupSetsByExercise(sets?: WorkoutSetDetail[]) {
     if (!sets) return [];
-    const groupsMap = new Map<string, { exerciseName: string; sets: any[] }>();
+    const groupsMap = new Map<string, { exerciseName: string; sets: WorkoutSetDetail[] }>();
 
     for (const setItem of sets) {
       const exName = setItem.exercise?.name || 'Esercizio';
