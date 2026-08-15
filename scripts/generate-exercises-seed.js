@@ -1,11 +1,11 @@
-// Rigenera il blocco INSERT dei default exercises in supabase/schema.sql
+// Rigenera il blocco INSERT dei default exercises nella migrazione baseline
 // a partire da src/app/core/data/default-exercises.json (fonte unica).
 // Uso: npm run gen:seed
 const fs = require('fs');
 const path = require('path');
 
 const jsonPath = path.join(__dirname, '..', 'src/app/core/data/default-exercises.json');
-const schemaPath = path.join(__dirname, '..', 'supabase/schema.sql');
+const schemaPath = path.join(__dirname, '..', 'supabase/migrations/0001_baseline.sql');
 
 const exercises = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 
@@ -34,7 +34,7 @@ const endMarker = '-- END GENERATED EXERCISES SEED';
 const startIdx = schema.indexOf(startMarker);
 const endIdx = schema.indexOf(endMarker);
 if (startIdx === -1 || endIdx === -1) {
-  throw new Error(`Marker ${startMarker}/${endMarker} non trovati in supabase/schema.sql`);
+  throw new Error(`Marker ${startMarker}/${endMarker} non trovati in supabase/migrations/0001_baseline.sql`);
 }
 
 const before = schema.slice(0, startIdx + startMarker.length);
@@ -42,4 +42,4 @@ const after = schema.slice(endIdx);
 const updated = `${before}\n${generatedBlock}\n${after}`;
 
 fs.writeFileSync(schemaPath, updated);
-console.log(`Rigenerati ${exercises.length} esercizi in supabase/schema.sql`);
+console.log(`Rigenerati ${exercises.length} esercizi in supabase/migrations/0001_baseline.sql`);
