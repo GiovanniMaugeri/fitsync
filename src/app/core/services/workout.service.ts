@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { db, generateUUID, fetchRemoteRow, fetchRemoteRows } from '../db/app-db';
 import { WorkoutSession, WorkoutSet, WorkoutSetDetail, TemplateExerciseDetail } from '../models/fitsync.models';
 import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
+import { logger } from '../utils/logger';
 import { SyncService } from './sync.service';
 
 export interface ActiveWorkoutState {
@@ -20,6 +21,10 @@ export interface ActiveWorkoutState {
   }[];
 }
 
+// Stato effimero, locale al device (non sync-ato su Supabase né su Dexie): a differenza
+// dei dati di dominio, deve sopravvivere a un refresh e il rest timer va ricalcolato subito
+// da questo timestamp senza attendere una query async a IndexedDB. Vedi ADR nel vault:
+// "Persistenza stato allenamento attivo in localStorage".
 const ACTIVE_WORKOUT_STORAGE_KEY = 'fitsync_active_workout_state';
 const REST_TIMER_END_STORAGE_KEY = 'fitsync_rest_timer_end_timestamp';
 
@@ -65,7 +70,7 @@ export class WorkoutService {
         localStorage.removeItem(REST_TIMER_END_STORAGE_KEY);
       }
     } catch (e) {
-      console.warn('FitSync: Errore durante il salvataggio dello stato allenamento:', e);
+      logger.warn('FitSync: Errore durante il salvataggio dello stato allenamento:', e);
     }
   }
 
@@ -90,7 +95,7 @@ export class WorkoutService {
         }
       }
     } catch (e) {
-      console.warn('FitSync: Errore ripristino allenamento attivo da localStorage:', e);
+      logger.warn('FitSync: Errore ripristino allenamento attivo da localStorage:', e);
     }
   }
 
@@ -335,7 +340,7 @@ export class WorkoutService {
       osc.start();
       osc.stop(audioCtx.currentTime + 0.5);
     } catch (e) {
-      console.log('Timer finished beep!');
+      logger.log('Timer finished beep!');
     }
   }
 
@@ -423,7 +428,7 @@ export class WorkoutService {
           }
         }
       } catch (err) {
-        console.warn('FitSync: Errore allineamento remoto sessioni:', err);
+        logger.warn('FitSync: Errore allineamento remoto sessioni:', err);
       }
     }
 
@@ -462,7 +467,7 @@ export class WorkoutService {
 
     const currentUserId = this.supabaseService.currentUserId;
     if (session.user_id && session.user_id !== LOCAL_USER_ID && session.user_id !== currentUserId) {
-      console.warn('Non puoi eliminare sessioni di altri utenti.');
+      logger.warn('Non puoi eliminare sessioni di altri utenti.');
       return;
     }
 

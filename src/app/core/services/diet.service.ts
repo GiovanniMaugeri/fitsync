@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { db, generateUUID } from '../db/app-db';
 import { DietLog, DietMeal, DietLogItem, DietMealDetail } from '../models/fitsync.models';
+import { logger } from '../utils/logger';
 import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
 import { SyncService } from './sync.service';
 
@@ -63,7 +64,7 @@ export class DietService {
       try {
         await this.syncService.pullRemoteData();
       } catch (e) {
-        console.warn('FitSync DietService: pull dei dati remoti non completato:', e);
+        logger.warn('FitSync DietService: pull dei dati remoti non completato:', e);
       }
     }
 

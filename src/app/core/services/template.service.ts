@@ -3,6 +3,7 @@ import { db, generateUUID, fetchRemoteRow, fetchRemoteRows } from '../db/app-db'
 import { WorkoutTemplate, TemplateExercise, TemplateExerciseDetail } from '../models/fitsync.models';
 import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
 import { SyncService } from './sync.service';
+import { logger } from '../utils/logger';
 
 @Injectable({
   providedIn: 'root'
@@ -39,7 +40,7 @@ export class TemplateService {
           }
         }
       } catch (err) {
-        console.warn('FitSync: Allineamento remoto schede pubbliche:', err);
+        logger.warn('FitSync: Allineamento remoto schede pubbliche:', err);
       }
     }
 

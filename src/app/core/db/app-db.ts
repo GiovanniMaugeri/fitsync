@@ -1,5 +1,6 @@
 import Dexie, { Table } from 'dexie';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { logger } from '../utils/logger';
 import { 
   Profile, 
   Exercise, 
@@ -12,6 +13,7 @@ import {
   DietMeal,
   DietLogItem
 } from '../models/fitsync.models';
+import defaultExercisesData from '../data/default-exercises.json';
 
 export function generateUUID(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -43,7 +45,7 @@ export async function fetchRemoteRow<T>(
       return data as T;
     }
   } catch (err) {
-    console.warn(`FitSync: recupero remoto fallito per ${table}.${column}=${value}:`, err);
+    logger.warn(`FitSync: recupero remoto fallito per ${table}.${column}=${value}:`, err);
   }
   return undefined;
 }
@@ -72,7 +74,7 @@ export async function fetchRemoteRows<T>(
       return data as T[];
     }
   } catch (err) {
-    console.warn(`FitSync: recupero remoto fallito per ${table} dove ${column}=${value}:`, err);
+    logger.warn(`FitSync: recupero remoto fallito per ${table} dove ${column}=${value}:`, err);
   }
   return [];
 }
@@ -120,7 +122,7 @@ async function migrateLegacyIds(source: { table(name: string): Table<any, string
       await exercisesTable.add(migratedEx);
       await enqueueSync('exercises', migratedEx);
       await exercisesTable.delete(ex.id);
-      console.log(`FitSyncDB ${logLabel}: Migrato esercizio personalizzato "${ex.name}" (${ex.id} -> ${newId})`);
+      logger.log(`FitSyncDB ${logLabel}: Migrato esercizio personalizzato "${ex.name}" (${ex.id} -> ${newId})`);
     }
   }
 
@@ -135,7 +137,7 @@ async function migrateLegacyIds(source: { table(name: string): Table<any, string
       await templatesTable.add(migratedTpl);
       await enqueueSync('workout_templates', migratedTpl);
       await templatesTable.delete(t.id);
-      console.log(`FitSyncDB ${logLabel}: Migrata scheda "${t.name}" (${t.id} -> ${newId})`);
+      logger.log(`FitSyncDB ${logLabel}: Migrata scheda "${t.name}" (${t.id} -> ${newId})`);
     }
   }
 
@@ -180,7 +182,7 @@ async function migrateLegacyIds(source: { table(name: string): Table<any, string
         await sessionsTable.put(migratedSession);
       }
       await enqueueSync('workout_sessions', migratedSession);
-      console.log(`FitSyncDB ${logLabel}: Migrata sessione di allenamento "${s.name}" (${s.id} -> ${newId})`);
+      logger.log(`FitSyncDB ${logLabel}: Migrata sessione di allenamento "${s.name}" (${s.id} -> ${newId})`);
     }
   }
 
@@ -300,9 +302,9 @@ export class FitSyncDatabase extends Dexie {
     });
 
     this.version(4).stores(schemaV1).upgrade(async tx => {
-      console.log('FitSyncDB: Avvio migrazione schema Versione 4 (migrazione ID testuali -> UUID)...');
+      logger.log('FitSyncDB: Avvio migrazione schema Versione 4 (migrazione ID testuali -> UUID)...');
       await migrateLegacyIds(tx, 'Versione 4');
-      console.log('FitSyncDB: Migrazione schema Versione 4 completata con successo!');
+      logger.log('FitSyncDB: Migrazione schema Versione 4 completata con successo!');
     });
 
     this.on('populate', () => this.populateInitialExercises());
@@ -312,7 +314,7 @@ export class FitSyncDatabase extends Dexie {
       try {
         const hasDefault = await this.exercises.get('d8970cee-e3d6-4dd0-ab09-c569f3f750f2');
         if (!hasDefault) {
-          console.log('FitSyncDB exercises table is missing default UUID exercises. Seeding...');
+          logger.log('FitSyncDB exercises table is missing default UUID exercises. Seeding...');
           await this.populateInitialExercises();
         }
 
@@ -325,12 +327,12 @@ export class FitSyncDatabase extends Dexie {
         for (const item of syncItems) {
           const payloadId = item.payload?.['id'] || item.payload;
           if (item.table_name !== 'profiles' && typeof payloadId === 'string' && !uuidRegex.test(payloadId)) {
-            console.warn(`Rimozione elemento di sync non valido ${item.id} (ID non-UUID: ${payloadId})`);
+            logger.warn(`Rimozione elemento di sync non valido ${item.id} (ID non-UUID: ${payloadId})`);
             await this.syncQueue.delete(item.id);
           }
         }
       } catch (err) {
-        console.error('Errore durante il controllo o la pulizia del database:', err);
+        logger.error('Errore durante il controllo o la pulizia del database:', err);
       }
     });
   }
@@ -339,54 +341,12 @@ export class FitSyncDatabase extends Dexie {
     try {
       await migrateLegacyIds(this, '[Runtime Failsafe]');
     } catch (e) {
-      console.error('Errore durante la migrazione failsafe in esecuzione:', e);
+      logger.error('Errore durante la migrazione failsafe in esecuzione:', e);
     }
   }
 
   private async populateInitialExercises() {
-    const defaultExercises: Exercise[] = [
-      // Petto
-      { id: 'd8970cee-e3d6-4dd0-ab09-c569f3f750f2', name: 'Panca Piana con Bilanciere', category: 'Petto', equipment: 'Bilanciere', is_custom: false, user_id: null },
-      { id: 'd9a5c5c4-fe5b-44c2-b380-adc5aacda21f', name: 'Panca Inclinata con Manubri', category: 'Petto', equipment: 'Manubri', is_custom: false, user_id: null },
-      { id: 'ebc33cb9-539d-41f9-bdae-e163dfa09762', name: 'Dip alle Parallele', category: 'Petto', equipment: 'Corpo Libero', is_custom: false, user_id: null },
-      { id: 'c8714d09-e448-4a60-baec-6e82092d27a4', name: 'Croci ai Cavi', category: 'Petto', equipment: 'Cavi', is_custom: false, user_id: null },
-
-      // Schiena
-      { id: '73c1430b-8c79-490c-bd37-8174fe0beee8', name: 'Stacco da Terra (Deadlift)', category: 'Schiena', equipment: 'Bilanciere', is_custom: false, user_id: null },
-      { id: 'd95f12cc-c0fa-4e29-b172-1ce437fb03f9', name: 'Trazioni alla Sbarra (Pull-up)', category: 'Schiena', equipment: 'Corpo Libero', is_custom: false, user_id: null },
-      { id: '8cc14caa-ee32-4042-ac72-f059125d4d03', name: 'Lat Machine Avanti', category: 'Schiena', equipment: 'Macchina', is_custom: false, user_id: null },
-      { id: '085593f7-7472-43f6-85f5-a672f7e93719', name: 'Pulley Basso', category: 'Schiena', equipment: 'Cavi', is_custom: false, user_id: null },
-      { id: '36e581ac-1306-4b76-87ad-410a6aef3ab0', name: 'Rematore con Bilanciere', category: 'Schiena', equipment: 'Bilanciere', is_custom: false, user_id: null },
-
-      // Gambe
-      { id: '9db7902f-dd5f-4ea8-8617-71dfc66f0fcb', name: 'Squat con Bilanciere', category: 'Gambe', equipment: 'Bilanciere', is_custom: false, user_id: null },
-      { id: '95ebce18-a76a-440e-84be-3a07bf0d37a0', name: 'Leg Press 45°', category: 'Gambe', equipment: 'Macchina', is_custom: false, user_id: null },
-      { id: 'f35fd411-5022-4e1b-884a-7eb3438ec20c', name: 'Affondi Camminati con Manubri', category: 'Gambe', equipment: 'Manubri', is_custom: false, user_id: null },
-      { id: '781e167f-d8ee-45b7-8c5f-9a7828395674', name: 'Leg Extension', category: 'Gambe', equipment: 'Macchina', is_custom: false, user_id: null },
-      { id: '461c4269-f5bd-4440-85e1-24fd7c8820dc', name: 'Leg Curl Sdraiato', category: 'Gambe', equipment: 'Macchina', is_custom: false, user_id: null },
-      { id: '7752da0c-aa55-4dae-8a64-84a461febd4e', name: 'Calf Raise In Piedi', category: 'Gambe', equipment: 'Macchina', is_custom: false, user_id: null },
-
-      // Spalle
-      { id: '9759a35a-c2a2-4096-9422-cffcc25b0a38', name: 'Military Press', category: 'Spalle', equipment: 'Bilanciere', is_custom: false, user_id: null },
-      { id: 'a4bc39b7-8d68-47fc-94f3-f619f19b13bb', name: 'Lento Avanti con Manubri', category: 'Spalle', equipment: 'Manubri', is_custom: false, user_id: null },
-      { id: '9f6634fb-ae52-4055-bacc-236082644880', name: 'Alzate Laterali con Manubri', category: 'Spalle', equipment: 'Manubri', is_custom: false, user_id: null },
-      { id: '661d2322-266d-4ffa-992f-62dd6fa0d3db', name: 'Alzate Posteriori a 90°', category: 'Spalle', equipment: 'Manubri', is_custom: false, user_id: null },
-
-      // Bicipiti
-      { id: '11c3fe8e-7b82-4791-b862-4f0152dcdb6e', name: 'Curl Alternato con Manubri', category: 'Bicipiti', equipment: 'Manubri', is_custom: false, user_id: null },
-      { id: '8fab3d46-ba8d-4866-a7d1-7864b127ada0', name: 'Curl con Bilanciere EZ', category: 'Bicipiti', equipment: 'Bilanciere', is_custom: false, user_id: null },
-
-      // Tricipiti
-      { id: '63fa0bc9-0773-4d09-8843-b44df47a1946', name: 'French Press panca piana', category: 'Tricipiti', equipment: 'Bilanciere', is_custom: false, user_id: null },
-      { id: '1f77326a-0fc1-4a02-b646-1df719087f03', name: 'Pushdown Tricipiti al Cavo', category: 'Tricipiti', equipment: 'Cavi', is_custom: false, user_id: null },
-
-      // Core
-      { id: '098506fa-10b5-4e23-a9ae-cdee10375a11', name: 'Crunch su Tappetino', category: 'Core', equipment: 'Corpo Libero', is_custom: false, user_id: null },
-      { id: '00dd5fdd-76cf-4823-bfd3-0d88cff2fbc0', name: 'Plank Addominale', category: 'Core', equipment: 'Corpo Libero', is_custom: false, user_id: null },
-      { id: '8391ec26-3a48-422a-899a-1710cb72f18a', name: 'Leg Raise alla Sbarra', category: 'Core', equipment: 'Corpo Libero', is_custom: false, user_id: null }
-    ];
-
-    await this.exercises.bulkAdd(defaultExercises);
+    await this.exercises.bulkAdd(defaultExercisesData as Exercise[]);
   }
 }
 

@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { db } from '../db/app-db';
 import { SyncQueueItem } from '../models/fitsync.models';
 import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
+import { logger } from '../utils/logger';
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +37,7 @@ export class SyncService {
     // Reagisce all'autenticazione dell'utente scaricando i dati reali dal database Supabase
     this.supabaseService.currentUser$.subscribe(user => {
       if (user) {
-        console.log('FitSync Auth State Changed: Utente autenticato. Avvio sync e pull dal DB remoto Supabase...');
+        logger.log('FitSync Auth State Changed: Utente autenticato. Avvio sync e pull dal DB remoto Supabase...');
         this.syncNow();
       }
     });
@@ -55,13 +56,13 @@ export class SyncService {
 
   private initNetworkListeners() {
     window.addEventListener('online', () => {
-      console.log('Network connected. FitSync is ONLINE.');
+      logger.log('Network connected. FitSync is ONLINE.');
       this.isOnlineSubject.next(true);
       this.syncNow();
     });
 
     window.addEventListener('offline', () => {
-      console.log('Network lost. FitSync is OFFLINE.');
+      logger.log('Network lost. FitSync is OFFLINE.');
       this.isOnlineSubject.next(false);
     });
   }
@@ -167,7 +168,7 @@ export class SyncService {
 
           // Fallback Failsafe: Se il DB Supabase remoto non possiede ancora la colonna 'is_public' o 'user_id' (PGRST204), riproviamo omettendo il campo mancante
           if (res?.error && res.error.code === 'PGRST204') {
-            console.warn(`FitSync Sync Fallback: Colonna mancante nello schema Supabase per '${item.table_name}'. Riprovo l'invio...`);
+            logger.warn(`FitSync Sync Fallback: Colonna mancante nello schema Supabase per '${item.table_name}'. Riprovo l'invio...`);
             const fallbackPayload = { ...item.payload };
             if (res.error.message?.includes('is_public')) {
               delete fallbackPayload['is_public'];
@@ -185,17 +186,17 @@ export class SyncService {
 
           if (res?.error) {
             if (res.error.code === '23503') {
-              console.warn(`FitSync Sync Warning: L'elemento genitore per '${item.table_name}' non esiste su Supabase (FK 23503). Rimuovo l'elemento orfano dalla coda.`);
+              logger.warn(`FitSync Sync Warning: L'elemento genitore per '${item.table_name}' non esiste su Supabase (FK 23503). Rimuovo l'elemento orfano dalla coda.`);
               await db.syncQueue.delete(item.id);
             } else if (res.status === 404 || res.error.code === '42P01' || res.error.message?.includes('relation') || res.error.message?.includes('does not exist')) {
-              console.warn(`FitSync Sync Warning: La tabella '${item.table_name}' non è ancora stata creata sul database Supabase remoto. Esegui lo script SQL nel Supabase Dashboard per crearla.`);
+              logger.warn(`FitSync Sync Warning: La tabella '${item.table_name}' non è ancora stata creata sul database Supabase remoto. Esegui lo script SQL nel Supabase Dashboard per crearla.`);
               await this.markError(item.id, item.retry_count || 0, res.error.message);
             } else {
-              console.error(`Sync error for item ${item.id} (${item.table_name}):`, res.error);
+              logger.error(`Sync error for item ${item.id} (${item.table_name}):`, res.error);
               await this.markError(item.id, item.retry_count || 0, res.error.message);
             }
           } else {
-            console.log(`FitSync Sync: caricamento riuscito per elemento ${item.id} (${item.table_name})`);
+            logger.log(`FitSync Sync: caricamento riuscito per elemento ${item.id} (${item.table_name})`);
             await db.syncQueue.delete(item.id);
           }
         } catch (err) {
@@ -219,19 +220,19 @@ export class SyncService {
     const userId = this.supabaseService.currentUserId;
 
     try {
-      console.log('FitSync: Sincronizzazione ed allineamento dati con il DB Supabase...');
+      logger.log('FitSync: Sincronizzazione ed allineamento dati con il DB Supabase...');
 
       // 1. Pull Exercises (Globali + Custom dell'utente)
       const { data: exercises, error: exErr } = await client.from('exercises').select('*');
       if (exErr) {
-        console.warn('FitSync: Errore durante il pull degli esercizi da Supabase:', exErr);
+        logger.warn('FitSync: Errore durante il pull degli esercizi da Supabase:', exErr);
       } else if (exercises) {
         const remoteIds = new Set(exercises.map(e => e.id));
         const localExercises = await db.exercises.toArray();
         const toDelete = localExercises.filter(e => !remoteIds.has(e.id)).map(e => e.id);
         if (toDelete.length > 0) {
           await db.exercises.bulkDelete(toDelete);
-          console.log(`FitSync: Rimossi ${toDelete.length} esercizi locali eliminati dal DB remoto.`);
+          logger.log(`FitSync: Rimossi ${toDelete.length} esercizi locali eliminati dal DB remoto.`);
         }
         if (exercises.length > 0) {
           await db.exercises.bulkPut(exercises);
@@ -247,7 +248,7 @@ export class SyncService {
       }
       const { data: templates, error: tplErr } = await query;
       if (tplErr) {
-        console.warn('FitSync: Errore durante il pull delle schede da Supabase:', tplErr);
+        logger.warn('FitSync: Errore durante il pull delle schede da Supabase:', tplErr);
       } else if (templates) {
         const pendingQueue = await db.syncQueue.toArray();
         const pendingTplIds = new Set(pendingQueue.filter(q => q.table_name === 'workout_templates').map(q => q.payload?.['id']));
@@ -257,7 +258,7 @@ export class SyncService {
         const toDelete = localTemplates.filter(t => !remoteIds.has(t.id) && !pendingTplIds.has(t.id) && t.user_id === userId).map(t => t.id);
         if (toDelete.length > 0) {
           await db.workoutTemplates.bulkDelete(toDelete);
-          console.log(`FitSync: Rimosse ${toDelete.length} schede locali eliminate dal DB remoto.`);
+          logger.log(`FitSync: Rimosse ${toDelete.length} schede locali eliminate dal DB remoto.`);
         }
         if (templates.length > 0) {
           await db.workoutTemplates.bulkPut(templates);
@@ -267,7 +268,7 @@ export class SyncService {
       // 3. Pull Template Exercises
       const { data: tempExs, error: teErr } = await client.from('template_exercises').select('*');
       if (teErr) {
-        console.warn('FitSync: Errore durante il pull degli esercizi scheda da Supabase:', teErr);
+        logger.warn('FitSync: Errore durante il pull degli esercizi scheda da Supabase:', teErr);
       } else if (tempExs) {
         const pendingQueue = await db.syncQueue.toArray();
         const pendingTeIds = new Set(pendingQueue.filter(q => q.table_name === 'template_exercises').map(q => q.payload?.['id']));
@@ -287,14 +288,14 @@ export class SyncService {
       if (userId && userId !== LOCAL_USER_ID) {
         const { data: sessions, error: sErr } = await client.from('workout_sessions').select('*').eq('user_id', userId);
         if (sErr) {
-          console.warn('FitSync: Errore durante il pull delle sessioni da Supabase:', sErr);
+          logger.warn('FitSync: Errore durante il pull delle sessioni da Supabase:', sErr);
         } else if (sessions) {
           const remoteIds = new Set(sessions.map(s => s.id));
           const localSessions = await db.workoutSessions.where('user_id').equals(userId).toArray();
           const toDelete = localSessions.filter(s => !remoteIds.has(s.id)).map(s => s.id);
           if (toDelete.length > 0) {
             await db.workoutSessions.bulkDelete(toDelete);
-            console.log(`FitSync: Rimosse ${toDelete.length} sessioni locali eliminate dal DB remoto.`);
+            logger.log(`FitSync: Rimosse ${toDelete.length} sessioni locali eliminate dal DB remoto.`);
           }
           if (sessions.length > 0) {
             await db.workoutSessions.bulkPut(sessions);
@@ -308,7 +309,7 @@ export class SyncService {
         if (userSessionIds.length > 0) {
           const { data: sets, error: setErr } = await client.from('workout_sets').select('*').in('session_id', userSessionIds);
           if (setErr) {
-            console.warn('FitSync: Errore durante il pull dei set da Supabase:', setErr);
+            logger.warn('FitSync: Errore durante il pull dei set da Supabase:', setErr);
           } else if (sets) {
             const remoteIds = new Set(sets.map(s => s.id));
             const localSets = await db.workoutSets.where('session_id').anyOf(userSessionIds).toArray();
@@ -355,13 +356,13 @@ export class SyncService {
             }
           }
         } catch (dErr) {
-          console.warn('FitSync: Pull tabella dieta non riuscito:', dErr);
+          logger.warn('FitSync: Pull tabella dieta non riuscito:', dErr);
         }
       }
 
-      console.log('FitSync: Allineamento completo ed eliminazioni sincronizzate dal DB remoto!');
+      logger.log('FitSync: Allineamento completo ed eliminazioni sincronizzate dal DB remoto!');
     } catch (err) {
-      console.warn('Errore durante il download dei dati remoti:', err);
+      logger.warn('Errore durante il download dei dati remoti:', err);
     }
   }
 }
