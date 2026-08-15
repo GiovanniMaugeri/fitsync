@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WorkoutService } from '../../core/services/workout.service';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -257,19 +257,19 @@ export class HistoryComponent implements OnInit {
     private workoutService: WorkoutService,
     private supabaseService: SupabaseService,
     private syncService: SyncService
-  ) {}
+  ) {
+    effect(() => {
+      if (!this.syncService.isSyncing()) {
+        this.loadSessions();
+      }
+    });
+  }
 
   async ngOnInit() {
     await this.loadSessions();
 
     this.supabaseService.currentUser$.subscribe(() => {
       this.loadSessions();
-    });
-
-    this.syncService.isSyncing$.subscribe(isSyncing => {
-      if (!isSyncing) {
-        this.loadSessions();
-      }
     });
   }
 

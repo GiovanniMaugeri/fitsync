@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { db, generateUUID, fetchRemoteRow, fetchRemoteRows } from '../db/app-db';
 import { WorkoutSession, WorkoutSet, WorkoutSetDetail, TemplateExerciseDetail } from '../models/fitsync.models';
@@ -32,8 +32,7 @@ const REST_TIMER_END_STORAGE_KEY = 'fitsync_rest_timer_end_timestamp';
   providedIn: 'root'
 })
 export class WorkoutService {
-  private activeWorkoutSubject = new BehaviorSubject<ActiveWorkoutState | null>(null);
-  public activeWorkout$: Observable<ActiveWorkoutState | null> = this.activeWorkoutSubject.asObservable();
+  public activeWorkout = signal<ActiveWorkoutState | null>(null);
 
   // Rest Timer State
   private restTimerSecondsSubject = new BehaviorSubject<number>(0);
@@ -52,12 +51,12 @@ export class WorkoutService {
   }
 
   public updateActiveWorkoutState(state: ActiveWorkoutState | null) {
-    this.activeWorkoutSubject.next(state);
+    this.activeWorkout.set(state);
     this.saveActiveWorkoutToStorage(state);
   }
 
   public saveCurrentState() {
-    const currentState = this.activeWorkoutSubject.value;
+    const currentState = this.activeWorkout();
     this.saveActiveWorkoutToStorage(currentState);
   }
 
@@ -80,7 +79,7 @@ export class WorkoutService {
       if (saved) {
         const state: ActiveWorkoutState = JSON.parse(saved);
         if (state && state.session && state.exercises) {
-          this.activeWorkoutSubject.next(state);
+          this.activeWorkout.set(state);
 
           const timerEnd = localStorage.getItem(REST_TIMER_END_STORAGE_KEY);
           if (timerEnd) {
@@ -100,7 +99,7 @@ export class WorkoutService {
   }
 
   public get currentActiveWorkout(): ActiveWorkoutState | null {
-    return this.activeWorkoutSubject.value;
+    return this.activeWorkout();
   }
 
   async startWorkoutFromTemplate(templateId: string): Promise<ActiveWorkoutState> {
@@ -207,7 +206,7 @@ export class WorkoutService {
   }
 
   async addExerciseToActiveWorkout(exerciseId: string) {
-    const currentState = this.activeWorkoutSubject.value;
+    const currentState = this.activeWorkout();
     if (!currentState) return;
 
     const ex = await db.exercises.get(exerciseId);
@@ -243,7 +242,7 @@ export class WorkoutService {
   }
 
   async toggleSetCompleted(exerciseIndex: number, setIndex: number, completed?: boolean) {
-    const state = this.activeWorkoutSubject.value;
+    const state = this.activeWorkout();
     if (!state) return;
 
     const setItem = state.exercises[exerciseIndex].sets[setIndex];
@@ -259,7 +258,7 @@ export class WorkoutService {
   }
 
   addSetToExercise(exerciseIndex: number) {
-    const state = this.activeWorkoutSubject.value;
+    const state = this.activeWorkout();
     if (!state) return;
 
     const exItem = state.exercises[exerciseIndex];
@@ -282,7 +281,7 @@ export class WorkoutService {
   }
 
   removeSetFromExercise(exerciseIndex: number, setIndex: number) {
-    const state = this.activeWorkoutSubject.value;
+    const state = this.activeWorkout();
     if (!state) return;
 
     state.exercises[exerciseIndex].sets.splice(setIndex, 1);
@@ -345,7 +344,7 @@ export class WorkoutService {
   }
 
   async finishWorkout(notes?: string): Promise<WorkoutSession | null> {
-    const state = this.activeWorkoutSubject.value;
+    const state = this.activeWorkout();
     if (!state) return null;
 
     const endTime = new Date().toISOString();

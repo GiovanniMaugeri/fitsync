@@ -31,20 +31,20 @@ import { LucideAngularModule, User, Globe, WifiOff, AlertTriangle, CheckCircle, 
         <div class="sync-status-box">
           <div class="status-row">
             <span>Stato Connessione:</span>
-            <strong [class.text-green]="isOnline$ | async" [class.text-orange]="!(isOnline$ | async)">
-              <lucide-icon *ngIf="(isOnline$ | async)" [img]="Globe" size="14"></lucide-icon>
-              <lucide-icon *ngIf="!(isOnline$ | async)" [img]="WifiOff" size="14"></lucide-icon>
-              {{ (isOnline$ | async) ? ' Online' : ' Offline' }}
+            <strong [class.text-green]="isOnline()" [class.text-orange]="!isOnline()">
+              <lucide-icon *ngIf="isOnline()" [img]="Globe" size="14"></lucide-icon>
+              <lucide-icon *ngIf="!isOnline()" [img]="WifiOff" size="14"></lucide-icon>
+              {{ isOnline() ? ' Online' : ' Offline' }}
             </strong>
           </div>
           <div class="status-row">
             <span>Modifiche in coda di Sync:</span>
-            <strong>{{ (pendingCount$ | async) || 0 }} elementi</strong>
+            <strong>{{ pendingCount() || 0 }} elementi</strong>
           </div>
         </div>
 
         <div class="profile-actions">
-          <button class="btn btn-primary" (click)="syncNow()" [disabled]="!(isOnline$ | async)"><lucide-icon [img]="Zap" size="16"></lucide-icon> Sincronizza Ora</button>
+          <button class="btn btn-primary" (click)="syncNow()" [disabled]="!isOnline()"><lucide-icon [img]="Zap" size="16"></lucide-icon> Sincronizza Ora</button>
           <button class="btn btn-outline" (click)="signOut()">Disconnetti</button>
         </div>
       </div>
@@ -218,8 +218,8 @@ export class AuthComponent implements OnInit {
   private syncService = inject(SyncService);
 
   currentUser$ = this.supabaseService.currentUser$;
-  isOnline$ = this.syncService.isOnline$;
-  pendingCount$ = this.syncService.pendingCount$;
+  isOnline = this.syncService.isOnline;
+  pendingCount = this.syncService.pendingCount;
 
   isLoginMode = true;
   username = '';

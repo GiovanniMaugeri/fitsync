@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { WorkoutService } from '../../core/services/workout.service';
@@ -313,19 +313,19 @@ export class HomeComponent implements OnInit {
  
   templates: WorkoutTemplate[] = [];
   recentSessions: WorkoutSession[] = [];
-  isOnline$ = this.syncService.isOnline$;
+  isOnline = this.syncService.isOnline;
   currentUser$ = this.supabaseService.currentUser$;
- 
-  constructor() {}
 
-  async ngOnInit() {
-    await this.loadData();
-
-    this.syncService.isSyncing$.subscribe(isSyncing => {
-      if (!isSyncing) {
+  constructor() {
+    effect(() => {
+      if (!this.syncService.isSyncing()) {
         this.loadData();
       }
     });
+  }
+
+  async ngOnInit() {
+    await this.loadData();
 
     this.supabaseService.currentUser$.subscribe(() => {
       this.loadData();
