@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExerciseService } from '../../core/services/exercise.service';
@@ -8,6 +8,7 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
 @Component({
   selector: 'app-exercise-list',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, LucideAngularModule],
   template: `
     <div class="exercises-container">
@@ -385,7 +386,7 @@ export class ExerciseListComponent implements OnInit {
   newExEquipment = 'Bilanciere';
   newExIsPublic = true;
 
-  constructor(private exerciseService: ExerciseService) {}
+  constructor(private exerciseService: ExerciseService, private cdr: ChangeDetectorRef) {}
 
   async ngOnInit() {
     await this.loadExercises();
@@ -393,6 +394,7 @@ export class ExerciseListComponent implements OnInit {
 
   async loadExercises() {
     this.exercises = await this.exerciseService.getAllExercises();
+    this.cdr.markForCheck();
   }
 
   get filteredExercises(): Exercise[] {
@@ -417,5 +419,6 @@ export class ExerciseListComponent implements OnInit {
     this.newExIsPublic = true;
     this.showCreateModal = false;
     await this.loadExercises();
+    this.cdr.markForCheck();
   }
 }

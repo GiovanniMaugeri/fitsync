@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -21,6 +21,7 @@ import { DietLog, DietMealDetail, DietLogItem } from '../../core/models/fitsync.
 @Component({
   selector: 'app-diet-log',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
   template: `
     <div class="diet-log-container">
@@ -705,7 +706,7 @@ export class DietLogComponent implements OnInit {
   isAddingMeal = false;
   newMealName = '';
 
-  constructor(private dietService: DietService) {}
+  constructor(private dietService: DietService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.dietService.activeLog$.subscribe(log => {
@@ -713,6 +714,7 @@ export class DietLogComponent implements OnInit {
       if (log && log.target_calories) {
         this.tempTargetCalories = log.target_calories;
       }
+      this.cdr.markForCheck();
     });
   }
 
@@ -769,6 +771,7 @@ export class DietLogComponent implements OnInit {
   async saveTargetCalories() {
     await this.dietService.updateTargetCalories(this.tempTargetCalories);
     this.isEditingTarget = false;
+    this.cdr.markForCheck();
   }
 
   openAddFoodModal(meal: DietMealDetail) {
@@ -789,6 +792,7 @@ export class DietLogComponent implements OnInit {
     );
 
     this.selectedMealForFood = null;
+    this.cdr.markForCheck();
   }
 
   async deleteFoodItem(item: DietLogItem) {
@@ -804,6 +808,7 @@ export class DietLogComponent implements OnInit {
     if (!this.newMealName.trim()) return;
     await this.dietService.addMeal(this.newMealName);
     this.isAddingMeal = false;
+    this.cdr.markForCheck();
   }
 
   async deleteMeal(meal: DietMealDetail) {

@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { WorkoutService } from '../../core/services/workout.service';
@@ -11,6 +11,7 @@ import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckC
 @Component({
   selector: 'app-home',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterModule, LucideAngularModule],
   template: `
     <div class="home-container">
@@ -310,7 +311,8 @@ export class HomeComponent implements OnInit {
   private syncService = inject(SyncService);
   private supabaseService = inject(SupabaseService);
   private router = inject(Router);
- 
+  private cdr = inject(ChangeDetectorRef);
+
   templates: WorkoutTemplate[] = [];
   recentSessions: WorkoutSession[] = [];
   isOnline = this.syncService.isOnline;
@@ -335,6 +337,7 @@ export class HomeComponent implements OnInit {
   async loadData() {
     this.templates = await this.templateService.getTemplates();
     this.recentSessions = await this.workoutService.getRecentWorkoutSessions(5);
+    this.cdr.markForCheck();
   }
 
   async startFreeWorkout() {

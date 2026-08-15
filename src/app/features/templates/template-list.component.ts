@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { TemplateService } from '../../core/services/template.service';
@@ -10,6 +10,7 @@ import { LucideAngularModule, ClipboardList, Pencil, Trash2, Zap, Plus } from 'l
 @Component({
   selector: 'app-template-list',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterModule, LucideAngularModule],
   template: `
     <div class="templates-container">
@@ -331,7 +332,8 @@ export class TemplateListComponent implements OnInit {
     private templateService: TemplateService,
     private workoutService: WorkoutService,
     private supabaseService: SupabaseService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   get currentUserId(): string | undefined {
@@ -369,6 +371,7 @@ export class TemplateListComponent implements OnInit {
 
   async loadTemplates() {
     this.templates = await this.templateService.getTemplates();
+    this.cdr.markForCheck();
   }
 
   async startWorkout(templateId: string) {
