@@ -49,7 +49,7 @@ export class ExerciseService {
     };
 
     await db.exercises.add(newExercise);
-    await this.syncService.enqueue('exercises', 'INSERT', newExercise);
+    await this.syncService.enqueue('exercises', 'INSERT', { ...newExercise });
     return newExercise;
   }
 }

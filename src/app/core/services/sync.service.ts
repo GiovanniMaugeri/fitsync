@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { PostgrestError } from '@supabase/supabase-js';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { db } from '../db/app-db';
 import { SyncQueueItem } from '../models/fitsync.models';
@@ -74,7 +75,7 @@ export class SyncService {
   public async enqueue(
     tableName: SyncQueueItem['table_name'],
     action: SyncQueueItem['action'],
-    payload: any
+    payload: Record<string, unknown>
   ): Promise<string> {
     const queueItem: SyncQueueItem = {
       id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
@@ -149,19 +150,19 @@ export class SyncService {
           // Se l'utente è autenticato su Supabase e l'oggetto richiede user_id, colleghiamo l'utente corrente
           if (isRealUser && item.payload && typeof item.payload === 'object') {
             if (['exercises', 'workout_templates', 'workout_sessions', 'diet_logs', 'diet_meals', 'diet_log_items'].includes(item.table_name)) {
-              if (!item.payload.user_id || item.payload.user_id === LOCAL_USER_ID) {
-                item.payload.user_id = currentUserId;
+              if (!item.payload['user_id'] || item.payload['user_id'] === LOCAL_USER_ID) {
+                item.payload['user_id'] = currentUserId;
               }
             }
           }
 
-          let res: any;
+          let res: { error: PostgrestError | null; status: number } | undefined;
           if (item.action === 'INSERT') {
             res = await client.from(item.table_name).upsert(item.payload);
           } else if (item.action === 'UPDATE') {
-            res = await client.from(item.table_name).update(item.payload).eq('id', item.payload.id);
+            res = await client.from(item.table_name).update(item.payload).eq('id', item.payload['id'] as string);
           } else if (item.action === 'DELETE') {
-            res = await client.from(item.table_name).delete().eq('id', item.payload.id || item.payload);
+            res = await client.from(item.table_name).delete().eq('id', item.payload['id'] as string);
           }
 
           // Fallback Failsafe: Se il DB Supabase remoto non possiede ancora la colonna 'is_public' o 'user_id' (PGRST204), riproviamo omettendo il campo mancante
@@ -169,16 +170,16 @@ export class SyncService {
             console.warn(`FitSync Sync Fallback: Colonna mancante nello schema Supabase per '${item.table_name}'. Riprovo l'invio...`);
             const fallbackPayload = { ...item.payload };
             if (res.error.message?.includes('is_public')) {
-              delete fallbackPayload.is_public;
+              delete fallbackPayload['is_public'];
             }
             if (res.error.message?.includes('user_id')) {
-              delete fallbackPayload.user_id;
+              delete fallbackPayload['user_id'];
             }
 
             if (item.action === 'INSERT') {
               res = await client.from(item.table_name).upsert(fallbackPayload);
             } else if (item.action === 'UPDATE') {
-              res = await client.from(item.table_name).update(fallbackPayload).eq('id', fallbackPayload.id);
+              res = await client.from(item.table_name).update(fallbackPayload).eq('id', fallbackPayload['id'] as string);
             }
           }
 
@@ -197,9 +198,10 @@ export class SyncService {
             console.log(`FitSync Sync: caricamento riuscito per elemento ${item.id} (${item.table_name})`);
             await db.syncQueue.delete(item.id);
           }
-        } catch (err: any) {
+        } catch (err) {
           console.error(`Execution error syncing item ${item.id}:`, err);
-          await this.markError(item.id, item.retry_count || 0, err?.message || 'Unknown error');
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          await this.markError(item.id, item.retry_count || 0, message);
         }
       }
 
@@ -248,7 +250,7 @@ export class SyncService {
         console.warn('FitSync: Errore durante il pull delle schede da Supabase:', tplErr);
       } else if (templates) {
         const pendingQueue = await db.syncQueue.toArray();
-        const pendingTplIds = new Set(pendingQueue.filter(q => q.table_name === 'workout_templates').map(q => q.payload?.id));
+        const pendingTplIds = new Set(pendingQueue.filter(q => q.table_name === 'workout_templates').map(q => q.payload?.['id']));
 
         const remoteIds = new Set(templates.map(t => t.id));
         const localTemplates = await db.workoutTemplates.toArray();
@@ -268,7 +270,7 @@ export class SyncService {
         console.warn('FitSync: Errore durante il pull degli esercizi scheda da Supabase:', teErr);
       } else if (tempExs) {
         const pendingQueue = await db.syncQueue.toArray();
-        const pendingTeIds = new Set(pendingQueue.filter(q => q.table_name === 'template_exercises').map(q => q.payload?.id));
+        const pendingTeIds = new Set(pendingQueue.filter(q => q.table_name === 'template_exercises').map(q => q.payload?.['id']));
 
         const remoteIds = new Set(tempExs.map(te => te.id));
         const localTempExs = await db.templateExercises.toArray();

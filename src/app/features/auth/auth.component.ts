@@ -245,8 +245,8 @@ export class AuthComponent implements OnInit {
         await this.supabaseService.signUp(this.username, this.password, this.fullName);
         this.successMessage = 'Registrazione completata!';
       }
-    } catch (err: any) {
-      this.errorMessage = err?.message || 'Errore durante l\'autenticazione.';
+    } catch (err) {
+      this.errorMessage = err instanceof Error ? err.message : 'Errore durante l\'autenticazione.';
     }
   }
 

@@ -86,7 +86,7 @@ export async function fetchRemoteRows<T>(
  */
 async function migrateLegacyIds(source: { table(name: string): Table<any, string> }, logLabel: string) {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const isUuid = (id: any) => typeof id === 'string' && uuidRegex.test(id);
+  const isUuid = (id: unknown): id is string => typeof id === 'string' && uuidRegex.test(id);
 
   const exercisesTable = source.table('exercises');
   const templatesTable = source.table('workoutTemplates');
@@ -95,7 +95,7 @@ async function migrateLegacyIds(source: { table(name: string): Table<any, string
   const setsTable = source.table('workoutSets');
   const syncQueueTable = source.table('syncQueue');
 
-  const enqueueSync = (table_name: string, payload: any) =>
+  const enqueueSync = (table_name: string, payload: Record<string, unknown>) =>
     syncQueueTable.add({
       id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
       table_name,
@@ -323,7 +323,7 @@ export class FitSyncDatabase extends Dexie {
         const syncItems = await this.syncQueue.toArray();
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         for (const item of syncItems) {
-          const payloadId = item.payload?.id || item.payload;
+          const payloadId = item.payload?.['id'] || item.payload;
           if (item.table_name !== 'profiles' && typeof payloadId === 'string' && !uuidRegex.test(payloadId)) {
             console.warn(`Rimozione elemento di sync non valido ${item.id} (ID non-UUID: ${payloadId})`);
             await this.syncQueue.delete(item.id);

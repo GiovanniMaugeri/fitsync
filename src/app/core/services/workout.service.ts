@@ -37,7 +37,7 @@ export class WorkoutService {
   private isTimerRunningSubject = new BehaviorSubject<boolean>(false);
   public isTimerRunning$: Observable<boolean> = this.isTimerRunningSubject.asObservable();
   
-  private timerInterval: any = null;
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private supabaseService: SupabaseService,
@@ -352,14 +352,14 @@ export class WorkoutService {
 
     // Save session locally in Dexie
     await db.workoutSessions.add(finalSession);
-    await this.syncService.enqueue('workout_sessions', 'INSERT', finalSession);
+    await this.syncService.enqueue('workout_sessions', 'INSERT', { ...finalSession });
 
     // Save completed sets
     for (const ex of state.exercises) {
       for (const setItem of ex.sets) {
         if (setItem.is_completed) {
           await db.workoutSets.add(setItem);
-          await this.syncService.enqueue('workout_sets', 'INSERT', setItem);
+          await this.syncService.enqueue('workout_sets', 'INSERT', { ...setItem });
         }
       }
     }
