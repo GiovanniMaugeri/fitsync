@@ -1,5 +1,6 @@
 import Dexie, { Table } from 'dexie';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { logger } from '../utils/logger';
 import { 
   Profile, 
   Exercise, 
@@ -44,7 +45,7 @@ export async function fetchRemoteRow<T>(
       return data as T;
     }
   } catch (err) {
-    console.warn(`FitSync: recupero remoto fallito per ${table}.${column}=${value}:`, err);
+    logger.warn(`FitSync: recupero remoto fallito per ${table}.${column}=${value}:`, err);
   }
   return undefined;
 }
@@ -73,7 +74,7 @@ export async function fetchRemoteRows<T>(
       return data as T[];
     }
   } catch (err) {
-    console.warn(`FitSync: recupero remoto fallito per ${table} dove ${column}=${value}:`, err);
+    logger.warn(`FitSync: recupero remoto fallito per ${table} dove ${column}=${value}:`, err);
   }
   return [];
 }
@@ -121,7 +122,7 @@ async function migrateLegacyIds(source: { table(name: string): Table<any, string
       await exercisesTable.add(migratedEx);
       await enqueueSync('exercises', migratedEx);
       await exercisesTable.delete(ex.id);
-      console.log(`FitSyncDB ${logLabel}: Migrato esercizio personalizzato "${ex.name}" (${ex.id} -> ${newId})`);
+      logger.log(`FitSyncDB ${logLabel}: Migrato esercizio personalizzato "${ex.name}" (${ex.id} -> ${newId})`);
     }
   }
 
@@ -136,7 +137,7 @@ async function migrateLegacyIds(source: { table(name: string): Table<any, string
       await templatesTable.add(migratedTpl);
       await enqueueSync('workout_templates', migratedTpl);
       await templatesTable.delete(t.id);
-      console.log(`FitSyncDB ${logLabel}: Migrata scheda "${t.name}" (${t.id} -> ${newId})`);
+      logger.log(`FitSyncDB ${logLabel}: Migrata scheda "${t.name}" (${t.id} -> ${newId})`);
     }
   }
 
@@ -181,7 +182,7 @@ async function migrateLegacyIds(source: { table(name: string): Table<any, string
         await sessionsTable.put(migratedSession);
       }
       await enqueueSync('workout_sessions', migratedSession);
-      console.log(`FitSyncDB ${logLabel}: Migrata sessione di allenamento "${s.name}" (${s.id} -> ${newId})`);
+      logger.log(`FitSyncDB ${logLabel}: Migrata sessione di allenamento "${s.name}" (${s.id} -> ${newId})`);
     }
   }
 
@@ -301,9 +302,9 @@ export class FitSyncDatabase extends Dexie {
     });
 
     this.version(4).stores(schemaV1).upgrade(async tx => {
-      console.log('FitSyncDB: Avvio migrazione schema Versione 4 (migrazione ID testuali -> UUID)...');
+      logger.log('FitSyncDB: Avvio migrazione schema Versione 4 (migrazione ID testuali -> UUID)...');
       await migrateLegacyIds(tx, 'Versione 4');
-      console.log('FitSyncDB: Migrazione schema Versione 4 completata con successo!');
+      logger.log('FitSyncDB: Migrazione schema Versione 4 completata con successo!');
     });
 
     this.on('populate', () => this.populateInitialExercises());
@@ -313,7 +314,7 @@ export class FitSyncDatabase extends Dexie {
       try {
         const hasDefault = await this.exercises.get('d8970cee-e3d6-4dd0-ab09-c569f3f750f2');
         if (!hasDefault) {
-          console.log('FitSyncDB exercises table is missing default UUID exercises. Seeding...');
+          logger.log('FitSyncDB exercises table is missing default UUID exercises. Seeding...');
           await this.populateInitialExercises();
         }
 
@@ -326,12 +327,12 @@ export class FitSyncDatabase extends Dexie {
         for (const item of syncItems) {
           const payloadId = item.payload?.id || item.payload;
           if (item.table_name !== 'profiles' && typeof payloadId === 'string' && !uuidRegex.test(payloadId)) {
-            console.warn(`Rimozione elemento di sync non valido ${item.id} (ID non-UUID: ${payloadId})`);
+            logger.warn(`Rimozione elemento di sync non valido ${item.id} (ID non-UUID: ${payloadId})`);
             await this.syncQueue.delete(item.id);
           }
         }
       } catch (err) {
-        console.error('Errore durante il controllo o la pulizia del database:', err);
+        logger.error('Errore durante il controllo o la pulizia del database:', err);
       }
     });
   }
@@ -340,7 +341,7 @@ export class FitSyncDatabase extends Dexie {
     try {
       await migrateLegacyIds(this, '[Runtime Failsafe]');
     } catch (e) {
-      console.error('Errore durante la migrazione failsafe in esecuzione:', e);
+      logger.error('Errore durante la migrazione failsafe in esecuzione:', e);
     }
   }
 

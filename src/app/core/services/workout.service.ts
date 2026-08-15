@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { db, generateUUID, fetchRemoteRow, fetchRemoteRows } from '../db/app-db';
 import { WorkoutSession, WorkoutSet, WorkoutSetDetail, TemplateExerciseDetail } from '../models/fitsync.models';
 import { SupabaseService, LOCAL_USER_ID } from './supabase.service';
+import { logger } from '../utils/logger';
 import { SyncService } from './sync.service';
 
 export interface ActiveWorkoutState {
@@ -69,7 +70,7 @@ export class WorkoutService {
         localStorage.removeItem(REST_TIMER_END_STORAGE_KEY);
       }
     } catch (e) {
-      console.warn('FitSync: Errore durante il salvataggio dello stato allenamento:', e);
+      logger.warn('FitSync: Errore durante il salvataggio dello stato allenamento:', e);
     }
   }
 
@@ -94,7 +95,7 @@ export class WorkoutService {
         }
       }
     } catch (e) {
-      console.warn('FitSync: Errore ripristino allenamento attivo da localStorage:', e);
+      logger.warn('FitSync: Errore ripristino allenamento attivo da localStorage:', e);
     }
   }
 
@@ -339,7 +340,7 @@ export class WorkoutService {
       osc.start();
       osc.stop(audioCtx.currentTime + 0.5);
     } catch (e) {
-      console.log('Timer finished beep!');
+      logger.log('Timer finished beep!');
     }
   }
 
@@ -427,7 +428,7 @@ export class WorkoutService {
           }
         }
       } catch (err) {
-        console.warn('FitSync: Errore allineamento remoto sessioni:', err);
+        logger.warn('FitSync: Errore allineamento remoto sessioni:', err);
       }
     }
 
@@ -466,7 +467,7 @@ export class WorkoutService {
 
     const currentUserId = this.supabaseService.currentUserId;
     if (session.user_id && session.user_id !== LOCAL_USER_ID && session.user_id !== currentUserId) {
-      console.warn('Non puoi eliminare sessioni di altri utenti.');
+      logger.warn('Non puoi eliminare sessioni di altri utenti.');
       return;
     }
 
