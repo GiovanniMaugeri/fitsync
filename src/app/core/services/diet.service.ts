@@ -79,7 +79,7 @@ export class DietService {
         created_at: new Date().toISOString()
       };
       await db.dietLogs.add(log);
-      await this.syncService.enqueue('diet_logs', 'INSERT', log);
+      await this.syncService.enqueue('diet_logs', 'INSERT', { ...log });
     }
 
     // Load meals & items
@@ -120,7 +120,7 @@ export class DietService {
     };
 
     await db.dietMeals.add(newMeal);
-    await this.syncService.enqueue('diet_meals', 'INSERT', newMeal);
+    await this.syncService.enqueue('diet_meals', 'INSERT', { ...newMeal });
     await this.loadLogForDate(currentLog.date);
   }
 
@@ -156,7 +156,7 @@ export class DietService {
     };
 
     await db.dietLogItems.add(newItem);
-    await this.syncService.enqueue('diet_log_items', 'INSERT', newItem);
+    await this.syncService.enqueue('diet_log_items', 'INSERT', { ...newItem });
     await this.loadLogForDate(currentLog.date);
   }
 

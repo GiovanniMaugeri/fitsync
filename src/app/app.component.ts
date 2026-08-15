@@ -627,8 +627,8 @@ export class AppComponent implements OnInit {
     this.syncService.syncNow();
 
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe((event) => {
       this.isDietMode = event.url.startsWith('/diet');
     });
 
