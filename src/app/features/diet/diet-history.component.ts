@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { LucideAngularModule, Calendar, Flame, ChevronRight, CheckCircle2, AlertCircle, Trash2 } from 'lucide-angular';
@@ -14,6 +14,7 @@ interface HistoryRecord {
 @Component({
   selector: 'app-diet-history',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterModule, LucideAngularModule],
   template: `
     <div class="diet-history-container">
@@ -277,7 +278,8 @@ export class DietHistoryComponent implements OnInit {
 
   constructor(
     private dietService: DietService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -286,6 +288,7 @@ export class DietHistoryComponent implements OnInit {
 
   async loadHistory() {
     this.historyRecords = await this.dietService.getRecentHistory(30);
+    this.cdr.markForCheck();
   }
 
   getDayNumber(dateStr: string): string {

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -17,6 +17,7 @@ interface SelectedExerciseItem {
 @Component({
   selector: 'app-template-editor',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
   template: `
     <div class="editor-container">
@@ -637,7 +638,8 @@ export class TemplateEditorComponent implements OnInit {
   constructor(
     private templateService: TemplateService,
     private exerciseService: ExerciseService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -660,6 +662,7 @@ export class TemplateEditorComponent implements OnInit {
         }
       }
     }
+    this.cdr.markForCheck();
   }
 
   get filteredExercises(): Exercise[] {

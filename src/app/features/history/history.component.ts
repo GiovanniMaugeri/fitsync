@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WorkoutService } from '../../core/services/workout.service';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -9,6 +9,7 @@ import { LucideAngularModule, History, Calendar, Clock, Dumbbell, ChevronUp, Che
 @Component({
   selector: 'app-history',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, LucideAngularModule],
   template: `
     <div class="history-container">
@@ -256,7 +257,8 @@ export class HistoryComponent implements OnInit {
   constructor(
     private workoutService: WorkoutService,
     private supabaseService: SupabaseService,
-    private syncService: SyncService
+    private syncService: SyncService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -275,10 +277,12 @@ export class HistoryComponent implements OnInit {
 
   async loadSessions() {
     this.sessions = await this.workoutService.getRecentWorkoutSessions(30);
+    this.cdr.markForCheck();
   }
 
   toggleExpand(id: string) {
     this.expandedSessionId = this.expandedSessionId === id ? null : id;
+    this.cdr.markForCheck();
   }
 
   groupSetsByExercise(sets?: any[]) {

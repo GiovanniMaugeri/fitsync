@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -11,6 +11,7 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
 @Component({
   selector: 'app-active-workout',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
   template: `
     <div class="active-workout-container">
@@ -650,7 +651,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   constructor(
     private workoutService: WorkoutService,
     private exerciseService: ExerciseService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.activeState$ = this.workoutService.activeWorkout$;
     this.restTimerSeconds$ = this.workoutService.restTimerSeconds$;
@@ -659,6 +661,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     this.allExercises = await this.exerciseService.getAllExercises();
+    this.cdr.markForCheck();
   }
 
   ngOnDestroy() {}
@@ -718,6 +721,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   async addExerciseToWorkout(exerciseId: string) {
     await this.workoutService.addExerciseToActiveWorkout(exerciseId);
     this.showAddExerciseModal = false;
+    this.cdr.markForCheck();
   }
 
   async finishWorkout() {

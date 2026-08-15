@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -26,6 +26,7 @@ import {
 @Component({
   selector: 'app-root',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterModule, LucideAngularModule],
   template: `
     <div class="app-shell">
@@ -614,7 +615,8 @@ export class AppComponent implements OnInit {
     private syncService: SyncService,
     private workoutService: WorkoutService,
     private supabaseService: SupabaseService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.isOnline$ = this.syncService.isOnline$;
     this.isSyncing$ = this.syncService.isSyncing$;
@@ -630,6 +632,7 @@ export class AppComponent implements OnInit {
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
       this.isDietMode = event.url.startsWith('/diet');
+      this.cdr.markForCheck();
     });
 
     this.isDietMode = this.router.url.startsWith('/diet');

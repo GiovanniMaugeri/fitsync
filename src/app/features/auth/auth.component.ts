@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -8,6 +8,7 @@ import { LucideAngularModule, User, Globe, WifiOff, AlertTriangle, CheckCircle, 
 @Component({
   selector: 'app-auth',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, LucideAngularModule],
   template: `
     <div class="auth-container">
@@ -216,6 +217,7 @@ export class AuthComponent implements OnInit {
 
   private supabaseService = inject(SupabaseService);
   private syncService = inject(SyncService);
+  private cdr = inject(ChangeDetectorRef);
 
   currentUser$ = this.supabaseService.currentUser$;
   isOnline$ = this.syncService.isOnline$;
@@ -248,6 +250,7 @@ export class AuthComponent implements OnInit {
     } catch (err: any) {
       this.errorMessage = err?.message || 'Errore durante l\'autenticazione.';
     }
+    this.cdr.markForCheck();
   }
 
   async signOut() {
