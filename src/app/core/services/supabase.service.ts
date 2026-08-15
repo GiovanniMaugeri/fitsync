@@ -3,6 +3,7 @@ import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { db } from '../db/app-db';
 import { Profile } from '../models/fitsync.models';
+import { logger } from '../utils/logger';
 import { environment } from '../../../environments/environment';
 
 export const SUPABASE_URL = environment.supabaseUrl;
@@ -47,10 +48,10 @@ export class SupabaseService {
           }
         });
       } catch (err) {
-        console.warn('Supabase initialization failed or using offline mode:', err);
+        logger.warn('Supabase initialization failed or using offline mode:', err);
       }
     } else {
-      console.log('FitSync running in local-only / offline demo mode. Supabase keys can be updated in env.');
+      logger.log('FitSync running in local-only / offline demo mode. Supabase keys can be updated in env.');
     }
   }
 
@@ -80,7 +81,7 @@ export class SupabaseService {
       try {
         await this.client.from('profiles').upsert(profile);
       } catch (err) {
-        console.warn('Could not sync user profile to remote Supabase:', err);
+        logger.warn('Could not sync user profile to remote Supabase:', err);
       }
     }
   }
