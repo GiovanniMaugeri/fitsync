@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { 
@@ -22,195 +22,206 @@ import { DietLog, DietMealDetail, DietLogItem } from '../../core/models/fitsync.
   selector: 'app-diet-log',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
+  imports: [FormsModule, RouterModule, LucideAngularModule],
   template: `
     <div class="diet-log-container">
-      
+    
       <!-- DATE NAV HEADER -->
       <div class="date-nav-card">
         <button class="nav-arrow-btn" (click)="changeDate(-1)" title="Giorno precedente">
           <lucide-icon [img]="ChevronLeft" size="20"></lucide-icon>
         </button>
-        
+    
         <div class="date-display" (click)="setToday()">
           <lucide-icon [img]="Calendar" size="18" class="calendar-icon"></lucide-icon>
           <span class="date-text">{{ formattedDisplayDate }}</span>
-          <span *ngIf="isToday" class="today-badge">Oggi</span>
+          @if (isToday) {
+            <span class="today-badge">Oggi</span>
+          }
         </div>
-
+    
         <button class="nav-arrow-btn" (click)="changeDate(1)" title="Giorno successivo">
           <lucide-icon [img]="ChevronRight" size="20"></lucide-icon>
         </button>
       </div>
-
+    
       <!-- DAILY CALORIES SUMMARY CARD -->
-      <div class="calorie-summary-card" *ngIf="activeLog">
-        <div class="card-header">
-          <div class="summary-title">
-            <span class="flame-icon"><lucide-icon [img]="Flame" size="22"></lucide-icon></span>
-            <span>Calorie del Giorno</span>
-          </div>
-
-          <button class="target-edit-btn" (click)="toggleTargetEdit()" title="Modifica Obiettivo Calorie">
-            <lucide-icon [img]="Edit3" size="16"></lucide-icon>
-            <span>Target: {{ activeLog.target_calories || 2000 }} kcal</span>
-          </button>
-        </div>
-
-        <!-- Inline edit target -->
-        <div *ngIf="isEditingTarget" class="target-edit-form">
-          <label>Obiettivo Calorie Giornaliere (kcal):</label>
-          <div class="input-row">
-            <input type="number" [(ngModel)]="tempTargetCalories" min="500" max="10000" class="form-input" />
-            <button class="btn btn-sm btn-primary" (click)="saveTargetCalories()">Salva</button>
-            <button class="btn btn-sm btn-outline" (click)="isEditingTarget = false">Annulla</button>
-          </div>
-        </div>
-
-        <div class="calorie-stats">
-          <div class="main-stat">
-            <span class="consumed-value">{{ totalConsumedCalories }}</span>
-            <span class="target-divider">/ {{ activeLog.target_calories || 2000 }}</span>
-            <span class="unit">kcal</span>
-          </div>
-          
-          <div class="remaining-badge" [class.over]="remainingCalories < 0">
-            <span *ngIf="remainingCalories >= 0">Rimanenti: <strong>{{ remainingCalories }} kcal</strong></span>
-            <span *ngIf="remainingCalories < 0">Superato di: <strong>{{ mathAbs(remainingCalories) }} kcal</strong></span>
-          </div>
-        </div>
-
-        <!-- PROGRESS BAR -->
-        <div class="progress-container">
-          <div class="progress-fill" [style.width.%]="caloriePercentage" [class.over-fill]="remainingCalories < 0"></div>
-        </div>
-      </div>
-
-      <!-- FLEXIBLE MEALS LIST -->
-      <div class="meals-section" *ngIf="activeLog">
-        <div class="section-header">
-          <h2 class="section-title">I Tuoi Pasti</h2>
-          <button class="btn btn-sm btn-outline btn-add-meal" (click)="openAddMealModal()">
-            <lucide-icon [img]="Plus" size="16"></lucide-icon> Nuovo Pasto
-          </button>
-        </div>
-
-        <!-- EMPTY MEALS STATE -->
-        <div *ngIf="!activeLog.meals || activeLog.meals.length === 0" class="empty-meals-card">
-          <lucide-icon [img]="Utensils" size="36" class="empty-meals-icon"></lucide-icon>
-          <p class="empty-meals-text">Nessun pasto creato per questo giorno.</p>
-          <button class="btn btn-sm btn-primary" (click)="openAddMealModal()">
-            <lucide-icon [img]="Plus" size="16"></lucide-icon> Crea il Tuo Primo Pasto
-          </button>
-        </div>
-
-        <!-- MEAL CARDS -->
-        <div class="meal-card" *ngFor="let meal of activeLog.meals">
-          <div class="meal-header">
-            <div class="meal-title-group">
-              <span class="meal-icon"><lucide-icon [img]="Utensils" size="18"></lucide-icon></span>
-              <h3 class="meal-name">{{ meal.name }}</h3>
+      @if (activeLog) {
+        <div class="calorie-summary-card">
+          <div class="card-header">
+            <div class="summary-title">
+              <span class="flame-icon"><lucide-icon [img]="Flame" size="22"></lucide-icon></span>
+              <span>Calorie del Giorno</span>
             </div>
-            
-            <div class="meal-header-right">
-              <span class="meal-calories">{{ meal.total_calories }} kcal</span>
-              <button class="delete-meal-btn" (click)="deleteMeal(meal)" title="Elimina pasto">
-                <lucide-icon [img]="Trash2" size="16"></lucide-icon>
+            <button class="target-edit-btn" (click)="toggleTargetEdit()" title="Modifica Obiettivo Calorie">
+              <lucide-icon [img]="Edit3" size="16"></lucide-icon>
+              <span>Target: {{ activeLog.target_calories || 2000 }} kcal</span>
+            </button>
+          </div>
+          <!-- Inline edit target -->
+          @if (isEditingTarget) {
+            <div class="target-edit-form">
+              <label>Obiettivo Calorie Giornaliere (kcal):</label>
+              <div class="input-row">
+                <input type="number" [(ngModel)]="tempTargetCalories" min="500" max="10000" class="form-input" />
+                <button class="btn btn-sm btn-primary" (click)="saveTargetCalories()">Salva</button>
+                <button class="btn btn-sm btn-outline" (click)="isEditingTarget = false">Annulla</button>
+              </div>
+            </div>
+          }
+          <div class="calorie-stats">
+            <div class="main-stat">
+              <span class="consumed-value">{{ totalConsumedCalories }}</span>
+              <span class="target-divider">/ {{ activeLog.target_calories || 2000 }}</span>
+              <span class="unit">kcal</span>
+            </div>
+            <div class="remaining-badge" [class.over]="remainingCalories < 0">
+              @if (remainingCalories >= 0) {
+                <span>Rimanenti: <strong>{{ remainingCalories }} kcal</strong></span>
+              }
+              @if (remainingCalories < 0) {
+                <span>Superato di: <strong>{{ mathAbs(remainingCalories) }} kcal</strong></span>
+              }
+            </div>
+          </div>
+          <!-- PROGRESS BAR -->
+          <div class="progress-container">
+            <div class="progress-fill" [style.width.%]="caloriePercentage" [class.over-fill]="remainingCalories < 0"></div>
+          </div>
+        </div>
+      }
+    
+      <!-- FLEXIBLE MEALS LIST -->
+      @if (activeLog) {
+        <div class="meals-section">
+          <div class="section-header">
+            <h2 class="section-title">I Tuoi Pasti</h2>
+            <button class="btn btn-sm btn-outline btn-add-meal" (click)="openAddMealModal()">
+              <lucide-icon [img]="Plus" size="16"></lucide-icon> Nuovo Pasto
+            </button>
+          </div>
+          <!-- EMPTY MEALS STATE -->
+          @if (!activeLog.meals || activeLog.meals.length === 0) {
+            <div class="empty-meals-card">
+              <lucide-icon [img]="Utensils" size="36" class="empty-meals-icon"></lucide-icon>
+              <p class="empty-meals-text">Nessun pasto creato per questo giorno.</p>
+              <button class="btn btn-sm btn-primary" (click)="openAddMealModal()">
+                <lucide-icon [img]="Plus" size="16"></lucide-icon> Crea il Tuo Primo Pasto
+              </button>
+            </div>
+          }
+          <!-- MEAL CARDS -->
+          @for (meal of activeLog.meals; track meal) {
+            <div class="meal-card">
+              <div class="meal-header">
+                <div class="meal-title-group">
+                  <span class="meal-icon"><lucide-icon [img]="Utensils" size="18"></lucide-icon></span>
+                  <h3 class="meal-name">{{ meal.name }}</h3>
+                </div>
+                <div class="meal-header-right">
+                  <span class="meal-calories">{{ meal.total_calories }} kcal</span>
+                  <button class="delete-meal-btn" (click)="deleteMeal(meal)" title="Elimina pasto">
+                    <lucide-icon [img]="Trash2" size="16"></lucide-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- FOOD ITEMS LIST -->
+              @if (meal.items && meal.items.length > 0) {
+                <div class="food-items-list">
+                  @for (item of meal.items; track item) {
+                    <div class="food-item-row">
+                      <div class="food-info">
+                        <span class="food-name">{{ item.name }}</span>
+                        @if (item.amount_note) {
+                          <span class="food-note">({{ item.amount_note }})</span>
+                        }
+                      </div>
+                      <div class="food-right">
+                        <span class="food-calories">{{ item.calories }} kcal</span>
+                        <button class="delete-item-btn" (click)="deleteFoodItem(item)" title="Rimuovi cibo">
+                          <lucide-icon [img]="Trash2" size="14"></lucide-icon>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+              @if (!meal.items || meal.items.length === 0) {
+                <div class="empty-meal-text">
+                  Nessun cibo aggiunto a questo pasto.
+                </div>
+              }
+              <!-- ADD FOOD BUTTON -->
+              <button class="add-food-btn" (click)="openAddFoodModal(meal)">
+                <lucide-icon [img]="Plus" size="16"></lucide-icon> Aggiungi Cibo
+              </button>
+            </div>
+          }
+        </div>
+      }
+    
+      <!-- MODAL: ADD FOOD TO MEAL -->
+      @if (selectedMealForFood) {
+        <div class="modal-backdrop">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h3>Aggiungi a: {{ selectedMealForFood.name }}</h3>
+              <button class="modal-close" (click)="selectedMealForFood = null">
+                <lucide-icon [img]="X" size="20"></lucide-icon>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label>Nome Cibo / Piatto *</label>
+                <input type="text" [(ngModel)]="newFoodName" placeholder="Es. Riso Basmati e Pollo" class="form-input" autofocus />
+              </div>
+              <div class="form-group">
+                <label>Calorie (kcal) *</label>
+                <input type="number" [(ngModel)]="newFoodCalories" placeholder="Es. 450" class="form-input" min="0" />
+              </div>
+              <div class="form-group">
+                <label>Quantità / Note (Opzionale)</label>
+                <input type="text" [(ngModel)]="newFoodNote" placeholder="Es. 200g, 1 porzione" class="form-input" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
+              <button class="btn btn-primary" (click)="confirmAddFood()" [disabled]="!newFoodName.trim() || !newFoodCalories">
+                <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Cibo
               </button>
             </div>
           </div>
-
-          <!-- FOOD ITEMS LIST -->
-          <div class="food-items-list" *ngIf="meal.items && meal.items.length > 0">
-            <div class="food-item-row" *ngFor="let item of meal.items">
-              <div class="food-info">
-                <span class="food-name">{{ item.name }}</span>
-                <span *ngIf="item.amount_note" class="food-note">({{ item.amount_note }})</span>
-              </div>
-              <div class="food-right">
-                <span class="food-calories">{{ item.calories }} kcal</span>
-                <button class="delete-item-btn" (click)="deleteFoodItem(item)" title="Rimuovi cibo">
-                  <lucide-icon [img]="Trash2" size="14"></lucide-icon>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div *ngIf="!meal.items || meal.items.length === 0" class="empty-meal-text">
-            Nessun cibo aggiunto a questo pasto.
-          </div>
-
-          <!-- ADD FOOD BUTTON -->
-          <button class="add-food-btn" (click)="openAddFoodModal(meal)">
-            <lucide-icon [img]="Plus" size="16"></lucide-icon> Aggiungi Cibo
-          </button>
         </div>
-      </div>
-
-      <!-- MODAL: ADD FOOD TO MEAL -->
-      <div class="modal-backdrop" *ngIf="selectedMealForFood">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>Aggiungi a: {{ selectedMealForFood.name }}</h3>
-            <button class="modal-close" (click)="selectedMealForFood = null">
-              <lucide-icon [img]="X" size="20"></lucide-icon>
-            </button>
-          </div>
-
-          <div class="modal-body">
-            <div class="form-group">
-              <label>Nome Cibo / Piatto *</label>
-              <input type="text" [(ngModel)]="newFoodName" placeholder="Es. Riso Basmati e Pollo" class="form-input" autofocus />
-            </div>
-
-            <div class="form-group">
-              <label>Calorie (kcal) *</label>
-              <input type="number" [(ngModel)]="newFoodCalories" placeholder="Es. 450" class="form-input" min="0" />
-            </div>
-
-            <div class="form-group">
-              <label>Quantità / Note (Opzionale)</label>
-              <input type="text" [(ngModel)]="newFoodNote" placeholder="Es. 200g, 1 porzione" class="form-input" />
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
-            <button class="btn btn-primary" (click)="confirmAddFood()" [disabled]="!newFoodName.trim() || !newFoodCalories">
-              <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Cibo
-            </button>
-          </div>
-        </div>
-      </div>
-
+      }
+    
       <!-- MODAL: ADD CUSTOM MEAL -->
-      <div class="modal-backdrop" *ngIf="isAddingMeal">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>Nuovo Pasto</h3>
-            <button class="modal-close" (click)="isAddingMeal = false">
-              <lucide-icon [img]="X" size="20"></lucide-icon>
-            </button>
-          </div>
-
-          <div class="modal-body">
-            <div class="form-group">
-              <label>Nome del Pasto *</label>
-              <input type="text" [(ngModel)]="newMealName" placeholder="Es. Spuntino Serale, Post Workout..." class="form-input" autofocus />
+      @if (isAddingMeal) {
+        <div class="modal-backdrop">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h3>Nuovo Pasto</h3>
+              <button class="modal-close" (click)="isAddingMeal = false">
+                <lucide-icon [img]="X" size="20"></lucide-icon>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label>Nome del Pasto *</label>
+                <input type="text" [(ngModel)]="newMealName" placeholder="Es. Spuntino Serale, Post Workout..." class="form-input" autofocus />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-outline" (click)="isAddingMeal = false">Annulla</button>
+              <button class="btn btn-primary" (click)="confirmAddMeal()" [disabled]="!newMealName.trim()">
+                Crea Pasto
+              </button>
             </div>
           </div>
-
-          <div class="modal-footer">
-            <button class="btn btn-outline" (click)="isAddingMeal = false">Annulla</button>
-            <button class="btn btn-primary" (click)="confirmAddMeal()" [disabled]="!newMealName.trim()">
-              Crea Pasto
-            </button>
-          </div>
         </div>
-      </div>
-
+      }
+    
     </div>
-  `,
+    `,
   styles: [`
     .diet-log-container {
       display: flex;

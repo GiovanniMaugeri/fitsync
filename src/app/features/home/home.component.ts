@@ -24,76 +24,88 @@ import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckC
           <lucide-icon [img]="Zap" size="16"></lucide-icon> Allenamento Rapido
         </button>
       </div>
- 
+    
       <!-- PROMPT DI LOGIN -->
-      <div *ngIf="!(currentUser$ | async)" class="glass-card login-prompt-card">
-        <div class="prompt-text">
-          <h3>Sincronizza i tuoi Allenamenti</h3>
-          <p>Accedi o crea un account per salvare i dati nel cloud su Supabase ed evitare di perderli.</p>
+      @if (!(currentUser$ | async)) {
+        <div class="glass-card login-prompt-card">
+          <div class="prompt-text">
+            <h3>Sincronizza i tuoi Allenamenti</h3>
+            <p>Accedi o crea un account per salvare i dati nel cloud su Supabase ed evitare di perderli.</p>
+          </div>
+          <button class="btn btn-primary btn-sm" routerLink="/auth">
+            <lucide-icon [img]="User" size="14"></lucide-icon> Accedi / Registrati
+          </button>
         </div>
-        <button class="btn btn-primary btn-sm" routerLink="/auth">
-          <lucide-icon [img]="User" size="14"></lucide-icon> Accedi / Registrati
-        </button>
-      </div>
-
+      }
+    
       <!-- TEMPLATES QUICK ACCESS -->
       <section class="section">
         <div class="section-header">
           <h2>Le tue Schede d'Allenamento</h2>
           <a routerLink="/templates" class="link-more">Vedi tutte ({{ templates.length }}) →</a>
         </div>
-
-        <div *ngIf="templates.length === 0" class="empty-state glass-card">
-          <p>Non hai ancora creato schede d'allenamento.</p>
-          <button class="btn btn-primary btn-sm" routerLink="/templates/new">+ Crea Prima Scheda</button>
-        </div>
-
-        <div class="template-grid">
-          <div *ngFor="let t of templates.slice(0, 3)" class="template-card glass-card glass-card-interactive" (click)="startFromTemplate(t.id)">
-            <div class="template-top">
-              <h3 class="template-title">{{ t.name }}</h3>
-              <span class="ex-count">{{ t.exercises?.length || 0 }} esercizi</span>
-            </div>
-            <p class="template-desc">{{ t.description || 'Nessuna descrizione.' }}</p>
-            <div class="template-footer">
-              <span class="start-link">
-                <lucide-icon [img]="PlayCircle" size="16"></lucide-icon> Avvia Ora
-              </span>
-            </div>
+    
+        @if (templates.length === 0) {
+          <div class="empty-state glass-card">
+            <p>Non hai ancora creato schede d'allenamento.</p>
+            <button class="btn btn-primary btn-sm" routerLink="/templates/new">+ Crea Prima Scheda</button>
           </div>
+        }
+    
+        <div class="template-grid">
+          @for (t of templates.slice(0, 3); track t) {
+            <div class="template-card glass-card glass-card-interactive" (click)="startFromTemplate(t.id)">
+              <div class="template-top">
+                <h3 class="template-title">{{ t.name }}</h3>
+                <span class="ex-count">{{ t.exercises?.length || 0 }} esercizi</span>
+              </div>
+              <p class="template-desc">{{ t.description || 'Nessuna descrizione.' }}</p>
+              <div class="template-footer">
+                <span class="start-link">
+                  <lucide-icon [img]="PlayCircle" size="16"></lucide-icon> Avvia Ora
+                </span>
+              </div>
+            </div>
+          }
         </div>
       </section>
-
+    
       <!-- RECENT SESSIONS -->
       <section class="section">
         <div class="section-header">
           <h2>Ultimi Allenamenti Completati</h2>
           <a routerLink="/history" class="link-more">Storico completo →</a>
         </div>
-
-        <div *ngIf="recentSessions.length === 0" class="empty-state glass-card">
-          <p>Nessun allenamento registrato di recente. Inizia il tuo primo workout!</p>
-        </div>
-
+    
+        @if (recentSessions.length === 0) {
+          <div class="empty-state glass-card">
+            <p>Nessun allenamento registrato di recente. Inizia il tuo primo workout!</p>
+          </div>
+        }
+    
         <div class="sessions-list">
-          <div *ngFor="let s of recentSessions" class="session-card glass-card">
-            <div class="session-main">
-              <div>
-                <h4 class="session-name">{{ s.name }}</h4>
-                <div class="session-meta">
-                  <span><lucide-icon [img]="Calendar" size="14"></lucide-icon> {{ formatDate(s.start_time) }}</span>
-                  <span *ngIf="s.end_time"><lucide-icon [img]="Clock" size="14"></lucide-icon> {{ calculateDuration(s.start_time, s.end_time) }} min</span>
+          @for (s of recentSessions; track s) {
+            <div class="session-card glass-card">
+              <div class="session-main">
+                <div>
+                  <h4 class="session-name">{{ s.name }}</h4>
+                  <div class="session-meta">
+                    <span><lucide-icon [img]="Calendar" size="14"></lucide-icon> {{ formatDate(s.start_time) }}</span>
+                    @if (s.end_time) {
+                      <span><lucide-icon [img]="Clock" size="14"></lucide-icon> {{ calculateDuration(s.start_time, s.end_time) }} min</span>
+                    }
+                  </div>
+                </div>
+                <div class="session-stats">
+                  <span class="sets-badge">{{ s.sets?.length || 0 }} set completati</span>
                 </div>
               </div>
-              <div class="session-stats">
-                <span class="sets-badge">{{ s.sets?.length || 0 }} set completati</span>
-              </div>
             </div>
-          </div>
+          }
         </div>
       </section>
     </div>
-  `,
+    `,
   styles: [`
     .home-container {
       display: flex;

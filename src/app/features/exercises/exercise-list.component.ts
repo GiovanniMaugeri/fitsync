@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ExerciseService } from '../../core/services/exercise.service';
 import { Exercise } from '../../core/models/fitsync.models';
@@ -9,7 +9,7 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
   selector: 'app-exercise-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [FormsModule, LucideAngularModule],
   template: `
     <div class="exercises-container">
       <div class="header-row">
@@ -18,115 +18,117 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
           <p class="page-subtitle">Visualizza gli esercizi di sistema o aggiungi le tue varianti custom.</p>
         </div>
       </div>
-
+    
       <!-- SEARCH & FILTER BAR -->
       <div class="glass-card filters-card">
         <input type="text" class="input-field" [(ngModel)]="searchQuery" placeholder="Cerca esercizio per nome (es. Panca, Curl, Squat)...">
-        
+    
         <div class="pills-row">
-          <button 
-            *ngFor="let cat of categories" 
-            class="pill-btn"
-            [class.active]="selectedCategory === cat"
-            (click)="selectedCategory = cat">
-            {{ cat }}
-          </button>
+          @for (cat of categories; track cat) {
+            <button
+              class="pill-btn"
+              [class.active]="selectedCategory === cat"
+              (click)="selectedCategory = cat">
+              {{ cat }}
+            </button>
+          }
         </div>
       </div>
-
+    
       <!-- EXERCISES GRID -->
       <div class="exercises-grid">
-        <div *ngFor="let ex of filteredExercises" class="ex-card glass-card">
-          <div class="ex-top">
-            <h3 class="ex-title">{{ ex.name }}</h3>
-            <div *ngIf="ex.is_custom" class="badges-row">
-              <span class="custom-badge">CUSTOM</span>
-              <span class="vis-tag" [class.private]="ex.is_public === false">
-                {{ ex.is_public === false ? '🔒 PRIVATO' : '🌐 PUBBLICO' }}
-              </span>
+        @for (ex of filteredExercises; track ex) {
+          <div class="ex-card glass-card">
+            <div class="ex-top">
+              <h3 class="ex-title">{{ ex.name }}</h3>
+              @if (ex.is_custom) {
+                <div class="badges-row">
+                  <span class="custom-badge">CUSTOM</span>
+                  <span class="vis-tag" [class.private]="ex.is_public === false">
+                    {{ ex.is_public === false ? '🔒 PRIVATO' : '🌐 PUBBLICO' }}
+                  </span>
+                </div>
+              }
+            </div>
+            <div class="ex-details">
+              <span class="detail-tag"><lucide-icon [img]="Dumbbell" size="12"></lucide-icon> {{ ex.category }}</span>
+              <span class="detail-tag"><lucide-icon [img]="Settings" size="12"></lucide-icon> {{ ex.equipment || 'Corpo Libero' }}</span>
             </div>
           </div>
-          <div class="ex-details">
-            <span class="detail-tag"><lucide-icon [img]="Dumbbell" size="12"></lucide-icon> {{ ex.category }}</span>
-            <span class="detail-tag"><lucide-icon [img]="Settings" size="12"></lucide-icon> {{ ex.equipment || 'Corpo Libero' }}</span>
-          </div>
-        </div>
+        }
       </div>
-
+    
       <!-- FLOATING ACTION BUTTON (FAB) IN BASSO A DESTRA -->
       <button class="fab-btn" (click)="showCreateModal = true" title="Nuovo Esercizio Custom" aria-label="Nuovo Esercizio Custom">
         <lucide-icon [img]="Plus" size="28"></lucide-icon>
       </button>
-
+    
       <!-- CREATE CUSTOM EXERCISE MODAL -->
-      <div *ngIf="showCreateModal" class="modal-backdrop" (click)="showCreateModal = false">
-        <div class="modal-card glass-card" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Nuovo Esercizio Personalizzato</h3>
-            <button class="modal-close-btn" (click)="showCreateModal = false" title="Chiudi" aria-label="Chiudi">
-              <lucide-icon [img]="X" size="20"></lucide-icon>
-            </button>
-          </div>
-
-          <div class="form-group">
-            <label>Nome Esercizio *</label>
-            <input type="text" class="input-field" [(ngModel)]="newExName" placeholder="es. Panca Inclinata alla Smith Machine">
-          </div>
-
-          <div class="form-group">
-            <label>Categoria Muscolare *</label>
-            <select class="input-field" [(ngModel)]="newExCategory">
-              <option value="Petto">Petto</option>
-              <option value="Schiena">Schiena</option>
-              <option value="Gambe">Gambe</option>
-              <option value="Spalle">Spalle</option>
-              <option value="Bicipiti">Bicipiti</option>
-              <option value="Tricipiti">Tricipiti</option>
-              <option value="Core">Core</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Attrezzo / Equipment</label>
-            <select class="input-field" [(ngModel)]="newExEquipment">
-              <option value="Bilanciere">Bilanciere</option>
-              <option value="Manubri">Manubri</option>
-              <option value="Cavi">Cavi</option>
-              <option value="Macchina">Macchina</option>
-              <option value="Corpo Libero">Corpo Libero</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Visibilità Esercizio *</label>
-            <div class="visibility-toggle">
-              <button 
-                type="button" 
-                class="vis-btn" 
-                [class.active]="newExIsPublic === true" 
-                (click)="newExIsPublic = true">
-                🌐 Pubblico
-                <small>Visibile a tutti nella creazione schede</small>
-              </button>
-              <button 
-                type="button" 
-                class="vis-btn" 
-                [class.active]="newExIsPublic === false" 
-                (click)="newExIsPublic = false">
-                🔒 Privato
-                <small>Visibile solo a te</small>
+      @if (showCreateModal) {
+        <div class="modal-backdrop" (click)="showCreateModal = false">
+          <div class="modal-card glass-card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Nuovo Esercizio Personalizzato</h3>
+              <button class="modal-close-btn" (click)="showCreateModal = false" title="Chiudi" aria-label="Chiudi">
+                <lucide-icon [img]="X" size="20"></lucide-icon>
               </button>
             </div>
-          </div>
-
-          <div class="modal-actions">
-            <button class="btn btn-outline" (click)="showCreateModal = false">Annulla</button>
-            <button class="btn btn-accent" (click)="createExercise()" [disabled]="!newExName.trim()">Crea Esercizio</button>
+            <div class="form-group">
+              <label>Nome Esercizio *</label>
+              <input type="text" class="input-field" [(ngModel)]="newExName" placeholder="es. Panca Inclinata alla Smith Machine">
+            </div>
+            <div class="form-group">
+              <label>Categoria Muscolare *</label>
+              <select class="input-field" [(ngModel)]="newExCategory">
+                <option value="Petto">Petto</option>
+                <option value="Schiena">Schiena</option>
+                <option value="Gambe">Gambe</option>
+                <option value="Spalle">Spalle</option>
+                <option value="Bicipiti">Bicipiti</option>
+                <option value="Tricipiti">Tricipiti</option>
+                <option value="Core">Core</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Attrezzo / Equipment</label>
+              <select class="input-field" [(ngModel)]="newExEquipment">
+                <option value="Bilanciere">Bilanciere</option>
+                <option value="Manubri">Manubri</option>
+                <option value="Cavi">Cavi</option>
+                <option value="Macchina">Macchina</option>
+                <option value="Corpo Libero">Corpo Libero</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Visibilità Esercizio *</label>
+              <div class="visibility-toggle">
+                <button
+                  type="button"
+                  class="vis-btn"
+                  [class.active]="newExIsPublic === true"
+                  (click)="newExIsPublic = true">
+                  🌐 Pubblico
+                  <small>Visibile a tutti nella creazione schede</small>
+                </button>
+                <button
+                  type="button"
+                  class="vis-btn"
+                  [class.active]="newExIsPublic === false"
+                  (click)="newExIsPublic = false">
+                  🔒 Privato
+                  <small>Visibile solo a te</small>
+                </button>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button class="btn btn-outline" (click)="showCreateModal = false">Annulla</button>
+              <button class="btn btn-accent" (click)="createExercise()" [disabled]="!newExName.trim()">Crea Esercizio</button>
+            </div>
           </div>
         </div>
-      </div>
+      }
     </div>
-  `,
+    `,
   styles: [`
     .exercises-container {
       display: flex;

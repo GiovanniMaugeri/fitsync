@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { TemplateService } from '../../core/services/template.service';
@@ -18,7 +18,7 @@ interface SelectedExerciseItem {
   selector: 'app-template-editor',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
+  imports: [FormsModule, RouterModule, LucideAngularModule],
   template: `
     <div class="editor-container">
       <div class="editor-header">
@@ -28,7 +28,7 @@ interface SelectedExerciseItem {
           <lucide-icon [img]="Save" size="16"></lucide-icon> Salva Scheda
         </button>
       </div>
-
+    
       <!-- TEMPLATE DETAILS FORM -->
       <div class="glass-card">
         <div class="form-group">
@@ -42,18 +42,18 @@ interface SelectedExerciseItem {
         <div class="form-group">
           <label>Visibilità Scheda *</label>
           <div class="visibility-toggle">
-            <button 
-              type="button" 
-              class="vis-btn" 
-              [class.active]="isPublic === true" 
+            <button
+              type="button"
+              class="vis-btn"
+              [class.active]="isPublic === true"
               (click)="isPublic = true">
               🌐 Pubblica
               <small>Tutti gli utenti possono vederla ed usarla</small>
             </button>
-            <button 
-              type="button" 
-              class="vis-btn" 
-              [class.active]="isPublic === false" 
+            <button
+              type="button"
+              class="vis-btn"
+              [class.active]="isPublic === false"
               (click)="isPublic = false">
               🔒 Privata
               <small>Visibile solo a te</small>
@@ -61,117 +61,120 @@ interface SelectedExerciseItem {
           </div>
         </div>
       </div>
-
+    
       <!-- SELECTED EXERCISES LIST -->
       <div class="exercises-section">
         <div class="section-top">
           <h2>Esercizi in Scheda ({{ selectedExercises.length }})</h2>
         </div>
-
-        <div *ngIf="selectedExercises.length === 0" class="empty-list glass-card">
-          <p>Nessun esercizio aggiunto. Clicca sul pulsante in basso per selezionare dalla libreria.</p>
-        </div>
-
-        <div class="exercises-list">
-          <div *ngFor="let item of selectedExercises; let idx = index" class="exercise-item-card glass-card">
-            <div class="item-header">
-              <div class="item-title">
-                <span class="index-badge">#{{ idx + 1 }}</span>
-                <div>
-                  <h4>{{ item.exercise.name }}</h4>
-                  <span class="cat-tag">{{ item.exercise.category }} • {{ item.exercise.equipment }}</span>
-                </div>
-              </div>
-              <div class="reorder-btns">
-                <button class="action-btn" (click)="moveUp(idx)" [disabled]="idx === 0" title="Sposta in alto" aria-label="Sposta in alto">
-                  <lucide-icon [img]="ArrowUp" size="15"></lucide-icon>
-                </button>
-                <button class="action-btn" (click)="moveDown(idx)" [disabled]="idx === selectedExercises.length - 1" title="Sposta in basso" aria-label="Sposta in basso">
-                  <lucide-icon [img]="ArrowDown" size="15"></lucide-icon>
-                </button>
-                <button class="action-btn danger" (click)="removeExercise(idx)" title="Elimina esercizio" aria-label="Elimina esercizio">
-                  <lucide-icon [img]="Trash2" size="15"></lucide-icon>
-                </button>
-              </div>
-            </div>
-
-            <!-- TARGET SETTINGS WITH STEPPERS -->
-            <div class="item-settings">
-              <div class="setting-col">
-                <label>Serie (Set)</label>
-                <div class="stepper-input">
-                  <button class="step-btn" (click)="adjustSets(item, -1)" [disabled]="item.target_sets <= 1">-</button>
-                  <input type="number" class="num-input" [(ngModel)]="item.target_sets" min="1" max="20">
-                  <button class="step-btn" (click)="adjustSets(item, 1)" [disabled]="item.target_sets >= 20">+</button>
-                </div>
-              </div>
-
-              <div class="setting-col">
-                <label>Reps Target</label>
-                <div class="stepper-input">
-                  <button class="step-btn" (click)="adjustReps(item, -1)" [disabled]="item.target_reps <= 1">-</button>
-                  <input type="number" class="num-input" [(ngModel)]="item.target_reps" min="1" max="100">
-                  <button class="step-btn" (click)="adjustReps(item, 1)" [disabled]="item.target_reps >= 100">+</button>
-                </div>
-              </div>
-
-              <div class="setting-col">
-                <label>Recupero (s)</label>
-                <div class="stepper-input">
-                  <button class="step-btn" (click)="adjustRest(item, -10)" [disabled]="item.rest_time_seconds <= 10">-</button>
-                  <input type="number" class="num-input" [(ngModel)]="item.rest_time_seconds" min="10" step="5">
-                  <button class="step-btn" (click)="adjustRest(item, 10)">+</button>
-                </div>
-              </div>
-            </div>
+    
+        @if (selectedExercises.length === 0) {
+          <div class="empty-list glass-card">
+            <p>Nessun esercizio aggiunto. Clicca sul pulsante in basso per selezionare dalla libreria.</p>
           </div>
+        }
+    
+        <div class="exercises-list">
+          @for (item of selectedExercises; track item; let idx = $index) {
+            <div class="exercise-item-card glass-card">
+              <div class="item-header">
+                <div class="item-title">
+                  <span class="index-badge">#{{ idx + 1 }}</span>
+                  <div>
+                    <h4>{{ item.exercise.name }}</h4>
+                    <span class="cat-tag">{{ item.exercise.category }} • {{ item.exercise.equipment }}</span>
+                  </div>
+                </div>
+                <div class="reorder-btns">
+                  <button class="action-btn" (click)="moveUp(idx)" [disabled]="idx === 0" title="Sposta in alto" aria-label="Sposta in alto">
+                    <lucide-icon [img]="ArrowUp" size="15"></lucide-icon>
+                  </button>
+                  <button class="action-btn" (click)="moveDown(idx)" [disabled]="idx === selectedExercises.length - 1" title="Sposta in basso" aria-label="Sposta in basso">
+                    <lucide-icon [img]="ArrowDown" size="15"></lucide-icon>
+                  </button>
+                  <button class="action-btn danger" (click)="removeExercise(idx)" title="Elimina esercizio" aria-label="Elimina esercizio">
+                    <lucide-icon [img]="Trash2" size="15"></lucide-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- TARGET SETTINGS WITH STEPPERS -->
+              <div class="item-settings">
+                <div class="setting-col">
+                  <label>Serie (Set)</label>
+                  <div class="stepper-input">
+                    <button class="step-btn" (click)="adjustSets(item, -1)" [disabled]="item.target_sets <= 1">-</button>
+                    <input type="number" class="num-input" [(ngModel)]="item.target_sets" min="1" max="20">
+                    <button class="step-btn" (click)="adjustSets(item, 1)" [disabled]="item.target_sets >= 20">+</button>
+                  </div>
+                </div>
+                <div class="setting-col">
+                  <label>Reps Target</label>
+                  <div class="stepper-input">
+                    <button class="step-btn" (click)="adjustReps(item, -1)" [disabled]="item.target_reps <= 1">-</button>
+                    <input type="number" class="num-input" [(ngModel)]="item.target_reps" min="1" max="100">
+                    <button class="step-btn" (click)="adjustReps(item, 1)" [disabled]="item.target_reps >= 100">+</button>
+                  </div>
+                </div>
+                <div class="setting-col">
+                  <label>Recupero (s)</label>
+                  <div class="stepper-input">
+                    <button class="step-btn" (click)="adjustRest(item, -10)" [disabled]="item.rest_time_seconds <= 10">-</button>
+                    <input type="number" class="num-input" [(ngModel)]="item.rest_time_seconds" min="10" step="5">
+                    <button class="step-btn" (click)="adjustRest(item, 10)">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
         </div>
-
+    
         <!-- TASTO + AGGIUNGI ESERCIZIO COME ULTIMO ELEMENTO -->
         <button class="btn btn-primary btn-block add-exercise-btn" (click)="showExerciseModal = true">
           <lucide-icon [img]="Plus" size="18"></lucide-icon> Aggiungi Esercizio
         </button>
       </div>
-
+    
       <!-- EXERCISE SEARCH MODAL -->
-      <div *ngIf="showExerciseModal" class="modal-backdrop" (click)="showExerciseModal = false">
-        <div class="modal-card glass-card" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Libreria Esercizi</h3>
-            <button class="modal-close-btn" (click)="showExerciseModal = false" title="Chiudi" aria-label="Chiudi libreria esercizi">
-              <lucide-icon [img]="X" size="20"></lucide-icon>
-            </button>
-          </div>
-
-          <div class="modal-search">
-            <input type="text" class="input-field" [(ngModel)]="searchQuery" placeholder="Cerca per nome (es. Panca, Squat)...">
-            <div class="categories-pills">
-              <button 
-                *ngFor="let cat of categories" 
-                class="pill-btn" 
-                [class.active]="selectedCategory === cat"
-                (click)="selectedCategory = cat">
-                {{ cat }}
+      @if (showExerciseModal) {
+        <div class="modal-backdrop" (click)="showExerciseModal = false">
+          <div class="modal-card glass-card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Libreria Esercizi</h3>
+              <button class="modal-close-btn" (click)="showExerciseModal = false" title="Chiudi" aria-label="Chiudi libreria esercizi">
+                <lucide-icon [img]="X" size="20"></lucide-icon>
               </button>
             </div>
-          </div>
-
-          <div class="modal-list">
-            <div 
-              *ngFor="let ex of filteredExercises" 
-              class="ex-select-row"
-              (click)="selectExercise(ex)">
-              <div>
-                <div class="ex-name">{{ ex.name }}</div>
-                <div class="ex-sub">{{ ex.category }} • {{ ex.equipment }}</div>
+            <div class="modal-search">
+              <input type="text" class="input-field" [(ngModel)]="searchQuery" placeholder="Cerca per nome (es. Panca, Squat)...">
+              <div class="categories-pills">
+                @for (cat of categories; track cat) {
+                  <button
+                    class="pill-btn"
+                    [class.active]="selectedCategory === cat"
+                    (click)="selectedCategory = cat">
+                    {{ cat }}
+                  </button>
+                }
               </div>
-              <span class="add-icon">+ Aggiungi</span>
+            </div>
+            <div class="modal-list">
+              @for (ex of filteredExercises; track ex) {
+                <div
+                  class="ex-select-row"
+                  (click)="selectExercise(ex)">
+                  <div>
+                    <div class="ex-name">{{ ex.name }}</div>
+                    <div class="ex-sub">{{ ex.category }} • {{ ex.equipment }}</div>
+                  </div>
+                  <span class="add-icon">+ Aggiungi</span>
+                </div>
+              }
             </div>
           </div>
         </div>
-      </div>
+      }
     </div>
-  `,
+    `,
   styles: [`
     .editor-container {
       display: flex;

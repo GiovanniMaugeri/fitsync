@@ -31,69 +31,70 @@ import {
   template: `
     <div class="app-shell">
       <!-- BACKDROP OVERLAY FOR SIDE DRAWER -->
-      <div *ngIf="isSettingsOpen" class="settings-backdrop" (click)="closeSettingsMenu()"></div>
-
+      @if (isSettingsOpen) {
+        <div class="settings-backdrop" (click)="closeSettingsMenu()"></div>
+      }
+    
       <!-- SIDE DRAWER NAVIGATION (MOBILE & DESKTOP) -->
-      <div *ngIf="isSettingsOpen" class="settings-drawer" (click)="$event.stopPropagation()">
-        <div class="drawer-header">
-          <div class="drawer-title">
-            <lucide-icon [img]="Settings" size="20" class="title-icon"></lucide-icon>
-            <span>Impostazioni</span>
+      @if (isSettingsOpen) {
+        <div class="settings-drawer" (click)="$event.stopPropagation()">
+          <div class="drawer-header">
+            <div class="drawer-title">
+              <lucide-icon [img]="Settings" size="20" class="title-icon"></lucide-icon>
+              <span>Impostazioni</span>
+            </div>
+            <button class="drawer-close-btn" (click)="closeSettingsMenu()" title="Chiudi">
+              <lucide-icon [img]="X" size="20"></lucide-icon>
+            </button>
           </div>
-          <button class="drawer-close-btn" (click)="closeSettingsMenu()" title="Chiudi">
-            <lucide-icon [img]="X" size="20"></lucide-icon>
-          </button>
-        </div>
-
-        <!-- Current User Info Card -->
-        <div class="drawer-user-card" *ngIf="currentUser$ | async as user">
-          <div class="user-avatar">
-            <lucide-icon [img]="User" size="20"></lucide-icon>
+          <!-- Current User Info Card -->
+          @if (currentUser$ | async; as user) {
+            <div class="drawer-user-card">
+              <div class="user-avatar">
+                <lucide-icon [img]="User" size="20"></lucide-icon>
+              </div>
+              <div class="user-details">
+                <span class="user-name">{{ user.user_metadata?.['username'] || 'Utente FitSync' }}</span>
+                <span class="user-email">{{ user.email }}</span>
+              </div>
+            </div>
+          }
+          <div class="drawer-section-label">NAVIGAZIONE PRINCIPALE</div>
+          <div class="drawer-menu-list">
+            <a routerLink="/auth" class="drawer-item" (click)="closeSettingsMenu()">
+              <div class="item-icon icon-profile">
+                <lucide-icon [img]="User" size="22"></lucide-icon>
+              </div>
+              <div class="item-content">
+                <span class="item-title">Profilo</span>
+                <span class="item-subtitle">Gestisci account e sincronizzazione</span>
+              </div>
+              <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
+            </a>
+            <a routerLink="/" class="drawer-item" (click)="closeSettingsMenu()">
+              <div class="item-icon icon-workout">
+                <lucide-icon [img]="Dumbbell" size="22"></lucide-icon>
+              </div>
+              <div class="item-content">
+                <span class="item-title">Allenamento</span>
+                <span class="item-subtitle">Dashboard ed esercizi</span>
+              </div>
+              <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
+            </a>
+            <a routerLink="/diet" class="drawer-item" (click)="closeSettingsMenu()">
+              <div class="item-icon icon-diet">
+                <lucide-icon [img]="Utensils" size="22"></lucide-icon>
+              </div>
+              <div class="item-content">
+                <span class="item-title">Dieta</span>
+                <span class="item-subtitle">Nutrizione e pasti</span>
+              </div>
+              <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
+            </a>
           </div>
-          <div class="user-details">
-            <span class="user-name">{{ user.user_metadata?.['username'] || 'Utente FitSync' }}</span>
-            <span class="user-email">{{ user.email }}</span>
-          </div>
         </div>
-
-        <div class="drawer-section-label">NAVIGAZIONE PRINCIPALE</div>
-
-        <div class="drawer-menu-list">
-          <a routerLink="/auth" class="drawer-item" (click)="closeSettingsMenu()">
-            <div class="item-icon icon-profile">
-              <lucide-icon [img]="User" size="22"></lucide-icon>
-            </div>
-            <div class="item-content">
-              <span class="item-title">Profilo</span>
-              <span class="item-subtitle">Gestisci account e sincronizzazione</span>
-            </div>
-            <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
-          </a>
-
-          <a routerLink="/" class="drawer-item" (click)="closeSettingsMenu()">
-            <div class="item-icon icon-workout">
-              <lucide-icon [img]="Dumbbell" size="22"></lucide-icon>
-            </div>
-            <div class="item-content">
-              <span class="item-title">Allenamento</span>
-              <span class="item-subtitle">Dashboard ed esercizi</span>
-            </div>
-            <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
-          </a>
-
-          <a routerLink="/diet" class="drawer-item" (click)="closeSettingsMenu()">
-            <div class="item-icon icon-diet">
-              <lucide-icon [img]="Utensils" size="22"></lucide-icon>
-            </div>
-            <div class="item-content">
-              <span class="item-title">Dieta</span>
-              <span class="item-subtitle">Nutrizione e pasti</span>
-            </div>
-            <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
-          </a>
-        </div>
-      </div>
-
+      }
+    
       <!-- TOP NAVIGATION BAR -->
       <header class="app-header">
         <div class="header-content">
@@ -101,79 +102,91 @@ import {
             <div class="logo-icon"><lucide-icon [img]="Dumbbell"></lucide-icon></div>
             <span class="brand-title">Fit<span class="highlight">Sync</span></span>
           </div>
-
+    
           <div class="status-area">
             <!-- Syncing indicator -->
-            <div *ngIf="isSyncing()" class="syncing-badge">
-              <span class="spinner"><lucide-icon [img]="Settings" size="16"></lucide-icon></span> Sync...
-            </div>
-
+            @if (isSyncing()) {
+              <div class="syncing-badge">
+                <span class="spinner"><lucide-icon [img]="Settings" size="16"></lucide-icon></span> Sync...
+              </div>
+            }
+    
             <!-- Pending Sync Items Count -->
-            <div *ngIf="pendingCount() as count" class="pending-badge" (click)="forceSync()">
-              <span *ngIf="count > 0" class="pending-tag">{{ count }} in coda</span>
-            </div>
-
+            @if (pendingCount(); as count) {
+              <div class="pending-badge" (click)="forceSync()">
+                @if (count > 0) {
+                  <span class="pending-tag">{{ count }} in coda</span>
+                }
+              </div>
+            }
+    
             <!-- Settings Gear Button -->
             <button class="settings-btn" [class.active]="isSettingsOpen" (click)="toggleSettingsMenu($event)" title="Apri Impostazioni">
               <lucide-icon [img]="Settings" size="20"></lucide-icon>
             </button>
           </div>
         </div>
-
+    
         <!-- Active Workout Floating Bar banner -->
-        <div *ngIf="activeWorkout() as activeState" class="active-workout-banner" routerLink="/workout/active">
-          <div class="banner-info">
-            <span class="pulse-icon"><lucide-icon [img]="Radio" size="18"></lucide-icon></span>
-            <span class="banner-text">ALLENAMENTO IN CORSO: <strong>{{ activeState.session.name }}</strong></span>
+        @if (activeWorkout(); as activeState) {
+          <div class="active-workout-banner" routerLink="/workout/active">
+            <div class="banner-info">
+              <span class="pulse-icon"><lucide-icon [img]="Radio" size="18"></lucide-icon></span>
+              <span class="banner-text">ALLENAMENTO IN CORSO: <strong>{{ activeState.session.name }}</strong></span>
+            </div>
+            <button class="btn btn-sm btn-accent">Riprendi →</button>
           </div>
-          <button class="btn btn-sm btn-accent">Riprendi →</button>
-        </div>
+        }
       </header>
-
+    
       <!-- MAIN ROUTER CONTAINER -->
       <main class="app-main">
         <router-outlet></router-outlet>
       </main>
-
+    
       <!-- WORKOUT BOTTOM NAVIGATION BAR -->
-      <nav *ngIf="!isDietMode" class="bottom-nav">
-        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
-          <span class="nav-icon"><lucide-icon [img]="Activity" size="24"></lucide-icon></span>
-          <span class="nav-label">Home</span>
-        </a>
-        <a routerLink="/templates" routerLinkActive="active" class="nav-item">
-          <span class="nav-icon"><lucide-icon [img]="ClipboardList" size="24"></lucide-icon></span>
-          <span class="nav-label">Schede</span>
-        </a>
-        <a routerLink="/workout/active" routerLinkActive="active" class="nav-item nav-item-workout">
-          <div class="workout-fab">
-            <span class="nav-icon"><lucide-icon [img]="Dumbbell" size="24"></lucide-icon></span>
-          </div>
-          <span class="nav-label">Allenati</span>
-        </a>
-        <a routerLink="/history" routerLinkActive="active" class="nav-item">
-          <span class="nav-icon"><lucide-icon [img]="History" size="24"></lucide-icon></span>
-          <span class="nav-label">Storico</span>
-        </a>
-        <a routerLink="/exercises" routerLinkActive="active" class="nav-item">
-          <span class="nav-icon"><lucide-icon [img]="BicepsFlexed" size="24"></lucide-icon></span>
-          <span class="nav-label">Esercizi</span>
-        </a>
-      </nav>
-
+      @if (!isDietMode) {
+        <nav class="bottom-nav">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="Activity" size="24"></lucide-icon></span>
+            <span class="nav-label">Home</span>
+          </a>
+          <a routerLink="/templates" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="ClipboardList" size="24"></lucide-icon></span>
+            <span class="nav-label">Schede</span>
+          </a>
+          <a routerLink="/workout/active" routerLinkActive="active" class="nav-item nav-item-workout">
+            <div class="workout-fab">
+              <span class="nav-icon"><lucide-icon [img]="Dumbbell" size="24"></lucide-icon></span>
+            </div>
+            <span class="nav-label">Allenati</span>
+          </a>
+          <a routerLink="/history" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="History" size="24"></lucide-icon></span>
+            <span class="nav-label">Storico</span>
+          </a>
+          <a routerLink="/exercises" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="BicepsFlexed" size="24"></lucide-icon></span>
+            <span class="nav-label">Esercizi</span>
+          </a>
+        </nav>
+      }
+    
       <!-- DIET CUSTOM BOTTOM NAVIGATION BAR -->
-      <nav *ngIf="isDietMode" class="bottom-nav diet-bottom-nav">
-        <a routerLink="/diet" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
-          <span class="nav-icon"><lucide-icon [img]="Utensils" size="24"></lucide-icon></span>
-          <span class="nav-label">Diario</span>
-        </a>
-        <a routerLink="/diet/history" routerLinkActive="active" class="nav-item">
-          <span class="nav-icon"><lucide-icon [img]="Calendar" size="24"></lucide-icon></span>
-          <span class="nav-label">Storico</span>
-        </a>
-      </nav>
+      @if (isDietMode) {
+        <nav class="bottom-nav diet-bottom-nav">
+          <a routerLink="/diet" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="Utensils" size="24"></lucide-icon></span>
+            <span class="nav-label">Diario</span>
+          </a>
+          <a routerLink="/diet/history" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="Calendar" size="24"></lucide-icon></span>
+            <span class="nav-label">Storico</span>
+          </a>
+        </nav>
+      }
     </div>
-  `,
+    `,
   styles: [`
     .app-shell {
       display: flex;
