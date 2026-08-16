@@ -260,7 +260,7 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
               </div>
               <div class="modal-footer">
                 <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
-                <button class="btn btn-primary" (click)="confirmAddCatalogFood()" [disabled]="!catalogQuantityGrams">
+                <button class="btn btn-primary" (click)="confirmAddCatalogFood()" [disabled]="!catalogQuantityGrams || isSavingFood">
                   <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Cibo
                 </button>
               </div>
@@ -301,7 +301,7 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
               </div>
               <div class="modal-footer">
                 <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
-                <button class="btn btn-primary" (click)="confirmAddManualFood()" [disabled]="!newFoodName.trim() || !newFoodCalories">
+                <button class="btn btn-primary" (click)="confirmAddManualFood()" [disabled]="!newFoodName.trim() || !newFoodCalories || isSavingFood">
                   <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Cibo
                 </button>
               </div>
@@ -328,7 +328,7 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
             </div>
             <div class="modal-footer">
               <button class="btn btn-outline" (click)="isAddingMeal = false">Annulla</button>
-              <button class="btn btn-primary" (click)="confirmAddMeal()" [disabled]="!newMealName.trim()">
+              <button class="btn btn-primary" (click)="confirmAddMeal()" [disabled]="!newMealName.trim() || isSavingMeal">
                 Crea Pasto
               </button>
             </div>
@@ -1005,6 +1005,7 @@ export class DietLogComponent implements OnInit {
   foodSearchQuery = '';
   selectedCatalogFood: Food | null = null;
   catalogQuantityGrams: number | null = 100;
+  isSavingFood = false;
 
   // Add food modal — inserimento manuale (fallback)
   showManualEntry = false;
@@ -1018,6 +1019,7 @@ export class DietLogComponent implements OnInit {
   // Add meal modal
   isAddingMeal = false;
   newMealName = '';
+  isSavingMeal = false;
 
   constructor(private dietService: DietService, private foodService: FoodService, private cdr: ChangeDetectorRef) {}
 
@@ -1147,33 +1149,41 @@ export class DietLogComponent implements OnInit {
   }
 
   async confirmAddCatalogFood() {
-    if (!this.selectedMealForFood || !this.selectedCatalogFood || !this.catalogQuantityGrams) return;
+    if (this.isSavingFood || !this.selectedMealForFood || !this.selectedCatalogFood || !this.catalogQuantityGrams) return;
 
-    await this.dietService.addFoodItemFromCatalog(
-      this.selectedMealForFood.id,
-      this.selectedCatalogFood.id,
-      this.catalogQuantityGrams
-    );
-
-    this.selectedMealForFood = null;
-    this.cdr.markForCheck();
+    this.isSavingFood = true;
+    try {
+      await this.dietService.addFoodItemFromCatalog(
+        this.selectedMealForFood.id,
+        this.selectedCatalogFood.id,
+        this.catalogQuantityGrams
+      );
+      this.selectedMealForFood = null;
+    } finally {
+      this.isSavingFood = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async confirmAddManualFood() {
-    if (!this.selectedMealForFood || !this.newFoodName.trim() || !this.newFoodCalories) return;
+    if (this.isSavingFood || !this.selectedMealForFood || !this.newFoodName.trim() || !this.newFoodCalories) return;
 
-    await this.dietService.addFoodItem(
-      this.selectedMealForFood.id,
-      this.newFoodName,
-      this.newFoodCalories,
-      this.newFoodNote,
-      this.newFoodProtein || 0,
-      this.newFoodCarbs || 0,
-      this.newFoodFat || 0
-    );
-
-    this.selectedMealForFood = null;
-    this.cdr.markForCheck();
+    this.isSavingFood = true;
+    try {
+      await this.dietService.addFoodItem(
+        this.selectedMealForFood.id,
+        this.newFoodName,
+        this.newFoodCalories,
+        this.newFoodNote,
+        this.newFoodProtein || 0,
+        this.newFoodCarbs || 0,
+        this.newFoodFat || 0
+      );
+      this.selectedMealForFood = null;
+    } finally {
+      this.isSavingFood = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async deleteFoodItem(item: DietLogItem) {
@@ -1186,10 +1196,16 @@ export class DietLogComponent implements OnInit {
   }
 
   async confirmAddMeal() {
-    if (!this.newMealName.trim()) return;
-    await this.dietService.addMeal(this.newMealName);
-    this.isAddingMeal = false;
-    this.cdr.markForCheck();
+    if (this.isSavingMeal || !this.newMealName.trim()) return;
+
+    this.isSavingMeal = true;
+    try {
+      await this.dietService.addMeal(this.newMealName);
+      this.isAddingMeal = false;
+    } finally {
+      this.isSavingMeal = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async deleteMeal(meal: DietMealDetail) {
