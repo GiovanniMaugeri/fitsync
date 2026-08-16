@@ -48,7 +48,7 @@ import { LucideAngularModule, User, Globe, WifiOff, AlertTriangle, CheckCircle, 
             </div>
           </div>
           <div class="profile-actions">
-            <button class="btn btn-primary" (click)="syncNow()" [disabled]="!isOnline()"><lucide-icon [img]="Zap" size="16"></lucide-icon> Sincronizza Ora</button>
+            <button class="btn btn-primary" (click)="syncNow()" [disabled]="!isOnline() || isSyncing()"><lucide-icon [img]="Zap" size="16"></lucide-icon> {{ isSyncing() ? 'Sincronizzazione...' : 'Sincronizza Ora' }}</button>
             <button class="btn btn-outline" (click)="signOut()">Disconnetti</button>
           </div>
         </div>
@@ -228,6 +228,7 @@ export class AuthComponent implements OnInit {
   currentUser$ = this.supabaseService.currentUser$;
   isOnline = this.syncService.isOnline;
   pendingCount = this.syncService.pendingCount;
+  isSyncing = this.syncService.isSyncing;
 
   isLoginMode = true;
   username = '';
