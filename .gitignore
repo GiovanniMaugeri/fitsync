@@ -5,4 +5,5 @@ src/environments/environment.ts
 .angular/
 dist/
 supabase/.temp/
+tools/
 
