@@ -237,7 +237,38 @@ export class SyncService {
     }
   }
 
+  private pullRemoteDataPromise: Promise<void> | null = null;
+  private pullRerunRequested = false;
+
+  /**
+   * Punto di ingresso pubblico: pullRemoteData() viene chiamato sia direttamente da
+   * loadLogForDate() sia internamente da syncNow() al termine di ogni sync. Senza
+   * coalescing, due chiamate sovrapposte possono interlacciarsi: una pull può leggere
+   * lo stato remoto PRIMA che una push concorrente completi, ma trovare la coda di sync
+   * già svuotata da quella stessa push (completata nel frattempo) — la protezione sugli
+   * item "ancora in coda" non scatta più, e un record appena creato/sincronizzato viene
+   * cancellato in locale per errore. Stesso pattern di coalescing di syncNow().
+   */
   public async pullRemoteData(): Promise<void> {
+    if (this.pullRemoteDataPromise) {
+      this.pullRerunRequested = true;
+      return this.pullRemoteDataPromise;
+    }
+
+    this.pullRemoteDataPromise = this.runPullRemoteData();
+    try {
+      await this.pullRemoteDataPromise;
+    } finally {
+      this.pullRemoteDataPromise = null;
+    }
+
+    if (this.pullRerunRequested) {
+      this.pullRerunRequested = false;
+      await this.pullRemoteData();
+    }
+  }
+
+  private async runPullRemoteData(): Promise<void> {
     const client = this.supabaseService.supabase;
     if (!client || !this.isOnline()) return;
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, from } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 import { db, generateUUID } from '../db/app-db';
 import { DietLog, DietMeal, DietLogItem, DietMealDetail } from '../models/fitsync.models';
 import { logger } from '../utils/logger';
@@ -21,7 +21,25 @@ export class DietService {
     private supabaseService: SupabaseService,
     private syncService: SyncService
   ) {
-    this.loadLogForDate(this.selectedDateSubject.value);
+    // Al costruttore, l'autenticazione Supabase non si è ancora risolta: currentUserId
+    // restituisce LOCAL_USER_ID finché client.auth.getUser() non completa. Questa
+    // sottoscrizione è l'unico punto che aspetta esplicitamente una pull di rete: quando
+    // l'utente reale viene riconosciuto (o cambia), scarica i dati aggiornati una volta,
+    // poi ricarica dal locale. loadLogForDate() da sola non tocca più la rete (vedi sotto),
+    // quindi senza questo la vista resterebbe agganciata ai dati "locali" pre-login per sempre.
+    this.supabaseService.currentUser$
+      .pipe(distinctUntilChanged((a, b) => (a?.id || null) === (b?.id || null)))
+      .subscribe(async () => {
+        const userId = this.supabaseService.currentUserId;
+        if (navigator.onLine && this.supabaseService.isConfigured && userId !== LOCAL_USER_ID) {
+          try {
+            await this.syncService.pullRemoteData();
+          } catch (e) {
+            logger.warn('FitSync DietService: pull dei dati remoti non completato:', e);
+          }
+        }
+        this.loadLogForDate(this.selectedDateSubject.value);
+      });
   }
 
   getTodayDateString(): string {
@@ -59,13 +77,13 @@ export class DietService {
     const userId = this.supabaseService.currentUserId;
     const isOnline = navigator.onLine && this.supabaseService.isConfigured;
 
-    // Se l'utente è online ed autenticato su Supabase, effettua prima il pull dei dati remoti
+    // Legge sempre e solo dal locale (Dexie) — niente pull bloccante qui: la pull di rete
+    // avviene una volta al riconoscimento dell'utente (vedi costruttore), dopo ogni mutazione
+    // e alla riconnessione (via syncService.enqueue/syncNow). Lancia comunque una sync in
+    // background (non attesa) per tenere i dati ragionevolmente freschi senza far aspettare
+    // la UI ad ogni cambio data.
     if (isOnline && userId && userId !== LOCAL_USER_ID) {
-      try {
-        await this.syncService.pullRemoteData();
-      } catch (e) {
-        logger.warn('FitSync DietService: pull dei dati remoti non completato:', e);
-      }
+      this.syncService.syncNow();
     }
 
     let log = await db.dietLogs.where('user_id').equals(userId).filter(l => l.date === dateStr).first();
