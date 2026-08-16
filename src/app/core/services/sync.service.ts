@@ -222,9 +222,12 @@ export class SyncService {
       if (exErr) {
         logger.warn('FitSync: Errore durante il pull degli esercizi da Supabase:', exErr);
       } else if (exercises) {
+        const pendingQueueEx = await db.syncQueue.toArray();
+        const pendingExIds = new Set(pendingQueueEx.filter(q => q.table_name === 'exercises').map(q => q.payload?.['id']));
+
         const remoteIds = new Set(exercises.map(e => e.id));
         const localExercises = await db.exercises.toArray();
-        const toDelete = localExercises.filter(e => !remoteIds.has(e.id)).map(e => e.id);
+        const toDelete = localExercises.filter(e => !remoteIds.has(e.id) && !pendingExIds.has(e.id)).map(e => e.id);
         if (toDelete.length > 0) {
           await db.exercises.bulkDelete(toDelete);
           logger.log(`FitSync: Rimossi ${toDelete.length} esercizi locali eliminati dal DB remoto.`);
@@ -239,9 +242,12 @@ export class SyncService {
       if (foodsErr) {
         logger.warn('FitSync: Errore durante il pull degli alimenti da Supabase:', foodsErr);
       } else if (foods) {
+        const pendingQueueFoods = await db.syncQueue.toArray();
+        const pendingFoodIds = new Set(pendingQueueFoods.filter(q => q.table_name === 'foods').map(q => q.payload?.['id']));
+
         const remoteFoodIds = new Set(foods.map(f => f.id));
         const localFoods = await db.foods.toArray();
-        const toDeleteFoods = localFoods.filter(f => !remoteFoodIds.has(f.id)).map(f => f.id);
+        const toDeleteFoods = localFoods.filter(f => !remoteFoodIds.has(f.id) && !pendingFoodIds.has(f.id)).map(f => f.id);
         if (toDeleteFoods.length > 0) {
           await db.foods.bulkDelete(toDeleteFoods);
           logger.log(`FitSync: Rimossi ${toDeleteFoods.length} alimenti locali eliminati dal DB remoto.`);
@@ -302,9 +308,12 @@ export class SyncService {
         if (sErr) {
           logger.warn('FitSync: Errore durante il pull delle sessioni da Supabase:', sErr);
         } else if (sessions) {
+          const pendingQueueSessions = await db.syncQueue.toArray();
+          const pendingSessionIds = new Set(pendingQueueSessions.filter(q => q.table_name === 'workout_sessions').map(q => q.payload?.['id']));
+
           const remoteIds = new Set(sessions.map(s => s.id));
           const localSessions = await db.workoutSessions.where('user_id').equals(userId).toArray();
-          const toDelete = localSessions.filter(s => !remoteIds.has(s.id)).map(s => s.id);
+          const toDelete = localSessions.filter(s => !remoteIds.has(s.id) && !pendingSessionIds.has(s.id)).map(s => s.id);
           if (toDelete.length > 0) {
             await db.workoutSessions.bulkDelete(toDelete);
             logger.log(`FitSync: Rimosse ${toDelete.length} sessioni locali eliminate dal DB remoto.`);
@@ -323,9 +332,12 @@ export class SyncService {
           if (setErr) {
             logger.warn('FitSync: Errore durante il pull dei set da Supabase:', setErr);
           } else if (sets) {
+            const pendingQueueSets = await db.syncQueue.toArray();
+            const pendingSetIds = new Set(pendingQueueSets.filter(q => q.table_name === 'workout_sets').map(q => q.payload?.['id']));
+
             const remoteIds = new Set(sets.map(s => s.id));
             const localSets = await db.workoutSets.where('session_id').anyOf(userSessionIds).toArray();
-            const toDelete = localSets.filter(s => !remoteIds.has(s.id)).map(s => s.id);
+            const toDelete = localSets.filter(s => !remoteIds.has(s.id) && !pendingSetIds.has(s.id)).map(s => s.id);
             if (toDelete.length > 0) {
               await db.workoutSets.bulkDelete(toDelete);
             }
@@ -341,9 +353,12 @@ export class SyncService {
         try {
           const { data: dietLogs, error: dlErr } = await client.from('diet_logs').select('*').eq('user_id', userId);
           if (!dlErr && dietLogs) {
+            const pendingQueueLogs = await db.syncQueue.toArray();
+            const pendingLogIds = new Set(pendingQueueLogs.filter(q => q.table_name === 'diet_logs').map(q => q.payload?.['id']));
+
             const remoteLogIds = new Set(dietLogs.map(l => l.id));
             const localLogs = await db.dietLogs.where('user_id').equals(userId).toArray();
-            const toDelLogs = localLogs.filter(l => !remoteLogIds.has(l.id)).map(l => l.id);
+            const toDelLogs = localLogs.filter(l => !remoteLogIds.has(l.id) && !pendingLogIds.has(l.id)).map(l => l.id);
             if (toDelLogs.length > 0) {
               await db.dietLogs.bulkDelete(toDelLogs);
             }
