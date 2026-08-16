@@ -1,19 +1,21 @@
 import Dexie, { Table } from 'dexie';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '../utils/logger';
-import { 
-  Profile, 
-  Exercise, 
-  WorkoutTemplate, 
-  TemplateExercise, 
-  WorkoutSession, 
-  WorkoutSet, 
+import {
+  Profile,
+  Exercise,
+  Food,
+  WorkoutTemplate,
+  TemplateExercise,
+  WorkoutSession,
+  WorkoutSet,
   SyncQueueItem,
   DietLog,
   DietMeal,
   DietLogItem
 } from '../models/fitsync.models';
 import defaultExercisesData from '../data/default-exercises.json';
+import defaultFoodsData from '../data/default-foods.json';
 
 export function generateUUID(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -219,6 +221,7 @@ export class FitSyncDatabase extends Dexie {
   dietLogs!: Table<DietLog, string>;
   dietMeals!: Table<DietMeal, string>;
   dietLogItems!: Table<DietLogItem, string>;
+  foods!: Table<Food, string>;
 
   constructor() {
     super('FitSyncDB');
@@ -240,8 +243,14 @@ export class FitSyncDatabase extends Dexie {
       dietLogItems: 'id, user_id, meal_id'
     };
 
+    const schemaV6 = {
+      ...schemaV5,
+      foods: 'id, user_id, name, is_custom, is_public'
+    };
+
     this.version(1).stores(schemaV1);
     this.version(5).stores(schemaV5);
+    this.version(6).stores(schemaV6);
 
     this.version(2).stores(schemaV1).upgrade(async tx => {
       // Migrazione degli esercizi esistenti da 'Braccia' a 'Bicipiti' o 'Tricipiti'
@@ -307,7 +316,10 @@ export class FitSyncDatabase extends Dexie {
       logger.log('FitSyncDB: Migrazione schema Versione 4 completata con successo!');
     });
 
-    this.on('populate', () => this.populateInitialExercises());
+    this.on('populate', () => {
+      this.populateInitialExercises();
+      this.populateInitialFoods();
+    });
 
     // Failsafe: se il database esiste già ma mancano gli esercizi di default UUID, li popoliamo all'avvio.
     this.on('ready', async () => {
@@ -316,6 +328,12 @@ export class FitSyncDatabase extends Dexie {
         if (!hasDefault) {
           logger.log('FitSyncDB exercises table is missing default UUID exercises. Seeding...');
           await this.populateInitialExercises();
+        }
+
+        const foodsCount = await this.foods.count();
+        if (foodsCount === 0) {
+          logger.log('FitSyncDB foods table is empty. Seeding default foods...');
+          await this.populateInitialFoods();
         }
 
         // Esegue sempre un controllo e migrazione dei dati vecchi rimasti con ID non-UUID
@@ -347,6 +365,10 @@ export class FitSyncDatabase extends Dexie {
 
   private async populateInitialExercises() {
     await this.exercises.bulkAdd(defaultExercisesData as Exercise[]);
+  }
+
+  private async populateInitialFoods() {
+    await this.foods.bulkAdd(defaultFoodsData as Food[]);
   }
 }
 

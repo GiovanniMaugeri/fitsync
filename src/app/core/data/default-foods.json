@@ -1,0 +1,2132 @@
+[
+  {
+    "id": "b5b056dd-87a1-4dc8-9b24-f0f2f94703c9",
+    "name": "Pasta di semola (cruda)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 341,
+    "protein_100g": 13.5,
+    "carbs_100g": 72.7,
+    "fat_100g": 1.2
+  },
+  {
+    "id": "a98c26f5-22ce-446b-91d4-40cb517b5789",
+    "name": "Pasta all'uovo (cruda)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 358,
+    "protein_100g": 12.5,
+    "carbs_100g": 71.7,
+    "fat_100g": 3.7
+  },
+  {
+    "id": "2bb35449-2963-4e85-9ab5-b94034c0470a",
+    "name": "Pasta integrale (cruda)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 319,
+    "protein_100g": 13.4,
+    "carbs_100g": 66.2,
+    "fat_100g": 2.9
+  },
+  {
+    "id": "3ed94787-22d2-4b1c-9abd-9d31098144e7",
+    "name": "Riso brillato (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 334,
+    "protein_100g": 6.7,
+    "carbs_100g": 80.4,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "406ef40f-189d-4ecb-bed1-38cf80087a63",
+    "name": "Riso basmati (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 349,
+    "protein_100g": 7.5,
+    "carbs_100g": 77,
+    "fat_100g": 0.6
+  },
+  {
+    "id": "8d97e67c-e94e-44f9-9d2d-60f773864320",
+    "name": "Riso integrale (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 337,
+    "protein_100g": 7.5,
+    "carbs_100g": 74.8,
+    "fat_100g": 2.7
+  },
+  {
+    "id": "80ca3524-75b0-4988-936c-0fa52dd2cfb1",
+    "name": "Farro (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 335,
+    "protein_100g": 15,
+    "carbs_100g": 67.1,
+    "fat_100g": 2.5
+  },
+  {
+    "id": "40a07848-c5f9-4c31-a29b-210913cd67e6",
+    "name": "Orzo perlato (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 328,
+    "protein_100g": 10.4,
+    "carbs_100g": 72.5,
+    "fat_100g": 1.5
+  },
+  {
+    "id": "91238d95-f717-4ac3-8a30-3a3535ed2dc8",
+    "name": "Avena, fiocchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 379,
+    "protein_100g": 13.5,
+    "carbs_100g": 62.6,
+    "fat_100g": 6.5
+  },
+  {
+    "id": "d015f4b2-e663-4fcb-b2b8-f17ffa725f1d",
+    "name": "Quinoa (cruda)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 368,
+    "protein_100g": 14.1,
+    "carbs_100g": 64.2,
+    "fat_100g": 6.1
+  },
+  {
+    "id": "a2b86631-1020-4567-ae1a-e7988e09fa05",
+    "name": "Cous cous (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 376,
+    "protein_100g": 12.8,
+    "carbs_100g": 77.4,
+    "fat_100g": 1.1
+  },
+  {
+    "id": "0cbd6efb-85b0-4e57-808a-e99e162e684f",
+    "name": "Pane comune",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 289,
+    "protein_100g": 7.7,
+    "carbs_100g": 62.1,
+    "fat_100g": 1
+  },
+  {
+    "id": "775b9ffc-a733-4b8a-94da-25aac2907efe",
+    "name": "Pane integrale",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 224,
+    "protein_100g": 9,
+    "carbs_100g": 41,
+    "fat_100g": 1.7
+  },
+  {
+    "id": "ecf7d4c4-d81d-4b47-8226-b430638d4382",
+    "name": "Pane di segale",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 220,
+    "protein_100g": 7.9,
+    "carbs_100g": 45.8,
+    "fat_100g": 1.1
+  },
+  {
+    "id": "1b7b50ec-a6ad-41f8-929a-4033279cb279",
+    "name": "Pane carasau",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 353,
+    "protein_100g": 11.7,
+    "carbs_100g": 74,
+    "fat_100g": 2
+  },
+  {
+    "id": "30fbdb17-2393-4699-87c6-23ac94423957",
+    "name": "Piadina",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 300,
+    "protein_100g": 8,
+    "carbs_100g": 50,
+    "fat_100g": 8
+  },
+  {
+    "id": "9ff2fd9a-8dc5-4cf4-b82e-aafb645c7b78",
+    "name": "Grissini",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 431,
+    "protein_100g": 10.7,
+    "carbs_100g": 74.3,
+    "fat_100g": 8.9
+  },
+  {
+    "id": "1456accb-ec35-4ab5-883b-dd38b2c053e0",
+    "name": "Fette biscottate",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 408,
+    "protein_100g": 10.4,
+    "carbs_100g": 76.8,
+    "fat_100g": 6.6
+  },
+  {
+    "id": "4eac2c80-3b32-4ee7-97ac-882767f2d215",
+    "name": "Farina di grano tenero tipo 00",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 340,
+    "protein_100g": 11,
+    "carbs_100g": 74,
+    "fat_100g": 1
+  },
+  {
+    "id": "2ce8c21d-817e-4433-9081-88ee73c818b3",
+    "name": "Farina di mais (fumetto)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 351,
+    "protein_100g": 8.7,
+    "carbs_100g": 75.9,
+    "fat_100g": 3.4
+  },
+  {
+    "id": "8f0b02e3-04cb-4073-8b8c-35ee98f7254e",
+    "name": "Polenta pronta (cotta)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 70,
+    "protein_100g": 1.7,
+    "carbs_100g": 15,
+    "fat_100g": 0.5
+  },
+  {
+    "id": "8a67ec42-7441-4502-a4f8-34cc4d2800b7",
+    "name": "Cracker",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 438,
+    "protein_100g": 10,
+    "carbs_100g": 65,
+    "fat_100g": 15
+  },
+  {
+    "id": "56438c1f-668f-43d2-8f4f-2992102eaa43",
+    "name": "Muesli",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 374,
+    "protein_100g": 9.5,
+    "carbs_100g": 66,
+    "fat_100g": 7
+  },
+  {
+    "id": "e6715d25-a399-4d06-8628-e0fff0361015",
+    "name": "Corn flakes",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 357,
+    "protein_100g": 8,
+    "carbs_100g": 84,
+    "fat_100g": 0.9
+  },
+  {
+    "id": "d4ed7ba1-e438-41db-bfd2-5885bd2241da",
+    "name": "Gnocchi di patate (freschi)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 140,
+    "protein_100g": 3,
+    "carbs_100g": 28,
+    "fat_100g": 1
+  },
+  {
+    "id": "06ddc53c-7133-4f4f-87cd-e7fc2ad89855",
+    "name": "Tortellini freschi (ripieno carne)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 280,
+    "protein_100g": 12,
+    "carbs_100g": 40,
+    "fat_100g": 7
+  },
+  {
+    "id": "11ec6b4f-0a8f-43be-a1a2-8c86105f2fa3",
+    "name": "Petto di pollo (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 100,
+    "protein_100g": 23.3,
+    "carbs_100g": 0,
+    "fat_100g": 0.8
+  },
+  {
+    "id": "fb3bd4db-2808-4e34-afcc-660cb51678cd",
+    "name": "Coscia di pollo (cruda, con pelle)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 216,
+    "protein_100g": 17,
+    "carbs_100g": 0,
+    "fat_100g": 15.6
+  },
+  {
+    "id": "fae7e320-7bce-48c1-8c15-31542b74e6f3",
+    "name": "Petto di tacchino (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 104,
+    "protein_100g": 24,
+    "carbs_100g": 0,
+    "fat_100g": 0.7
+  },
+  {
+    "id": "a83bb56c-e646-44e9-8b30-886250d4b64f",
+    "name": "Fesa di tacchino (affettata)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 104,
+    "protein_100g": 22,
+    "carbs_100g": 1,
+    "fat_100g": 1.5
+  },
+  {
+    "id": "43b49018-db6d-4136-9386-d508479a26ce",
+    "name": "Anatra (cruda)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 135,
+    "protein_100g": 19,
+    "carbs_100g": 0,
+    "fat_100g": 6.5
+  },
+  {
+    "id": "797008d4-6900-4347-90c7-aac09932fc0c",
+    "name": "Manzo, taglio magro (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 129,
+    "protein_100g": 21.3,
+    "carbs_100g": 0,
+    "fat_100g": 4.4
+  },
+  {
+    "id": "e4fc2347-84a4-454e-8f81-d5dcccebfe7e",
+    "name": "Vitello, taglio magro (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 109,
+    "protein_100g": 20.7,
+    "carbs_100g": 0,
+    "fat_100g": 2.8
+  },
+  {
+    "id": "942e6a31-c78b-4d56-8d75-55ffc0e71093",
+    "name": "Maiale, lonza (cruda)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 143,
+    "protein_100g": 21.3,
+    "carbs_100g": 0,
+    "fat_100g": 6
+  },
+  {
+    "id": "dcecbbc5-d30f-4e20-84a4-1e2c1d91c34e",
+    "name": "Agnello (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 162,
+    "protein_100g": 18,
+    "carbs_100g": 0,
+    "fat_100g": 9.9
+  },
+  {
+    "id": "f6b67778-5f97-41da-b52c-158cdaca0b2f",
+    "name": "Coniglio (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 118,
+    "protein_100g": 21,
+    "carbs_100g": 0,
+    "fat_100g": 3.5
+  },
+  {
+    "id": "6a37e061-4327-4fc3-ab73-f3aab0643d65",
+    "name": "Salmone (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 208,
+    "protein_100g": 20,
+    "carbs_100g": 0,
+    "fat_100g": 13.6
+  },
+  {
+    "id": "4176c7bf-4466-4b4c-9b4b-5f1586ee8a74",
+    "name": "Tonno (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 159,
+    "protein_100g": 21.5,
+    "carbs_100g": 0.1,
+    "fat_100g": 8.1
+  },
+  {
+    "id": "b2566b20-313b-41ba-9723-1f7df2225d9e",
+    "name": "Tonno al naturale (sgocciolato)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 112,
+    "protein_100g": 25,
+    "carbs_100g": 0,
+    "fat_100g": 0.8
+  },
+  {
+    "id": "b34a1893-8ec4-4af8-a964-9e3a763ab30f",
+    "name": "Merluzzo / Nasello (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 82,
+    "protein_100g": 17.8,
+    "carbs_100g": 0,
+    "fat_100g": 0.7
+  },
+  {
+    "id": "03c8c700-e8eb-477f-b71f-0a6ee675531f",
+    "name": "Orata (cruda)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 121,
+    "protein_100g": 20,
+    "carbs_100g": 0,
+    "fat_100g": 4.5
+  },
+  {
+    "id": "b40d67ee-3a93-4682-921b-140d24f32ad5",
+    "name": "Branzino (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 82,
+    "protein_100g": 16.5,
+    "carbs_100g": 0,
+    "fat_100g": 1.6
+  },
+  {
+    "id": "e5bc4471-7523-47b7-bd45-906a491a687a",
+    "name": "Sgombro (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 205,
+    "protein_100g": 18.6,
+    "carbs_100g": 0,
+    "fat_100g": 13.9
+  },
+  {
+    "id": "d6a07c79-c443-4652-aa17-2f6307233168",
+    "name": "Alici / Acciughe (fresche)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 96,
+    "protein_100g": 16.8,
+    "carbs_100g": 0,
+    "fat_100g": 3.4
+  },
+  {
+    "id": "b9b6dc86-22c1-4100-a575-5e8d36219837",
+    "name": "Gamberi (crudi)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 71,
+    "protein_100g": 13.6,
+    "carbs_100g": 0.9,
+    "fat_100g": 1.2
+  },
+  {
+    "id": "87c5ad01-0b83-4df2-b291-93328265ac53",
+    "name": "Cozze (crude, sgusciate)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 84,
+    "protein_100g": 11.7,
+    "carbs_100g": 3.4,
+    "fat_100g": 2.7
+  },
+  {
+    "id": "1efe9b44-5d64-42dd-a7ec-19b7bc01039e",
+    "name": "Calamari (crudi)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 68,
+    "protein_100g": 13,
+    "carbs_100g": 1.2,
+    "fat_100g": 1
+  },
+  {
+    "id": "42da49a7-a521-468d-bdc4-81f38f92c30a",
+    "name": "Polpo (crudo)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 57,
+    "protein_100g": 10.6,
+    "carbs_100g": 1.4,
+    "fat_100g": 1
+  },
+  {
+    "id": "b97735a7-d103-4b32-8227-972f1f795387",
+    "name": "Uova di gallina (intere)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 128,
+    "protein_100g": 12.4,
+    "carbs_100g": 0,
+    "fat_100g": 8.7
+  },
+  {
+    "id": "adf80998-00f5-4216-a59d-05969a6a75cf",
+    "name": "Albume d'uovo",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 48,
+    "protein_100g": 10.9,
+    "carbs_100g": 0.7,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "d01db3f0-939c-455a-87ff-71f3154409bc",
+    "name": "Tuorlo d'uovo",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 315,
+    "protein_100g": 16,
+    "carbs_100g": 0.6,
+    "fat_100g": 27
+  },
+  {
+    "id": "79a47f3a-e9c4-4bf0-85dc-c10dd75d3789",
+    "name": "Prosciutto crudo, parte magra",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 159,
+    "protein_100g": 27.9,
+    "carbs_100g": 0,
+    "fat_100g": 5.4
+  },
+  {
+    "id": "2a6cd2f9-f46f-4b40-a6d8-f9106a9dd268",
+    "name": "Prosciutto cotto",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 132,
+    "protein_100g": 20.5,
+    "carbs_100g": 0.8,
+    "fat_100g": 5
+  },
+  {
+    "id": "70ee66ab-a0a0-42e6-8553-72568270895e",
+    "name": "Bresaola",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 151,
+    "protein_100g": 32,
+    "carbs_100g": 0.4,
+    "fat_100g": 2.6
+  },
+  {
+    "id": "020c934f-2a73-4ae4-bc3a-68195757cca9",
+    "name": "Speck",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 216,
+    "protein_100g": 25.9,
+    "carbs_100g": 0.5,
+    "fat_100g": 12
+  },
+  {
+    "id": "82c571b4-5616-446c-b3d5-34b04ec83ee3",
+    "name": "Salame Milano",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 380,
+    "protein_100g": 25,
+    "carbs_100g": 1,
+    "fat_100g": 31
+  },
+  {
+    "id": "2df13043-9849-46f3-ba88-8499157bc441",
+    "name": "Mortadella",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 288,
+    "protein_100g": 15.7,
+    "carbs_100g": 3,
+    "fat_100g": 24
+  },
+  {
+    "id": "ef0e77d7-d323-4f19-bb8d-fcb62299dc68",
+    "name": "Wurstel (pollo/tacchino)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 220,
+    "protein_100g": 12,
+    "carbs_100g": 3,
+    "fat_100g": 18
+  },
+  {
+    "id": "a2b13cf9-f79c-4aca-82aa-ffa00ef1a702",
+    "name": "Pancetta",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 379,
+    "protein_100g": 9,
+    "carbs_100g": 0,
+    "fat_100g": 39
+  },
+  {
+    "id": "94e7f1a9-efb5-4e3d-b9b9-ec69667af8ea",
+    "name": "Tofu",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 76,
+    "protein_100g": 8.1,
+    "carbs_100g": 0.7,
+    "fat_100g": 4.8
+  },
+  {
+    "id": "17e98a20-0132-40ac-acf8-8b663ccc5d22",
+    "name": "Seitan",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 118,
+    "protein_100g": 21,
+    "carbs_100g": 4,
+    "fat_100g": 1.5
+  },
+  {
+    "id": "32d3a4de-357a-4aac-ad02-ff9fb927988e",
+    "name": "Tempeh",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 190,
+    "protein_100g": 19,
+    "carbs_100g": 9,
+    "fat_100g": 11
+  },
+  {
+    "id": "82af4215-92c5-4676-8f37-5cc84e04c7bc",
+    "name": "Whey protein (polvere)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 380,
+    "protein_100g": 78,
+    "carbs_100g": 6,
+    "fat_100g": 5
+  },
+  {
+    "id": "b96388ac-fc18-4e07-b08f-75d3660e4358",
+    "name": "Barretta proteica",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 350,
+    "protein_100g": 30,
+    "carbs_100g": 30,
+    "fat_100g": 10
+  },
+  {
+    "id": "1acb56e4-1574-48f4-8494-67be242e99eb",
+    "name": "Lenticchie secche",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 319,
+    "protein_100g": 22.7,
+    "carbs_100g": 51.1,
+    "fat_100g": 1
+  },
+  {
+    "id": "107cf058-83ff-49ba-82af-3a1b7e498cb1",
+    "name": "Ceci secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 316,
+    "protein_100g": 19.6,
+    "carbs_100g": 54.3,
+    "fat_100g": 6
+  },
+  {
+    "id": "da96f1b2-fe28-428f-87f6-303f1bd66e99",
+    "name": "Fagioli borlotti secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 313,
+    "protein_100g": 21.8,
+    "carbs_100g": 47.5,
+    "fat_100g": 1.4
+  },
+  {
+    "id": "a51b5518-084b-4b5d-8cd5-ebf515a07a5f",
+    "name": "Fagioli cannellini secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 333,
+    "protein_100g": 23.4,
+    "carbs_100g": 49.2,
+    "fat_100g": 1.6
+  },
+  {
+    "id": "6e74471a-29a7-40c4-b63c-a4ed175fe98c",
+    "name": "Fagioli neri secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 341,
+    "protein_100g": 21.6,
+    "carbs_100g": 62.4,
+    "fat_100g": 1.4
+  },
+  {
+    "id": "947ec3ff-ff8b-45b2-867c-cc2ac7ca6630",
+    "name": "Fagioli azuki secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 329,
+    "protein_100g": 19.9,
+    "carbs_100g": 62.9,
+    "fat_100g": 0.5
+  },
+  {
+    "id": "d3501484-9bd2-4d24-b188-b7729a032b5e",
+    "name": "Piselli freschi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 81,
+    "protein_100g": 5.4,
+    "carbs_100g": 12.6,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "b47c17c4-4957-4a4a-ae2f-5849882eb433",
+    "name": "Piselli secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 328,
+    "protein_100g": 21.7,
+    "carbs_100g": 52.4,
+    "fat_100g": 1.9
+  },
+  {
+    "id": "647b3073-cabd-4770-8dd3-0ef6c61611f4",
+    "name": "Fave fresche",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 72,
+    "protein_100g": 4.8,
+    "carbs_100g": 8.3,
+    "fat_100g": 0.6
+  },
+  {
+    "id": "4b5fdb59-c4a3-4771-b409-56389514df29",
+    "name": "Soia, semi secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 335,
+    "protein_100g": 36.9,
+    "carbs_100g": 22,
+    "fat_100g": 17.7
+  },
+  {
+    "id": "fc312ab6-df1e-4d55-ba82-e10f9473dadc",
+    "name": "Edamame",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 122,
+    "protein_100g": 11.9,
+    "carbs_100g": 8.9,
+    "fat_100g": 5.2
+  },
+  {
+    "id": "3f239c2d-bcb7-4b07-89ec-30865794c426",
+    "name": "Lupini (ammollati)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 119,
+    "protein_100g": 15.6,
+    "carbs_100g": 8,
+    "fat_100g": 3.5
+  },
+  {
+    "id": "abf94858-d637-46f9-8954-a83a7bb36eb4",
+    "name": "Hummus di ceci",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 177,
+    "protein_100g": 7.9,
+    "carbs_100g": 14.6,
+    "fat_100g": 9.6
+  },
+  {
+    "id": "c1e81c71-02f3-46d8-815a-f2fe4f87b288",
+    "name": "Latte di vacca intero",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 64,
+    "protein_100g": 3.3,
+    "carbs_100g": 4.9,
+    "fat_100g": 3.6
+  },
+  {
+    "id": "f901742a-f6fd-4df7-ad4a-10a432243732",
+    "name": "Latte di vacca parzialmente scremato",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 46,
+    "protein_100g": 3.5,
+    "carbs_100g": 4.9,
+    "fat_100g": 1.6
+  },
+  {
+    "id": "96682a74-2492-475a-83df-ab660c7409d5",
+    "name": "Latte di vacca scremato",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 36,
+    "protein_100g": 3.4,
+    "carbs_100g": 5,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "6b85f57a-28bb-4944-95a0-f568bb12addd",
+    "name": "Latte di soia",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 32,
+    "protein_100g": 3.3,
+    "carbs_100g": 0.8,
+    "fat_100g": 1.8
+  },
+  {
+    "id": "720edb42-86e2-4805-a9a3-54772d60504f",
+    "name": "Latte di mandorla",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 24,
+    "protein_100g": 0.5,
+    "carbs_100g": 3,
+    "fat_100g": 1.1
+  },
+  {
+    "id": "7b8d5ab1-d68c-4c7b-ae6f-d86368840a45",
+    "name": "Latte condensato zuccherato",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 321,
+    "protein_100g": 7.9,
+    "carbs_100g": 54.4,
+    "fat_100g": 8.7
+  },
+  {
+    "id": "e4d005b6-e680-4813-b546-11c9c4dd6139",
+    "name": "Yogurt intero bianco",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 66,
+    "protein_100g": 3.5,
+    "carbs_100g": 4.3,
+    "fat_100g": 3.6
+  },
+  {
+    "id": "aedbb214-f415-4d6f-b3ab-90162b2ad8ff",
+    "name": "Yogurt magro bianco",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 44,
+    "protein_100g": 3.9,
+    "carbs_100g": 5.7,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "d2bab6c6-21fe-40e6-b78b-b423b219c376",
+    "name": "Yogurt alla frutta",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 92,
+    "protein_100g": 3.5,
+    "carbs_100g": 15,
+    "fat_100g": 1.5
+  },
+  {
+    "id": "661c96d1-9f8f-4746-8515-0bff8479cb11",
+    "name": "Yogurt greco intero",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 97,
+    "protein_100g": 5.7,
+    "carbs_100g": 4,
+    "fat_100g": 6.5
+  },
+  {
+    "id": "31eb2be3-c9c3-48b3-96c4-89f3401507a7",
+    "name": "Yogurt greco 0%",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 59,
+    "protein_100g": 10,
+    "carbs_100g": 3.6,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "22574768-63eb-4014-9a67-1a5ca44e17d0",
+    "name": "Mozzarella di vacca",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 253,
+    "protein_100g": 18.7,
+    "carbs_100g": 0.7,
+    "fat_100g": 19.5
+  },
+  {
+    "id": "8941c8b8-c301-452d-883f-7dc23ca7edf3",
+    "name": "Mozzarella di bufala",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 288,
+    "protein_100g": 16.7,
+    "carbs_100g": 0.4,
+    "fat_100g": 24.4
+  },
+  {
+    "id": "c21d1665-5ec2-4d67-a2f8-fab268e47866",
+    "name": "Parmigiano Reggiano DOP",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 397,
+    "protein_100g": 32.4,
+    "carbs_100g": 0,
+    "fat_100g": 29.7
+  },
+  {
+    "id": "3ed70e8b-c87b-4051-98ca-90fd22c7f5e5",
+    "name": "Grana Padano",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 384,
+    "protein_100g": 33,
+    "carbs_100g": 0,
+    "fat_100g": 28
+  },
+  {
+    "id": "1bee8103-0ced-4997-a72e-2ce6019f5c1b",
+    "name": "Ricotta vaccina",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 146,
+    "protein_100g": 8.8,
+    "carbs_100g": 3.5,
+    "fat_100g": 10.9
+  },
+  {
+    "id": "78cc521b-88b2-4da2-88e4-efeb350ce1c7",
+    "name": "Fiocchi di latte (cottage)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 98,
+    "protein_100g": 12,
+    "carbs_100g": 3,
+    "fat_100g": 4.3
+  },
+  {
+    "id": "a0251486-2036-41cc-9cfd-51e148e592b4",
+    "name": "Formaggio spalmabile fresco",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 253,
+    "protein_100g": 5.8,
+    "carbs_100g": 4,
+    "fat_100g": 24
+  },
+  {
+    "id": "0db22ff7-6911-46ff-9e2c-cb7e20122085",
+    "name": "Mascarpone",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 450,
+    "protein_100g": 4.5,
+    "carbs_100g": 4,
+    "fat_100g": 47
+  },
+  {
+    "id": "390089b5-e4f9-42d8-9e50-80d64092cf83",
+    "name": "Gorgonzola",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 324,
+    "protein_100g": 19,
+    "carbs_100g": 2.2,
+    "fat_100g": 26.9
+  },
+  {
+    "id": "d8341bd9-0eb3-4800-9ed4-66b069f809e5",
+    "name": "Provolone",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 351,
+    "protein_100g": 25.6,
+    "carbs_100g": 2.1,
+    "fat_100g": 26.6
+  },
+  {
+    "id": "112186ae-9274-411c-bfd4-8a80c43cc25d",
+    "name": "Emmental",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 380,
+    "protein_100g": 28,
+    "carbs_100g": 1.5,
+    "fat_100g": 29
+  },
+  {
+    "id": "b6d8db86-6539-4b60-98d7-a9f70ab428a7",
+    "name": "Feta",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 264,
+    "protein_100g": 14.2,
+    "carbs_100g": 4.1,
+    "fat_100g": 21.3
+  },
+  {
+    "id": "da172bdc-9f04-4287-924d-a14ec4d62868",
+    "name": "Burro",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 758,
+    "protein_100g": 0.6,
+    "carbs_100g": 1,
+    "fat_100g": 83.4
+  },
+  {
+    "id": "c081075d-9100-4543-8d2c-766dd8b28e1d",
+    "name": "Panna da cucina",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 337,
+    "protein_100g": 2.3,
+    "carbs_100g": 3.4,
+    "fat_100g": 35
+  },
+  {
+    "id": "f0909699-1260-415c-a3bd-9a889a65590d",
+    "name": "Kefir",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 41,
+    "protein_100g": 3.3,
+    "carbs_100g": 4,
+    "fat_100g": 1
+  },
+  {
+    "id": "82d6ad86-49f9-4ff5-b17e-613a501460ee",
+    "name": "Skyr",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 63,
+    "protein_100g": 11,
+    "carbs_100g": 4,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "b9bbfa60-818e-4432-853e-396726d6d9b0",
+    "name": "Banane fresche",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 76,
+    "protein_100g": 1.2,
+    "carbs_100g": 17.4,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "92c81af4-c1bb-4eb5-859c-e8be3b045a9e",
+    "name": "Mele",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 52,
+    "protein_100g": 0.3,
+    "carbs_100g": 13.8,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "dd346cb1-aa97-4aae-8072-715609ec9227",
+    "name": "Pere",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 57,
+    "protein_100g": 0.4,
+    "carbs_100g": 13.7,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "c1b0c091-df38-42ca-ad84-6bd309c7f5dd",
+    "name": "Arance",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 34,
+    "protein_100g": 0.7,
+    "carbs_100g": 7.8,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "8b0ca530-ae2e-42e6-b581-4299e8cb4d4d",
+    "name": "Mandarini",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 53,
+    "protein_100g": 0.8,
+    "carbs_100g": 12.2,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "d61774ae-82a4-438f-aa9e-d938af03d4fb",
+    "name": "Pompelmo",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 30,
+    "protein_100g": 0.7,
+    "carbs_100g": 6.5,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "602e6145-0e8a-42c2-abcf-f771cd5fe373",
+    "name": "Kiwi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 51,
+    "protein_100g": 1.2,
+    "carbs_100g": 10.5,
+    "fat_100g": 0.5
+  },
+  {
+    "id": "42aa1ca5-3bc5-40d5-941c-66628d2b447a",
+    "name": "Fragole",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 27,
+    "protein_100g": 0.9,
+    "carbs_100g": 5.3,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "2acadcbb-eee4-4e37-b701-35cc72298605",
+    "name": "Uva",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 61,
+    "protein_100g": 0.5,
+    "carbs_100g": 15.6,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "b88188ed-5b4a-4591-94ce-6673ca474eb6",
+    "name": "Ananas",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 40,
+    "protein_100g": 0.5,
+    "carbs_100g": 10,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "c2c6a2ce-4bc8-4a91-b1ba-d6c92320f003",
+    "name": "Pesche",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 27,
+    "protein_100g": 0.9,
+    "carbs_100g": 6,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "004348d7-69a9-41aa-b204-f1c1592cac92",
+    "name": "Albicocche",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 28,
+    "protein_100g": 0.9,
+    "carbs_100g": 6.2,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "5ea76830-edde-4ff4-8836-c83fc88fbe2d",
+    "name": "Prugne",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 42,
+    "protein_100g": 0.5,
+    "carbs_100g": 9.9,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "655645bb-fc32-45ba-897a-4b80aee216a1",
+    "name": "Ciliegie",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 38,
+    "protein_100g": 1,
+    "carbs_100g": 8,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "2583ae7a-3925-4c14-9e8f-d4bf3b847c4f",
+    "name": "Melone",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 33,
+    "protein_100g": 0.8,
+    "carbs_100g": 7.3,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "d8bdd46c-0b8f-425f-bfb7-2f4415328500",
+    "name": "Anguria",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 16,
+    "protein_100g": 0.5,
+    "carbs_100g": 3.4,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "104e1788-ecc3-4894-aa26-23fa0b6542d3",
+    "name": "Fichi freschi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 47,
+    "protein_100g": 1,
+    "carbs_100g": 10,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "17122c97-4dec-4262-8fb4-af5fc86f8ff2",
+    "name": "Melograno",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 63,
+    "protein_100g": 1.7,
+    "carbs_100g": 14,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "ccc20d19-3bda-4e23-ace4-9cdac6dcb67d",
+    "name": "Cachi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 65,
+    "protein_100g": 0.8,
+    "carbs_100g": 15.9,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "d93de54f-b258-46dd-b712-e123a04aa718",
+    "name": "Avocado",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 160,
+    "protein_100g": 2,
+    "carbs_100g": 1.8,
+    "fat_100g": 14.7
+  },
+  {
+    "id": "6f257a0a-daa3-434d-acb5-5b18af999512",
+    "name": "Mango",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 60,
+    "protein_100g": 0.6,
+    "carbs_100g": 14,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "074594e8-7b66-44fd-80f9-0ee2ac40ae84",
+    "name": "Papaya",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 39,
+    "protein_100g": 0.6,
+    "carbs_100g": 8.3,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "3fed1509-a324-4989-924a-8882bcefc3f9",
+    "name": "Limoni (polpa)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 29,
+    "protein_100g": 0.9,
+    "carbs_100g": 2.5,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "9838a0ca-df7a-478a-922b-6aeb95e69815",
+    "name": "Lamponi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 33,
+    "protein_100g": 1.2,
+    "carbs_100g": 5.4,
+    "fat_100g": 0.5
+  },
+  {
+    "id": "3293d8e8-9888-4047-82a4-67ed093b2502",
+    "name": "Mirtilli",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 42,
+    "protein_100g": 0.7,
+    "carbs_100g": 8.6,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "d200b8e9-3911-4649-9a60-a02a13da7d2c",
+    "name": "More",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 36,
+    "protein_100g": 1.4,
+    "carbs_100g": 6.2,
+    "fat_100g": 0.5
+  },
+  {
+    "id": "035482c6-9382-404b-8710-45b49ceaab77",
+    "name": "Mandorle secche",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 575,
+    "protein_100g": 21.2,
+    "carbs_100g": 21.7,
+    "fat_100g": 49.9
+  },
+  {
+    "id": "61955d3f-1bf0-4f0d-8f18-24cc65ff5492",
+    "name": "Noci secche",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 654,
+    "protein_100g": 15.2,
+    "carbs_100g": 13.7,
+    "fat_100g": 65.2
+  },
+  {
+    "id": "bcc0bce4-3dd4-4919-934d-3014c6e56512",
+    "name": "Nocciole secche",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 628,
+    "protein_100g": 14.1,
+    "carbs_100g": 17,
+    "fat_100g": 60.8
+  },
+  {
+    "id": "07d2a3b2-6821-4eb7-82e0-b8d633a7cb31",
+    "name": "Pistacchi secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 562,
+    "protein_100g": 20.6,
+    "carbs_100g": 27.2,
+    "fat_100g": 45.3
+  },
+  {
+    "id": "630f24bc-3b3e-496c-9827-2e64adbbf217",
+    "name": "Anacardi secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 553,
+    "protein_100g": 18.2,
+    "carbs_100g": 30.2,
+    "fat_100g": 43.9
+  },
+  {
+    "id": "fce5c4d7-34f3-4a84-92c7-05efc7368e00",
+    "name": "Noci pecan",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 691,
+    "protein_100g": 9.2,
+    "carbs_100g": 13.9,
+    "fat_100g": 72
+  },
+  {
+    "id": "7254b706-4b1d-4f4e-9c45-d5b3e0f51106",
+    "name": "Uvetta (uva passa)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 299,
+    "protein_100g": 3.1,
+    "carbs_100g": 68.1,
+    "fat_100g": 0.5
+  },
+  {
+    "id": "8b38e682-05db-460b-b0c5-86de1fd26bde",
+    "name": "Datteri secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 282,
+    "protein_100g": 2.5,
+    "carbs_100g": 63.9,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "602e29c4-248a-4d0d-956a-cde7442bb17f",
+    "name": "Fichi secchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 249,
+    "protein_100g": 3.5,
+    "carbs_100g": 58.9,
+    "fat_100g": 0.9
+  },
+  {
+    "id": "8d553c9f-a515-4bc1-9a3b-acb3cf5ea468",
+    "name": "Prugne secche",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 240,
+    "protein_100g": 2.2,
+    "carbs_100g": 53,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "a90eff42-cbdc-4249-9e25-89744c789827",
+    "name": "Pomodori",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 19,
+    "protein_100g": 1,
+    "carbs_100g": 3.5,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "30d775d6-2f90-4697-be75-0c9aa8084d96",
+    "name": "Zucchine",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 11,
+    "protein_100g": 1.2,
+    "carbs_100g": 1.4,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "9ce09b21-4804-4271-b263-d23f07cbca82",
+    "name": "Melanzane",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 18,
+    "protein_100g": 1,
+    "carbs_100g": 2.6,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "e669e86b-f36f-490c-8917-f6efa7d8e749",
+    "name": "Peperoni",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 22,
+    "protein_100g": 0.9,
+    "carbs_100g": 4.2,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "a8ed126c-2ddc-435a-9b01-6cafebe6d7e6",
+    "name": "Carote",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 35,
+    "protein_100g": 1.1,
+    "carbs_100g": 7.6,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "ef240bac-62bf-4742-a696-37605b8ed64e",
+    "name": "Patate",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 77,
+    "protein_100g": 2.1,
+    "carbs_100g": 17.6,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "b58e8659-29bc-4038-9847-1738b212852c",
+    "name": "Patate dolci",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 86,
+    "protein_100g": 1.6,
+    "carbs_100g": 20.1,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "da9493b7-60f9-462d-93ba-7194ff0a4a32",
+    "name": "Cipolle",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 26,
+    "protein_100g": 1.1,
+    "carbs_100g": 5.7,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "1efc9d3b-2911-4cb0-b260-da667b57302b",
+    "name": "Aglio",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 41,
+    "protein_100g": 6,
+    "carbs_100g": 8.4,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "57030b4b-741b-41f6-9980-680e77db2817",
+    "name": "Broccoli",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 27,
+    "protein_100g": 3,
+    "carbs_100g": 2.9,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "998d6d85-5fc8-44b3-b183-0b614fd4a982",
+    "name": "Cavolfiore",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 25,
+    "protein_100g": 3.2,
+    "carbs_100g": 2.5,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "adc7c004-6ad9-471c-bcf0-299811fc31ea",
+    "name": "Spinaci",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 23,
+    "protein_100g": 2.9,
+    "carbs_100g": 1,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "29fea2fb-aeca-4050-91ba-37aa7bec8612",
+    "name": "Lattuga",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 19,
+    "protein_100g": 1.8,
+    "carbs_100g": 2.2,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "c1aa71e8-79d7-41e4-9d52-eebe49fc8df9",
+    "name": "Rucola",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 25,
+    "protein_100g": 2.6,
+    "carbs_100g": 2.1,
+    "fat_100g": 0.7
+  },
+  {
+    "id": "e9d94517-b996-4e21-ad48-6f580afc8e90",
+    "name": "Radicchio",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 13,
+    "protein_100g": 1.3,
+    "carbs_100g": 1.6,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "c864f564-274b-4618-a07f-3757929f193c",
+    "name": "Finocchi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 9,
+    "protein_100g": 1.2,
+    "carbs_100g": 1.3,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "7ee617f6-6bfa-4c5d-a3b2-f311fb031976",
+    "name": "Sedano",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 20,
+    "protein_100g": 1,
+    "carbs_100g": 3.1,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "2963af2a-dd81-416a-a75e-8933bf0d4911",
+    "name": "Cetrioli",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 12,
+    "protein_100g": 0.7,
+    "carbs_100g": 1.8,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "c5047132-5729-4adc-8f96-a547bef051da",
+    "name": "Fagiolini",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 22,
+    "protein_100g": 1.9,
+    "carbs_100g": 2.7,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "855aee1e-e55f-486e-b7c6-8a0393b6a1db",
+    "name": "Asparagi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 24,
+    "protein_100g": 3.4,
+    "carbs_100g": 2,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "f942f698-f75c-436a-9c6b-d581fa767e1b",
+    "name": "Carciofi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 24,
+    "protein_100g": 2.7,
+    "carbs_100g": 2.5,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "d10ff5be-e17f-4499-8ebe-5e2d92e270be",
+    "name": "Funghi champignon",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 22,
+    "protein_100g": 3.1,
+    "carbs_100g": 1.4,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "02678b66-8ffe-4281-a50f-872b260806f4",
+    "name": "Zucca",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 18,
+    "protein_100g": 1.1,
+    "carbs_100g": 3.5,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "ebfe5464-89ee-4613-85e1-528b3c09befd",
+    "name": "Cavolo verza",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 27,
+    "protein_100g": 2.4,
+    "carbs_100g": 3,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "e703f3c7-06f8-4751-b756-f1f4e85b8bc9",
+    "name": "Cavolo cappuccio",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 26,
+    "protein_100g": 1.4,
+    "carbs_100g": 4.3,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "3a1a9f64-deb3-400c-8e0f-6b74a8fba854",
+    "name": "Rape",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 26,
+    "protein_100g": 0.9,
+    "carbs_100g": 4.7,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "ebff0712-26ba-4574-a874-937cf01f5b94",
+    "name": "Barbabietola",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 44,
+    "protein_100g": 1.6,
+    "carbs_100g": 8.8,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "e3c1b192-4f4e-45f2-be7c-1c88b6858af6",
+    "name": "Porri",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 29,
+    "protein_100g": 2.1,
+    "carbs_100g": 4.6,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "0a18b9a3-b8cc-4636-afc1-21019283cd12",
+    "name": "Mais dolce",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 86,
+    "protein_100g": 3.4,
+    "carbs_100g": 19,
+    "fat_100g": 1.2
+  },
+  {
+    "id": "c4c61057-42c9-451e-9b7f-af8a26e9be2e",
+    "name": "Olive verdi/nere",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 145,
+    "protein_100g": 1,
+    "carbs_100g": 4,
+    "fat_100g": 15
+  },
+  {
+    "id": "3f717e5f-0267-4dad-84d8-3bdc781e7b3e",
+    "name": "Ravanelli",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 17,
+    "protein_100g": 0.8,
+    "carbs_100g": 2.1,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "808cb44f-8983-4cdf-b055-d0d7cf5cf3fc",
+    "name": "Germogli di soia",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 30,
+    "protein_100g": 3,
+    "carbs_100g": 3,
+    "fat_100g": 0.5
+  },
+  {
+    "id": "506f098d-ac60-4cfe-ba20-e67ce3afc24d",
+    "name": "Olio extravergine di oliva",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 899,
+    "protein_100g": 0,
+    "carbs_100g": 0,
+    "fat_100g": 99.9
+  },
+  {
+    "id": "58204cdc-8fd4-4715-ac7a-17c7208b4e1c",
+    "name": "Olio di semi di girasole",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 899,
+    "protein_100g": 0,
+    "carbs_100g": 0,
+    "fat_100g": 99.9
+  },
+  {
+    "id": "90b281b8-ba59-46a4-b884-b5c7d6c92ddc",
+    "name": "Olio di cocco",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 862,
+    "protein_100g": 0,
+    "carbs_100g": 0,
+    "fat_100g": 99.1
+  },
+  {
+    "id": "f93874e0-7608-46da-a301-9a04206c61f5",
+    "name": "Margarina",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 717,
+    "protein_100g": 0.2,
+    "carbs_100g": 0.6,
+    "fat_100g": 79.8
+  },
+  {
+    "id": "b6450856-313c-4973-a6b0-cfad0b0894bd",
+    "name": "Maionese",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 680,
+    "protein_100g": 1.1,
+    "carbs_100g": 2.5,
+    "fat_100g": 74
+  },
+  {
+    "id": "018905ab-3095-4d58-bd82-1a01fc34b27c",
+    "name": "Aceto balsamico",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 88,
+    "protein_100g": 0.5,
+    "carbs_100g": 17,
+    "fat_100g": 0
+  },
+  {
+    "id": "8db9e656-ad1d-491f-bd0b-850eb0a9e9dc",
+    "name": "Miele",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 304,
+    "protein_100g": 0.3,
+    "carbs_100g": 80.3,
+    "fat_100g": 0
+  },
+  {
+    "id": "58cca2e2-5032-4fe0-b4c4-c25cf4e46114",
+    "name": "Zucchero (saccarosio)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 392,
+    "protein_100g": 0,
+    "carbs_100g": 99.6,
+    "fat_100g": 0
+  },
+  {
+    "id": "1ea347bb-62c9-46ed-bc2a-160152382e01",
+    "name": "Marmellata",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 224,
+    "protein_100g": 0.4,
+    "carbs_100g": 55,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "60d76899-d78c-405b-8243-91490455d4ac",
+    "name": "Salsa di soia",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 60,
+    "protein_100g": 6,
+    "carbs_100g": 8,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "8109b8e5-7ef4-47b5-93cf-8996f71bf979",
+    "name": "Ketchup",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 101,
+    "protein_100g": 1.7,
+    "carbs_100g": 24,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "f21f0893-84de-4569-8fbe-06fb0c8ce14f",
+    "name": "Senape",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 108,
+    "protein_100g": 6,
+    "carbs_100g": 8,
+    "fat_100g": 6
+  },
+  {
+    "id": "2559a845-3db1-4584-8917-6ad16d971de5",
+    "name": "Cioccolato fondente 70%",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 598,
+    "protein_100g": 7.8,
+    "carbs_100g": 34,
+    "fat_100g": 42
+  },
+  {
+    "id": "2169f072-47c6-45a2-be39-178135c4cc5b",
+    "name": "Cioccolato al latte",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 535,
+    "protein_100g": 7.7,
+    "carbs_100g": 56,
+    "fat_100g": 30
+  },
+  {
+    "id": "cc7f43ba-16db-45d4-b1af-f4a2894aefe4",
+    "name": "Biscotti secchi (frollini)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 450,
+    "protein_100g": 6.5,
+    "carbs_100g": 70,
+    "fat_100g": 16
+  },
+  {
+    "id": "dfcddfb7-d90b-4770-a6b8-eb07cc3e1e44",
+    "name": "Patatine fritte in busta",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 536,
+    "protein_100g": 6.6,
+    "carbs_100g": 53,
+    "fat_100g": 33
+  },
+  {
+    "id": "2b00d5ed-978d-4e32-a8e3-614ea924af8f",
+    "name": "Popcorn (senza sale/burro)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 387,
+    "protein_100g": 12,
+    "carbs_100g": 78,
+    "fat_100g": 4.5
+  },
+  {
+    "id": "210b24e6-b9e7-45e4-a168-82fc26c36a3c",
+    "name": "Gelato alla crema",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 216,
+    "protein_100g": 4,
+    "carbs_100g": 24,
+    "fat_100g": 11
+  },
+  {
+    "id": "f3120708-61ae-4195-b945-a2fc9949111f",
+    "name": "Gelato alla frutta (sorbetto)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 130,
+    "protein_100g": 0.5,
+    "carbs_100g": 30,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "67b95eb9-88a7-4589-ab01-b09fd7fc644a",
+    "name": "Torta margherita",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 371,
+    "protein_100g": 6,
+    "carbs_100g": 55,
+    "fat_100g": 14
+  },
+  {
+    "id": "4575a3eb-7951-4c3b-b15e-55117609479a",
+    "name": "Croissant",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 406,
+    "protein_100g": 8,
+    "carbs_100g": 46,
+    "fat_100g": 20
+  },
+  {
+    "id": "7c98089f-6824-4857-b651-fb178f2f92bd",
+    "name": "Barretta ai cereali",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 380,
+    "protein_100g": 6,
+    "carbs_100g": 65,
+    "fat_100g": 10
+  },
+  {
+    "id": "11fb3747-2e41-4c1e-be37-8b730706f39f",
+    "name": "Bevanda sportiva isotonica",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 24,
+    "protein_100g": 0,
+    "carbs_100g": 6,
+    "fat_100g": 0
+  },
+  {
+    "id": "c30a3b7e-2e82-4f8e-a391-2f1be3f97fe1",
+    "name": "Succo d'arancia",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 45,
+    "protein_100g": 0.7,
+    "carbs_100g": 10.4,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "571f0700-39e5-45ab-ae78-f68685023c3a",
+    "name": "Succo di mela",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 46,
+    "protein_100g": 0.1,
+    "carbs_100g": 11.3,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "7cc10e2b-2be8-46f8-9194-d38d709689ab",
+    "name": "Cola",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 42,
+    "protein_100g": 0,
+    "carbs_100g": 10.6,
+    "fat_100g": 0
+  },
+  {
+    "id": "19edd07e-598d-4a2d-8c94-c3a85ded8704",
+    "name": "Birra chiara",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 42,
+    "protein_100g": 0.5,
+    "carbs_100g": 3.5,
+    "fat_100g": 0
+  },
+  {
+    "id": "9de35967-a462-42ce-8774-75b9d2d16016",
+    "name": "Vino rosso",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 85,
+    "protein_100g": 0.1,
+    "carbs_100g": 0.3,
+    "fat_100g": 0
+  },
+  {
+    "id": "565aa4ff-27ca-4d0a-86e6-fac143c3a5c6",
+    "name": "Caffè nero (senza zucchero)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 1,
+    "protein_100g": 0.1,
+    "carbs_100g": 0,
+    "fat_100g": 0
+  },
+  {
+    "id": "bc2fb304-f64f-41a6-a312-1db7df36ea16",
+    "name": "Tè (senza zucchero)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 1,
+    "protein_100g": 0,
+    "carbs_100g": 0.2,
+    "fat_100g": 0
+  },
+  {
+    "id": "2b1cdf7d-771b-4635-b6a3-933458c28ce5",
+    "name": "Cacao amaro in polvere",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 355,
+    "protein_100g": 24,
+    "carbs_100g": 11.5,
+    "fat_100g": 24
+  },
+  {
+    "id": "197087f3-828c-4225-afc8-ee6277608a48",
+    "name": "Crema spalmabile alle nocciole",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 539,
+    "protein_100g": 6,
+    "carbs_100g": 57,
+    "fat_100g": 31
+  },
+  {
+    "id": "ac9c588f-e8e9-4d58-906f-6e245a0e3906",
+    "name": "Marshmallow",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 318,
+    "protein_100g": 1.8,
+    "carbs_100g": 81,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "8b4d71cf-c247-465e-985a-1764991e5136",
+    "name": "Wafer alla crema",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 522,
+    "protein_100g": 6.5,
+    "carbs_100g": 61,
+    "fat_100g": 28
+  },
+  {
+    "id": "77ac31dc-cbd3-48d7-be8b-c62a71992fdb",
+    "name": "Taralli",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 460,
+    "protein_100g": 9,
+    "carbs_100g": 65,
+    "fat_100g": 18
+  },
+  {
+    "id": "5f896fc6-3e2e-4781-a04e-1f09b6709d1e",
+    "name": "Pizza margherita",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 271,
+    "protein_100g": 11,
+    "carbs_100g": 33,
+    "fat_100g": 10
+  },
+  {
+    "id": "3265e7bd-45c2-40b9-82c5-15a3f82d027e",
+    "name": "Focaccia",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 290,
+    "protein_100g": 7.5,
+    "carbs_100g": 47,
+    "fat_100g": 8
+  },
+  {
+    "id": "37af07f7-53e7-4a93-b722-436f5b1761d5",
+    "name": "Tortilla di mais",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 218,
+    "protein_100g": 5.7,
+    "carbs_100g": 45,
+    "fat_100g": 2.5
+  },
+  {
+    "id": "20b2d4b6-bb4f-452a-b21c-99723b0e5924",
+    "name": "Tortilla di frumento",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 310,
+    "protein_100g": 8.5,
+    "carbs_100g": 50,
+    "fat_100g": 8
+  },
+  {
+    "id": "38c61591-c740-4897-8dde-a19f9aa1f186",
+    "name": "Frappè / milkshake",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 130,
+    "protein_100g": 3.5,
+    "carbs_100g": 18,
+    "fat_100g": 4.5
+  },
+  {
+    "id": "2212c9ce-e311-4f8b-ab1f-bf499615a0bb",
+    "name": "Energy drink",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 45,
+    "protein_100g": 0,
+    "carbs_100g": 11,
+    "fat_100g": 0
+  }
+]

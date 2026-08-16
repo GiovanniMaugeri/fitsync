@@ -2,21 +2,25 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@
 
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { 
-  LucideAngularModule, 
-  Flame, 
-  Plus, 
-  Trash2, 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar, 
-  Edit3, 
-  Utensils, 
-  Check, 
-  X 
+import {
+  LucideAngularModule,
+  Flame,
+  Plus,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Edit3,
+  Utensils,
+  Check,
+  X,
+  Search,
+  ArrowLeft,
+  Clock
 } from 'lucide-angular';
 import { DietService } from '../../core/services/diet.service';
-import { DietLog, DietMealDetail, DietLogItem } from '../../core/models/fitsync.models';
+import { FoodService } from '../../core/services/food.service';
+import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fitsync.models';
 
 @Component({
   selector: 'app-diet-log',
@@ -87,6 +91,21 @@ import { DietLog, DietMealDetail, DietLogItem } from '../../core/models/fitsync.
           <!-- PROGRESS BAR -->
           <div class="progress-container">
             <div class="progress-fill" [style.width.%]="caloriePercentage" [class.over-fill]="remainingCalories < 0"></div>
+          </div>
+          <!-- MACRO TOTALS -->
+          <div class="macro-totals-row">
+            <div class="macro-pill protein">
+              <span class="macro-label">Proteine</span>
+              <span class="macro-value">{{ totalConsumedProtein }}g</span>
+            </div>
+            <div class="macro-pill carbs">
+              <span class="macro-label">Carboidrati</span>
+              <span class="macro-value">{{ totalConsumedCarbs }}g</span>
+            </div>
+            <div class="macro-pill fat">
+              <span class="macro-label">Grassi</span>
+              <span class="macro-value">{{ totalConsumedFat }}g</span>
+            </div>
           </div>
         </div>
       }
@@ -163,33 +182,130 @@ import { DietLog, DietMealDetail, DietLogItem } from '../../core/models/fitsync.
       <!-- MODAL: ADD FOOD TO MEAL -->
       @if (selectedMealForFood) {
         <div class="modal-backdrop">
-          <div class="modal-card">
+          <div class="modal-card food-picker-modal">
             <div class="modal-header">
               <h3>Aggiungi a: {{ selectedMealForFood.name }}</h3>
               <button class="modal-close" (click)="selectedMealForFood = null">
                 <lucide-icon [img]="X" size="20"></lucide-icon>
               </button>
             </div>
-            <div class="modal-body">
-              <div class="form-group">
-                <label>Nome Cibo / Piatto *</label>
-                <input type="text" [(ngModel)]="newFoodName" placeholder="Es. Riso Basmati e Pollo" class="form-input" autofocus />
+
+            <!-- STATO 1: RICERCA NEL CATALOGO -->
+            @if (!selectedCatalogFood && !showManualEntry) {
+              <div class="modal-body">
+                <div class="search-input-wrap">
+                  <lucide-icon [img]="Search" size="16" class="search-icon"></lucide-icon>
+                  <input type="text" [(ngModel)]="foodSearchQuery" placeholder="Cerca un alimento..." class="form-input search-input" autofocus />
+                </div>
+
+                @if (!foodSearchQuery.trim()) {
+                  @if (frequentFoods.length > 0) {
+                    <div class="results-section-label">
+                      <lucide-icon [img]="Clock" size="13"></lucide-icon>
+                      <span>Usati di frequente in questo pasto</span>
+                    </div>
+                    <div class="food-results-list">
+                      @for (food of frequentFoods; track food.id) {
+                        <div class="food-result-row" (click)="selectCatalogFood(food)">
+                          <span class="food-result-name">{{ food.name }}</span>
+                          <span class="food-result-kcal">{{ food.kcal_100g }} kcal/100g</span>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <p class="picker-hint">Digita per cercare un alimento nel catalogo.</p>
+                  }
+                } @else {
+                  <div class="food-results-list">
+                    @for (food of filteredFoods; track food.id) {
+                      <div class="food-result-row" (click)="selectCatalogFood(food)">
+                        <span class="food-result-name">{{ food.name }}</span>
+                        <span class="food-result-kcal">{{ food.kcal_100g }} kcal/100g</span>
+                      </div>
+                    }
+                    @if (filteredFoods.length === 0) {
+                      <p class="picker-hint">Nessun alimento trovato.</p>
+                    }
+                  </div>
+                }
+
+                <button class="manual-fallback-link" (click)="showManualEntry = true">
+                  Alimento non trovato? Inserisci manualmente
+                </button>
               </div>
-              <div class="form-group">
-                <label>Calorie (kcal) *</label>
-                <input type="number" [(ngModel)]="newFoodCalories" placeholder="Es. 450" class="form-input" min="0" />
+              <div class="modal-footer">
+                <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
               </div>
-              <div class="form-group">
-                <label>Quantità / Note (Opzionale)</label>
-                <input type="text" [(ngModel)]="newFoodNote" placeholder="Es. 200g, 1 porzione" class="form-input" />
+            }
+
+            <!-- STATO 2: QUANTITÀ ALIMENTO DA CATALOGO -->
+            @if (selectedCatalogFood) {
+              <div class="modal-body">
+                <button class="back-link" (click)="backToSearch()">
+                  <lucide-icon [img]="ArrowLeft" size="14"></lucide-icon> Cambia alimento
+                </button>
+                <div class="selected-food-name">{{ selectedCatalogFood.name }}</div>
+                <div class="form-group">
+                  <label>Quantità (grammi) *</label>
+                  <input type="number" [(ngModel)]="catalogQuantityGrams" placeholder="Es. 150" class="form-input" min="0" autofocus />
+                </div>
+                @if (catalogPreview) {
+                  <div class="macro-preview-grid">
+                    <div class="macro-preview-item"><span class="mp-label">Kcal</span><span class="mp-value">{{ catalogPreview.calories }}</span></div>
+                    <div class="macro-preview-item"><span class="mp-label">Prot.</span><span class="mp-value">{{ catalogPreview.protein }}g</span></div>
+                    <div class="macro-preview-item"><span class="mp-label">Carb.</span><span class="mp-value">{{ catalogPreview.carbs }}g</span></div>
+                    <div class="macro-preview-item"><span class="mp-label">Grassi</span><span class="mp-value">{{ catalogPreview.fat }}g</span></div>
+                  </div>
+                }
               </div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
-              <button class="btn btn-primary" (click)="confirmAddFood()" [disabled]="!newFoodName.trim() || !newFoodCalories">
-                <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Cibo
-              </button>
-            </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
+                <button class="btn btn-primary" (click)="confirmAddCatalogFood()" [disabled]="!catalogQuantityGrams">
+                  <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Cibo
+                </button>
+              </div>
+            }
+
+            <!-- STATO 3: INSERIMENTO MANUALE -->
+            @if (showManualEntry) {
+              <div class="modal-body">
+                <button class="back-link" (click)="showManualEntry = false">
+                  <lucide-icon [img]="ArrowLeft" size="14"></lucide-icon> Torna alla ricerca
+                </button>
+                <div class="form-group">
+                  <label>Nome Cibo / Piatto *</label>
+                  <input type="text" [(ngModel)]="newFoodName" placeholder="Es. Riso Basmati e Pollo" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label>Calorie (kcal) *</label>
+                  <input type="number" [(ngModel)]="newFoodCalories" placeholder="Es. 450" class="form-input" min="0" />
+                </div>
+                <div class="form-group">
+                  <label>Quantità / Note (Opzionale)</label>
+                  <input type="text" [(ngModel)]="newFoodNote" placeholder="Es. 200g, 1 porzione" class="form-input" />
+                </div>
+                <div class="macro-input-row">
+                  <div class="form-group">
+                    <label>Proteine (g)</label>
+                    <input type="number" [(ngModel)]="newFoodProtein" placeholder="0" class="form-input" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label>Carboidrati (g)</label>
+                    <input type="number" [(ngModel)]="newFoodCarbs" placeholder="0" class="form-input" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label>Grassi (g)</label>
+                    <input type="number" [(ngModel)]="newFoodFat" placeholder="0" class="form-input" min="0" />
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
+                <button class="btn btn-primary" (click)="confirmAddManualFood()" [disabled]="!newFoodName.trim() || !newFoodCalories">
+                  <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Cibo
+                </button>
+              </div>
+            }
           </div>
         </div>
       }
@@ -421,6 +537,38 @@ import { DietLog, DietMealDetail, DietLogItem } from '../../core/models/fitsync.
       &.over-fill {
         background: linear-gradient(90deg, #f97316, #ef4444);
       }
+    }
+
+    .macro-totals-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .macro-pill {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 0.5rem 0.4rem;
+
+      &.protein { border-color: rgba(168, 85, 247, 0.3); }
+      &.carbs { border-color: rgba(249, 115, 22, 0.3); }
+      &.fat { border-color: rgba(234, 179, 8, 0.3); }
+    }
+
+    .macro-label {
+      font-size: 0.7rem;
+      color: #a1a1aa;
+    }
+
+    .macro-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
     }
 
     .meals-section {
@@ -686,6 +834,146 @@ import { DietLog, DietMealDetail, DietLogItem } from '../../core/models/fitsync.
       gap: 0.5rem;
       margin-top: 0.5rem;
     }
+
+    .food-picker-modal {
+      max-height: 85vh;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.7rem;
+      color: #71717a;
+      pointer-events: none;
+    }
+
+    .search-input {
+      padding-left: 2.1rem;
+    }
+
+    .results-section-label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      color: #71717a;
+      font-weight: 600;
+    }
+
+    .food-results-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      max-height: 40vh;
+      overflow-y: auto;
+    }
+
+    .food-result-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 0.55rem 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(6, 182, 212, 0.1);
+        border-color: rgba(6, 182, 212, 0.4);
+      }
+    }
+
+    .food-result-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .food-result-kcal {
+      font-size: 0.75rem;
+      color: #a1a1aa;
+    }
+
+    .picker-hint {
+      font-size: 0.825rem;
+      color: #71717a;
+      font-style: italic;
+      margin: 0.25rem 0;
+    }
+
+    .manual-fallback-link {
+      background: transparent;
+      border: none;
+      color: var(--primary-cyan, #06b6d4);
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-align: center;
+      padding: 0.4rem;
+
+      &:hover { text-decoration: underline; }
+    }
+
+    .back-link {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: transparent;
+      border: none;
+      color: #a1a1aa;
+      font-size: 0.8rem;
+      cursor: pointer;
+      align-self: flex-start;
+      padding: 0;
+
+      &:hover { color: #ffffff; }
+    }
+
+    .selected-food-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .macro-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+
+    .macro-preview-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15rem;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      padding: 0.5rem 0.25rem;
+    }
+
+    .mp-label {
+      font-size: 0.65rem;
+      color: #a1a1aa;
+    }
+
+    .mp-value {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .macro-input-row {
+      display: flex;
+      gap: 0.5rem;
+
+      .form-group { flex: 1; }
+    }
   `]
 })
 export class DietLogComponent implements OnInit {
@@ -699,6 +987,9 @@ export class DietLogComponent implements OnInit {
   readonly Utensils = Utensils;
   readonly Check = Check;
   readonly X = X;
+  readonly Search = Search;
+  readonly ArrowLeft = ArrowLeft;
+  readonly Clock = Clock;
 
   activeLog: DietLog | null = null;
   currentDateObj = new Date();
@@ -707,17 +998,28 @@ export class DietLogComponent implements OnInit {
   isEditingTarget = false;
   tempTargetCalories = 2000;
 
-  // Add food modal
+  // Add food modal — ricerca nel catalogo
   selectedMealForFood: DietMealDetail | null = null;
+  allFoods: Food[] = [];
+  frequentFoods: Food[] = [];
+  foodSearchQuery = '';
+  selectedCatalogFood: Food | null = null;
+  catalogQuantityGrams: number | null = 100;
+
+  // Add food modal — inserimento manuale (fallback)
+  showManualEntry = false;
   newFoodName = '';
   newFoodCalories: number | null = null;
   newFoodNote = '';
+  newFoodProtein: number | null = null;
+  newFoodCarbs: number | null = null;
+  newFoodFat: number | null = null;
 
   // Add meal modal
   isAddingMeal = false;
   newMealName = '';
 
-  constructor(private dietService: DietService, private cdr: ChangeDetectorRef) {}
+  constructor(private dietService: DietService, private foodService: FoodService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.dietService.activeLog$.subscribe(log => {
@@ -744,6 +1046,38 @@ export class DietLogComponent implements OnInit {
   get totalConsumedCalories(): number {
     if (!this.activeLog || !this.activeLog.meals) return 0;
     return this.activeLog.meals.reduce((sum, meal) => sum + meal.total_calories, 0);
+  }
+
+  get totalConsumedProtein(): number {
+    if (!this.activeLog || !this.activeLog.meals) return 0;
+    return Math.round(this.activeLog.meals.reduce((sum, meal) => sum + meal.total_protein, 0) * 10) / 10;
+  }
+
+  get totalConsumedCarbs(): number {
+    if (!this.activeLog || !this.activeLog.meals) return 0;
+    return Math.round(this.activeLog.meals.reduce((sum, meal) => sum + meal.total_carbs, 0) * 10) / 10;
+  }
+
+  get totalConsumedFat(): number {
+    if (!this.activeLog || !this.activeLog.meals) return 0;
+    return Math.round(this.activeLog.meals.reduce((sum, meal) => sum + meal.total_fat, 0) * 10) / 10;
+  }
+
+  get filteredFoods(): Food[] {
+    const q = this.foodSearchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return this.allFoods.filter(f => f.name.toLowerCase().includes(q));
+  }
+
+  get catalogPreview(): { calories: number; protein: number; carbs: number; fat: number } | null {
+    if (!this.selectedCatalogFood || !this.catalogQuantityGrams) return null;
+    const factor = this.catalogQuantityGrams / 100;
+    return {
+      calories: Math.round(this.selectedCatalogFood.kcal_100g * factor),
+      protein: Math.round(this.selectedCatalogFood.protein_100g * factor * 10) / 10,
+      carbs: Math.round(this.selectedCatalogFood.carbs_100g * factor * 10) / 10,
+      fat: Math.round(this.selectedCatalogFood.fat_100g * factor * 10) / 10
+    };
   }
 
   get remainingCalories(): number {
@@ -785,21 +1119,57 @@ export class DietLogComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  openAddFoodModal(meal: DietMealDetail) {
+  async openAddFoodModal(meal: DietMealDetail) {
     this.selectedMealForFood = meal;
+    this.foodSearchQuery = '';
+    this.selectedCatalogFood = null;
+    this.catalogQuantityGrams = 100;
+    this.showManualEntry = false;
     this.newFoodName = '';
     this.newFoodCalories = null;
     this.newFoodNote = '';
+    this.newFoodProtein = null;
+    this.newFoodCarbs = null;
+    this.newFoodFat = null;
+
+    this.allFoods = await this.foodService.getAllFoods();
+    this.frequentFoods = await this.foodService.getFrequentFoodsForMeal(meal.name, 5);
+    this.cdr.markForCheck();
   }
 
-  async confirmAddFood() {
+  selectCatalogFood(food: Food) {
+    this.selectedCatalogFood = food;
+    this.catalogQuantityGrams = 100;
+  }
+
+  backToSearch() {
+    this.selectedCatalogFood = null;
+  }
+
+  async confirmAddCatalogFood() {
+    if (!this.selectedMealForFood || !this.selectedCatalogFood || !this.catalogQuantityGrams) return;
+
+    await this.dietService.addFoodItemFromCatalog(
+      this.selectedMealForFood.id,
+      this.selectedCatalogFood.id,
+      this.catalogQuantityGrams
+    );
+
+    this.selectedMealForFood = null;
+    this.cdr.markForCheck();
+  }
+
+  async confirmAddManualFood() {
     if (!this.selectedMealForFood || !this.newFoodName.trim() || !this.newFoodCalories) return;
 
     await this.dietService.addFoodItem(
       this.selectedMealForFood.id,
       this.newFoodName,
       this.newFoodCalories,
-      this.newFoodNote
+      this.newFoodNote,
+      this.newFoodProtein || 0,
+      this.newFoodCarbs || 0,
+      this.newFoodFat || 0
     );
 
     this.selectedMealForFood = null;

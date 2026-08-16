@@ -119,13 +119,14 @@ export class SyncService {
       // Ordiniamo le tabelle in base alle dipendenze di Foreign Key (genitori prima dei figli):
       const tablePriority: Record<string, number> = {
         'exercises': 1,
-        'workout_templates': 2,
-        'template_exercises': 3,
-        'workout_sessions': 4,
-        'workout_sets': 5,
-        'diet_logs': 6,
-        'diet_meals': 7,
-        'diet_log_items': 8
+        'foods': 2,
+        'workout_templates': 3,
+        'template_exercises': 4,
+        'workout_sessions': 5,
+        'workout_sets': 6,
+        'diet_logs': 7,
+        'diet_meals': 8,
+        'diet_log_items': 9
       };
 
       pendingItems.sort((a, b) => {
@@ -144,7 +145,7 @@ export class SyncService {
 
           // Se l'utente è autenticato su Supabase e l'oggetto richiede user_id, colleghiamo l'utente corrente
           if (isRealUser && item.payload && typeof item.payload === 'object') {
-            if (['exercises', 'workout_templates', 'workout_sessions', 'diet_logs', 'diet_meals', 'diet_log_items'].includes(item.table_name)) {
+            if (['exercises', 'foods', 'workout_templates', 'workout_sessions', 'diet_logs', 'diet_meals', 'diet_log_items'].includes(item.table_name)) {
               if (!item.payload['user_id'] || item.payload['user_id'] === LOCAL_USER_ID) {
                 item.payload['user_id'] = currentUserId;
               }
@@ -230,6 +231,23 @@ export class SyncService {
         }
         if (exercises.length > 0) {
           await db.exercises.bulkPut(exercises);
+        }
+      }
+
+      // 1b. Pull Foods (Globali + Custom dell'utente)
+      const { data: foods, error: foodsErr } = await client.from('foods').select('*');
+      if (foodsErr) {
+        logger.warn('FitSync: Errore durante il pull degli alimenti da Supabase:', foodsErr);
+      } else if (foods) {
+        const remoteFoodIds = new Set(foods.map(f => f.id));
+        const localFoods = await db.foods.toArray();
+        const toDeleteFoods = localFoods.filter(f => !remoteFoodIds.has(f.id)).map(f => f.id);
+        if (toDeleteFoods.length > 0) {
+          await db.foods.bulkDelete(toDeleteFoods);
+          logger.log(`FitSync: Rimossi ${toDeleteFoods.length} alimenti locali eliminati dal DB remoto.`);
+        }
+        if (foods.length > 0) {
+          await db.foods.bulkPut(foods);
         }
       }
 
