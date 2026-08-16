@@ -96,16 +96,37 @@ export interface DietLogItem {
   calories: number; // kcal
   amount_note?: string; // e.g. "200g" or "1 porzione"
   created_at?: string;
+  food_id?: string; // presente solo se aggiunto dal catalogo alimenti
+  quantity_grams?: number; // presente solo se aggiunto dal catalogo alimenti
+  protein?: number; // grammi — snapshot dal catalogo o inserito a mano
+  carbs?: number;
+  fat?: number;
 }
 
 export interface DietMealDetail extends DietMeal {
   items: DietLogItem[];
   total_calories: number;
+  total_protein: number;
+  total_carbs: number;
+  total_fat: number;
+}
+
+export interface Food {
+  id: string;
+  user_id?: string | null;
+  name: string;
+  is_custom: boolean;
+  is_public?: boolean; // true = Pubblico (visibile a tutti), false = Privato (visibile solo al creatore)
+  kcal_100g: number;
+  protein_100g: number;
+  carbs_100g: number;
+  fat_100g: number;
+  created_at?: string;
 }
 
 export interface SyncQueueItem {
   id: string;
-  table_name: 'profiles' | 'exercises' | 'workout_templates' | 'template_exercises' | 'workout_sessions' | 'workout_sets' | 'diet_logs' | 'diet_meals' | 'diet_log_items';
+  table_name: 'profiles' | 'exercises' | 'foods' | 'workout_templates' | 'template_exercises' | 'workout_sessions' | 'workout_sets' | 'diet_logs' | 'diet_meals' | 'diet_log_items';
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   payload: Record<string, unknown>;
   timestamp: number;

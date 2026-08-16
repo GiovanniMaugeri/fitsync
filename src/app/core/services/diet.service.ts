@@ -80,6 +80,32 @@ export class DietService {
       };
       await db.dietLogs.add(log);
       await this.syncService.enqueue('diet_logs', 'INSERT', { ...log });
+
+      // Copia la struttura dei pasti (nome + ordine, non gli alimenti) dall'ultimo giorno
+      // precedente registrato, qualunque sia la sua data. Se non esiste nessun giorno
+      // precedente (primo utilizzo in assoluto), il nuovo giorno resta senza pasti.
+      const priorLogs = await db.dietLogs
+        .where('user_id').equals(userId)
+        .filter(l => l.date < dateStr)
+        .toArray();
+
+      if (priorLogs.length > 0) {
+        priorLogs.sort((a, b) => b.date.localeCompare(a.date));
+        const priorLog = priorLogs[0];
+        const priorMeals = await db.dietMeals.where({ diet_log_id: priorLog.id }).sortBy('order_index');
+
+        for (const pm of priorMeals) {
+          const carriedMeal: DietMeal = {
+            id: generateUUID(),
+            user_id: userId,
+            diet_log_id: log.id,
+            name: pm.name,
+            order_index: pm.order_index
+          };
+          await db.dietMeals.add(carriedMeal);
+          await this.syncService.enqueue('diet_meals', 'INSERT', { ...carriedMeal });
+        }
+      }
     }
 
     // Load meals & items
@@ -88,11 +114,21 @@ export class DietService {
 
     for (const meal of meals) {
       const items = await db.dietLogItems.where({ meal_id: meal.id }).toArray();
-      const totalCalories = items.reduce((sum, item) => sum + (item.calories || 0), 0);
+      const totals = items.reduce((acc, item) => {
+        acc.calories += item.calories || 0;
+        acc.protein += item.protein || 0;
+        acc.carbs += item.carbs || 0;
+        acc.fat += item.fat || 0;
+        return acc;
+      }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
       mealDetails.push({
         ...meal,
         items,
-        total_calories: totalCalories
+        total_calories: totals.calories,
+        total_protein: totals.protein,
+        total_carbs: totals.carbs,
+        total_fat: totals.fat
       });
     }
 
@@ -140,7 +176,15 @@ export class DietService {
     await this.loadLogForDate(currentLog.date);
   }
 
-  async addFoodItem(mealId: string, name: string, calories: number, amountNote?: string): Promise<void> {
+  async addFoodItem(
+    mealId: string,
+    name: string,
+    calories: number,
+    amountNote?: string,
+    protein: number = 0,
+    carbs: number = 0,
+    fat: number = 0
+  ): Promise<void> {
     const currentLog = this.activeLogSubject.value;
     if (!currentLog) return;
 
@@ -152,6 +196,45 @@ export class DietService {
       name: name.trim(),
       calories: Math.max(0, Number(calories) || 0),
       amount_note: amountNote ? amountNote.trim() : undefined,
+      protein: Math.max(0, Number(protein) || 0),
+      carbs: Math.max(0, Number(carbs) || 0),
+      fat: Math.max(0, Number(fat) || 0),
+      created_at: new Date().toISOString()
+    };
+
+    await db.dietLogItems.add(newItem);
+    await this.syncService.enqueue('diet_log_items', 'INSERT', { ...newItem });
+    await this.loadLogForDate(currentLog.date);
+  }
+
+  /**
+   * Aggiunge un alimento scelto dal catalogo. Calorie/macro vengono calcolate una sola
+   * volta (snapshot) da foods.*_100g × quantityGrams/100 e salvate sulla riga: una futura
+   * correzione dei valori nel catalogo non altera retroattivamente i log già registrati.
+   */
+  async addFoodItemFromCatalog(mealId: string, foodId: string, quantityGrams: number): Promise<void> {
+    const currentLog = this.activeLogSubject.value;
+    if (!currentLog) return;
+
+    const food = await db.foods.get(foodId);
+    if (!food) return;
+
+    const grams = Math.max(0, Number(quantityGrams) || 0);
+    const factor = grams / 100;
+
+    const userId = this.supabaseService.currentUserId;
+    const newItem: DietLogItem = {
+      id: generateUUID(),
+      user_id: userId,
+      meal_id: mealId,
+      name: food.name,
+      calories: Math.round(food.kcal_100g * factor),
+      amount_note: `${grams}g`,
+      food_id: food.id,
+      quantity_grams: grams,
+      protein: Math.round(food.protein_100g * factor * 10) / 10,
+      carbs: Math.round(food.carbs_100g * factor * 10) / 10,
+      fat: Math.round(food.fat_100g * factor * 10) / 10,
       created_at: new Date().toISOString()
     };
 
