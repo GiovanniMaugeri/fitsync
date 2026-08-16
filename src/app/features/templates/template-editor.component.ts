@@ -24,7 +24,7 @@ interface SelectedExerciseItem {
       <div class="editor-header">
         <button class="btn btn-outline btn-sm" routerLink="/templates"><lucide-icon [img]="ArrowLeft" size="16"></lucide-icon> Annulla</button>
         <h1 class="page-title">{{ isEdit ? 'Modifica Scheda' : 'Nuova Scheda' }}</h1>
-        <button class="btn btn-primary btn-sm" (click)="saveTemplate()" [disabled]="!name.trim() || selectedExercises.length === 0">
+        <button class="btn btn-primary btn-sm" (click)="saveTemplate()" [disabled]="!name.trim() || selectedExercises.length === 0 || isSaving">
           <lucide-icon [img]="Save" size="16"></lucide-icon> Salva Scheda
         </button>
       </div>
@@ -637,6 +637,7 @@ export class TemplateEditorComponent implements OnInit {
   selectedCategory = 'Tutti';
   searchQuery = '';
   showExerciseModal = false;
+  isSaving = false;
 
   constructor(
     private templateService: TemplateService,
@@ -719,23 +720,29 @@ export class TemplateEditorComponent implements OnInit {
   }
 
   async saveTemplate() {
-    if (!this.name.trim() || this.selectedExercises.length === 0) return;
+    if (this.isSaving || !this.name.trim() || this.selectedExercises.length === 0) return;
 
-    const list = this.selectedExercises.map(item => ({
-      exercise_id: item.exercise.id,
-      target_sets: item.target_sets,
-      target_reps: item.target_reps,
-      rest_time_seconds: item.rest_time_seconds
-    }));
+    this.isSaving = true;
+    try {
+      const list = this.selectedExercises.map(item => ({
+        exercise_id: item.exercise.id,
+        target_sets: item.target_sets,
+        target_reps: item.target_reps,
+        rest_time_seconds: item.rest_time_seconds
+      }));
 
-    await this.templateService.saveTemplate(
-      this.id || null,
-      this.name,
-      this.description,
-      list,
-      this.isPublic
-    );
+      await this.templateService.saveTemplate(
+        this.id || null,
+        this.name,
+        this.description,
+        list,
+        this.isPublic
+      );
 
-    this.router.navigate(['/templates']);
+      this.router.navigate(['/templates']);
+    } finally {
+      this.isSaving = false;
+      this.cdr.markForCheck();
+    }
   }
 }

@@ -122,7 +122,7 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
             </div>
             <div class="modal-actions">
               <button class="btn btn-outline" (click)="showCreateModal = false">Annulla</button>
-              <button class="btn btn-accent" (click)="createExercise()" [disabled]="!newExName.trim()">Crea Esercizio</button>
+              <button class="btn btn-accent" (click)="createExercise()" [disabled]="!newExName.trim() || isCreating">Crea Esercizio</button>
             </div>
           </div>
         </div>
@@ -387,6 +387,7 @@ export class ExerciseListComponent implements OnInit {
   newExCategory = 'Petto';
   newExEquipment = 'Bilanciere';
   newExIsPublic = true;
+  isCreating = false;
 
   constructor(private exerciseService: ExerciseService, private cdr: ChangeDetectorRef) {}
 
@@ -408,19 +409,24 @@ export class ExerciseListComponent implements OnInit {
   }
 
   async createExercise() {
-    if (!this.newExName.trim()) return;
+    if (this.isCreating || !this.newExName.trim()) return;
 
-    await this.exerciseService.createCustomExercise(
-      this.newExName,
-      this.newExCategory,
-      this.newExEquipment,
-      this.newExIsPublic
-    );
+    this.isCreating = true;
+    try {
+      await this.exerciseService.createCustomExercise(
+        this.newExName,
+        this.newExCategory,
+        this.newExEquipment,
+        this.newExIsPublic
+      );
 
-    this.newExName = '';
-    this.newExIsPublic = true;
-    this.showCreateModal = false;
-    await this.loadExercises();
-    this.cdr.markForCheck();
+      this.newExName = '';
+      this.newExIsPublic = true;
+      this.showCreateModal = false;
+      await this.loadExercises();
+    } finally {
+      this.isCreating = false;
+      this.cdr.markForCheck();
+    }
   }
 }

@@ -145,7 +145,7 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
             <textarea class="input-field" [(ngModel)]="sessionNotes" rows="3" placeholder="es. Ottime sensazioni sulla panca piana, aumentato carico..."></textarea>
             <div class="modal-actions">
               <button class="btn btn-outline" (click)="showFinishModal = false">Torna all'Allenamento</button>
-              <button class="btn btn-accent" (click)="finishWorkout()"><lucide-icon [img]="Save" size="16"></lucide-icon> Salva e Concludi</button>
+              <button class="btn btn-accent" (click)="finishWorkout()" [disabled]="isFinishing"><lucide-icon [img]="Save" size="16"></lucide-icon> Salva e Concludi</button>
             </div>
           </div>
         </div>
@@ -164,7 +164,7 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
             <input type="text" class="input-field search-ex-input" [(ngModel)]="searchQuery" placeholder="🔍 Cerca esercizio per nome...">
             <div class="modal-ex-list">
               @for (ex of filteredExercises; track ex) {
-                <div class="modal-ex-item" (click)="addExerciseToWorkout(ex.id)">
+                <div class="modal-ex-item" [class.disabled]="isAddingExercise" (click)="addExerciseToWorkout(ex.id)">
                   <div>
                     <div class="ex-title">{{ ex.name }}</div>
                     <div class="ex-sub">{{ ex.category }} • {{ ex.equipment || 'Corpo Libero' }}</div>
@@ -575,6 +575,11 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
         transform: translateY(-1px);
       }
 
+      &.disabled {
+        pointer-events: none;
+        opacity: 0.5;
+      }
+
       .ex-title { font-weight: 700; color: #ffffff; font-size: 0.95rem; }
       .ex-sub { font-size: 0.8rem; color: #94a3b8; margin-top: 0.15rem; }
       .add-txt {
@@ -658,6 +663,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   showAddExerciseModal = false;
   sessionNotes = '';
   searchQuery = '';
+  isAddingExercise = false;
+  isFinishing = false;
 
   allExercises: Exercise[] = [];
 
@@ -732,15 +739,30 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   }
 
   async addExerciseToWorkout(exerciseId: string) {
-    await this.workoutService.addExerciseToActiveWorkout(exerciseId);
-    this.showAddExerciseModal = false;
-    this.cdr.markForCheck();
+    if (this.isAddingExercise) return;
+
+    this.isAddingExercise = true;
+    try {
+      await this.workoutService.addExerciseToActiveWorkout(exerciseId);
+      this.showAddExerciseModal = false;
+    } finally {
+      this.isAddingExercise = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async finishWorkout() {
-    await this.workoutService.finishWorkout(this.sessionNotes);
-    this.showFinishModal = false;
-    this.router.navigate(['/history']);
+    if (this.isFinishing) return;
+
+    this.isFinishing = true;
+    try {
+      await this.workoutService.finishWorkout(this.sessionNotes);
+      this.showFinishModal = false;
+      this.router.navigate(['/history']);
+    } finally {
+      this.isFinishing = false;
+      this.cdr.markForCheck();
+    }
   }
 
   cancelWorkout() {
