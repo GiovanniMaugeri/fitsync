@@ -91,11 +91,40 @@ export class SyncService {
     return queueItem.id;
   }
 
+  private syncNowPromise: Promise<void> | null = null;
+  private syncRerunRequested = false;
+
+  /**
+   * Punto di ingresso pubblico: se una sincronizzazione è già in corso, non ne avvia una
+   * seconda in parallelo (che riprocesserebbe la stessa coda). Chi chiama mentre una è già
+   * in corso si accoda alla promise in esecuzione e, alla fine, ne viene lanciata un'altra
+   * automaticamente se nel frattempo sono arrivate nuove richieste — così gli item accodati
+   * durante l'esecuzione non restano bloccati fino al prossimo trigger esterno.
+   */
   public async syncNow(): Promise<void> {
     if (!this.isOnline() || !this.supabaseService.isConfigured) {
       return;
     }
 
+    if (this.syncNowPromise) {
+      this.syncRerunRequested = true;
+      return this.syncNowPromise;
+    }
+
+    this.syncNowPromise = this.runSyncNow();
+    try {
+      await this.syncNowPromise;
+    } finally {
+      this.syncNowPromise = null;
+    }
+
+    if (this.syncRerunRequested) {
+      this.syncRerunRequested = false;
+      await this.syncNow();
+    }
+  }
+
+  private async runSyncNow(): Promise<void> {
     const client = this.supabaseService.supabase;
     if (!client) return;
 
@@ -370,6 +399,16 @@ export class SyncService {
           const { data: dietMeals, error: dmErr } = await client.from('diet_meals').select('*');
           if (!dmErr && dietMeals) {
             const userMeals = dietMeals.filter(m => !m.user_id || m.user_id === userId);
+
+            const pendingQueueMeals = await db.syncQueue.toArray();
+            const pendingMealIds = new Set(pendingQueueMeals.filter(q => q.table_name === 'diet_meals').map(q => q.payload?.['id']));
+
+            const remoteMealIds = new Set(userMeals.map(m => m.id));
+            const localMeals = (await db.dietMeals.toArray()).filter(m => !m.user_id || m.user_id === userId);
+            const toDeleteMeals = localMeals.filter(m => !remoteMealIds.has(m.id) && !pendingMealIds.has(m.id)).map(m => m.id);
+            if (toDeleteMeals.length > 0) {
+              await db.dietMeals.bulkDelete(toDeleteMeals);
+            }
             if (userMeals.length > 0) {
               await db.dietMeals.bulkPut(userMeals);
             }
@@ -378,6 +417,16 @@ export class SyncService {
           const { data: dietLogItems, error: dliErr } = await client.from('diet_log_items').select('*');
           if (!dliErr && dietLogItems) {
             const userItems = dietLogItems.filter(i => !i.user_id || i.user_id === userId);
+
+            const pendingQueueItems = await db.syncQueue.toArray();
+            const pendingItemIds = new Set(pendingQueueItems.filter(q => q.table_name === 'diet_log_items').map(q => q.payload?.['id']));
+
+            const remoteItemIds = new Set(userItems.map(i => i.id));
+            const localItems = (await db.dietLogItems.toArray()).filter(i => !i.user_id || i.user_id === userId);
+            const toDeleteItems = localItems.filter(i => !remoteItemIds.has(i.id) && !pendingItemIds.has(i.id)).map(i => i.id);
+            if (toDeleteItems.length > 0) {
+              await db.dietLogItems.bulkDelete(toDeleteItems);
+            }
             if (userItems.length > 0) {
               await db.dietLogItems.bulkPut(userItems);
             }
