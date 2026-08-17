@@ -307,6 +307,45 @@ export class DietService {
     return history;
   }
 
+  /**
+   * Totali giornalieri (calorie + macro) nell'intervallo [fromDate, toDate] (incluso), un
+   * elemento per ogni giorno che ha effettivamente un log — i giorni senza log non compaiono
+   * nell'array, così il chiamante può distinguerli da un giorno realmente a zero.
+   */
+  async getDailyTotals(fromDate: string, toDate: string): Promise<{ date: string; calories: number; target_calories: number; protein: number; carbs: number; fat: number }[]> {
+    const userId = this.supabaseService.currentUserId;
+    const logs = await db.dietLogs
+      .where('user_id').equals(userId)
+      .filter(l => l.date >= fromDate && l.date <= toDate)
+      .toArray();
+
+    logs.sort((a, b) => a.date.localeCompare(b.date));
+    const totals = [];
+
+    for (const log of logs) {
+      const meals = await db.dietMeals.where({ diet_log_id: log.id }).toArray();
+      const dayTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
+      for (const meal of meals) {
+        const items = await db.dietLogItems.where({ meal_id: meal.id }).toArray();
+        for (const item of items) {
+          dayTotals.calories += item.calories || 0;
+          dayTotals.protein += item.protein || 0;
+          dayTotals.carbs += item.carbs || 0;
+          dayTotals.fat += item.fat || 0;
+        }
+      }
+
+      totals.push({
+        date: log.date,
+        target_calories: log.target_calories || 2000,
+        ...dayTotals
+      });
+    }
+
+    return totals;
+  }
+
   async deleteDietLogByDate(dateStr: string): Promise<void> {
     const userId = this.supabaseService.currentUserId;
     const logs = await db.dietLogs.where('user_id').equals(userId).toArray();

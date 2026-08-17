@@ -20,7 +20,8 @@ import {
   ChevronRight,
   X,
   Calendar,
-  Flame
+  Flame,
+  TrendingUp
 } from 'lucide-angular';
 
 @Component({
@@ -182,6 +183,10 @@ import {
           <a routerLink="/diet/history" routerLinkActive="active" class="nav-item">
             <span class="nav-icon"><lucide-icon [img]="Calendar" size="24"></lucide-icon></span>
             <span class="nav-label">Storico</span>
+          </a>
+          <a routerLink="/diet/dashboard" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="TrendingUp" size="24"></lucide-icon></span>
+            <span class="nav-label">Andamento</span>
           </a>
         </nav>
       }
@@ -614,6 +619,7 @@ export class AppComponent implements OnInit {
   readonly X = X;
   readonly Calendar = Calendar;
   readonly Flame = Flame;
+  readonly TrendingUp = TrendingUp;
 
   isSettingsOpen = false;
   isDietMode = false;
