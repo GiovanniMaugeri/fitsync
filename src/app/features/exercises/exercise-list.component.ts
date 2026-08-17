@@ -318,14 +318,16 @@ import { LucideAngularModule, Dumbbell, Settings, Plus, X } from 'lucide-angular
       backdrop-filter: blur(8px);
       z-index: 3000;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 1rem;
+      padding: 8vh 1rem 1rem;
     }
 
     .modal-card {
       width: 100%;
       max-width: 450px;
+      max-height: 90vh;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 1rem;

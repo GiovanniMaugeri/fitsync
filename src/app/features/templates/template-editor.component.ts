@@ -463,9 +463,9 @@ interface SelectedExerciseItem {
       backdrop-filter: blur(6px);
       z-index: 2000;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 1rem;
+      padding: 8vh 1rem 1rem;
     }
 
     .modal-card {

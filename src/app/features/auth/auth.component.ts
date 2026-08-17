@@ -86,7 +86,7 @@ import { LucideAngularModule, User, Globe, WifiOff, AlertTriangle, CheckCircle, 
               <label>Password *</label>
               <input type="password" class="input-field" [(ngModel)]="password" name="password" placeholder="••••••••" required minlength="6">
             </div>
-            <button type="submit" class="btn btn-primary btn-block">
+            <button type="submit" class="btn btn-primary btn-block" [disabled]="!username.trim() || password.length < 6 || isSubmitting">
               {{ isLoginMode ? 'Accedi a Supabase' : 'Crea Account' }}
             </button>
           </form>
@@ -237,14 +237,18 @@ export class AuthComponent implements OnInit {
 
   errorMessage = '';
   successMessage = '';
+  isSubmitting = false;
 
   constructor() {}
 
   ngOnInit() {}
 
   async handleSubmit() {
+    if (this.isSubmitting || !this.username.trim() || this.password.length < 6) return;
+
     this.errorMessage = '';
     this.successMessage = '';
+    this.isSubmitting = true;
 
     try {
       if (this.isLoginMode) {
@@ -256,8 +260,10 @@ export class AuthComponent implements OnInit {
       }
     } catch (err) {
       this.errorMessage = err instanceof Error ? err.message : 'Errore durante l\'autenticazione.';
+    } finally {
+      this.isSubmitting = false;
+      this.cdr.markForCheck();
     }
-    this.cdr.markForCheck();
   }
 
   async signOut() {
