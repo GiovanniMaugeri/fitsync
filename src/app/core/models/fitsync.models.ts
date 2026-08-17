@@ -122,6 +122,7 @@ export interface Food {
   carbs_100g: number;
   fat_100g: number;
   barcode?: string | null;
+  original_name?: string | null;
   created_at?: string;
 }
 

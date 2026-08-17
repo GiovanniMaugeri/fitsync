@@ -270,6 +270,68 @@ export class DietService {
     await this.loadLogForDate(currentLog.date);
   }
 
+  /**
+   * Corregge la quantità di un alimento già registrato che viene dal catalogo:
+   * ricalcola calorie/macro dai valori per 100g correnti dell'alimento (non da
+   * quelli congelati sulla riga), così una correzione fatta anche sul catalogo
+   * nel frattempo si riflette qui.
+   */
+  async updateFoodItemQuantity(itemId: string, quantityGrams: number): Promise<void> {
+    const currentLog = this.activeLogSubject.value;
+    if (!currentLog) return;
+
+    const item = await db.dietLogItems.get(itemId);
+    if (!item || !item.food_id) return;
+
+    const food = await db.foods.get(item.food_id);
+    if (!food) return;
+
+    const grams = Math.max(0, Number(quantityGrams) || 0);
+    const factor = grams / 100;
+    const patch: Partial<DietLogItem> = {
+      quantity_grams: grams,
+      amount_note: `${grams}g`,
+      calories: Math.round(food.kcal_100g * factor),
+      protein: Math.round(food.protein_100g * factor * 10) / 10,
+      carbs: Math.round(food.carbs_100g * factor * 10) / 10,
+      fat: Math.round(food.fat_100g * factor * 10) / 10
+    };
+
+    await db.dietLogItems.update(itemId, patch);
+    await this.syncService.enqueue('diet_log_items', 'UPDATE', { id: itemId, ...patch });
+    await this.loadLogForDate(currentLog.date);
+  }
+
+  /**
+   * Corregge un alimento già registrato inserito manualmente (nessun food_id,
+   * nessun riferimento al catalogo): i valori vengono sovrascritti direttamente.
+   */
+  async updateFoodItemManual(
+    itemId: string,
+    name: string,
+    calories: number,
+    amountNote?: string,
+    protein: number = 0,
+    carbs: number = 0,
+    fat: number = 0
+  ): Promise<void> {
+    const currentLog = this.activeLogSubject.value;
+    if (!currentLog) return;
+
+    const patch: Partial<DietLogItem> = {
+      name: name.trim(),
+      calories: Math.max(0, Number(calories) || 0),
+      amount_note: amountNote ? amountNote.trim() : undefined,
+      protein: Math.max(0, Number(protein) || 0),
+      carbs: Math.max(0, Number(carbs) || 0),
+      fat: Math.max(0, Number(fat) || 0)
+    };
+
+    await db.dietLogItems.update(itemId, patch);
+    await this.syncService.enqueue('diet_log_items', 'UPDATE', { id: itemId, ...patch });
+    await this.loadLogForDate(currentLog.date);
+  }
+
   async updateTargetCalories(targetCalories: number): Promise<void> {
     const currentLog = this.activeLogSubject.value;
     if (!currentLog) return;

@@ -160,6 +160,9 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
                       </div>
                       <div class="food-right">
                         <span class="food-calories">{{ item.calories }} kcal</span>
+                        <button class="edit-item-btn" (click)="openEditFoodItem(item)" title="Modifica">
+                          <lucide-icon [img]="Edit3" size="14"></lucide-icon>
+                        </button>
                         <button class="delete-item-btn" (click)="deleteFoodItem(item)" title="Rimuovi cibo">
                           <lucide-icon [img]="Trash2" size="14"></lucide-icon>
                         </button>
@@ -339,7 +342,32 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
                 <button class="back-link" (click)="backToSearch()">
                   <lucide-icon [img]="ArrowLeft" size="14"></lucide-icon> Cambia alimento
                 </button>
-                <div class="selected-food-name">{{ selectedCatalogFood.name }}</div>
+                @if (canDeleteFood(selectedCatalogFood)) {
+                  <div class="form-group">
+                    <label>Nome Alimento *</label>
+                    <input type="text" [(ngModel)]="newFoodName" class="form-input" />
+                  </div>
+                  <div class="macro-input-row">
+                    <div class="form-group">
+                      <label>Kcal per 100g *</label>
+                      <input type="number" [(ngModel)]="newFoodCalories" class="form-input" min="0" />
+                    </div>
+                    <div class="form-group">
+                      <label>Proteine per 100g (g)</label>
+                      <input type="number" [(ngModel)]="newFoodProtein" class="form-input" min="0" />
+                    </div>
+                    <div class="form-group">
+                      <label>Carboidrati per 100g (g)</label>
+                      <input type="number" [(ngModel)]="newFoodCarbs" class="form-input" min="0" />
+                    </div>
+                    <div class="form-group">
+                      <label>Grassi per 100g (g)</label>
+                      <input type="number" [(ngModel)]="newFoodFat" class="form-input" min="0" />
+                    </div>
+                  </div>
+                } @else {
+                  <div class="selected-food-name">{{ selectedCatalogFood.name }}</div>
+                }
                 <div class="form-group">
                   <label>Quantità (grammi) *</label>
                   <input type="number" [(ngModel)]="catalogQuantityGrams" placeholder="Es. 150" class="form-input" min="0" autofocus />
@@ -355,7 +383,7 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
               </div>
               <div class="modal-footer">
                 <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
-                <button class="btn btn-primary" (click)="confirmAddCatalogFood()" [disabled]="!catalogQuantityGrams || isSavingFood">
+                <button class="btn btn-primary" (click)="confirmAddCatalogFood()" [disabled]="!catalogQuantityGrams || !newFoodName.trim() || !newFoodCalories || isSavingFood">
                   <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Cibo
                 </button>
               </div>
@@ -430,7 +458,74 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
           </div>
         </div>
       }
-    
+
+      <!-- MODAL: MODIFICA ALIMENTO GIÀ NEL PASTO -->
+      @if (editingFoodItem) {
+        <div class="modal-backdrop">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h3>Modifica: {{ editingFoodItem.name }}</h3>
+              <button class="modal-close" (click)="closeEditFoodItem()">
+                <lucide-icon [img]="X" size="20"></lucide-icon>
+              </button>
+            </div>
+            <div class="modal-body">
+              @if (editingFoodItem.food_id) {
+                <div class="form-group">
+                  <label>Quantità (grammi) *</label>
+                  <input type="number" [(ngModel)]="editItemQuantityGrams" placeholder="Es. 150" class="form-input" min="0" autofocus />
+                </div>
+                @if (editItemPreview) {
+                  <div class="macro-preview-grid">
+                    <div class="macro-preview-item"><span class="mp-label">Kcal</span><span class="mp-value">{{ editItemPreview.calories }}</span></div>
+                    <div class="macro-preview-item"><span class="mp-label">Prot.</span><span class="mp-value">{{ editItemPreview.protein }}g</span></div>
+                    <div class="macro-preview-item"><span class="mp-label">Carb.</span><span class="mp-value">{{ editItemPreview.carbs }}g</span></div>
+                    <div class="macro-preview-item"><span class="mp-label">Grassi</span><span class="mp-value">{{ editItemPreview.fat }}g</span></div>
+                  </div>
+                }
+              } @else {
+                <div class="form-group">
+                  <label>Nome Cibo / Piatto *</label>
+                  <input type="text" [(ngModel)]="editItemName" class="form-input" autofocus />
+                </div>
+                <div class="form-group">
+                  <label>Calorie (kcal) *</label>
+                  <input type="number" [(ngModel)]="editItemCalories" class="form-input" min="0" />
+                </div>
+                <div class="form-group">
+                  <label>Quantità / Note (Opzionale)</label>
+                  <input type="text" [(ngModel)]="editItemNote" class="form-input" />
+                </div>
+                <div class="macro-input-row">
+                  <div class="form-group">
+                    <label>Proteine (g)</label>
+                    <input type="number" [(ngModel)]="editItemProtein" class="form-input" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label>Carboidrati (g)</label>
+                    <input type="number" [(ngModel)]="editItemCarbs" class="form-input" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label>Grassi (g)</label>
+                    <input type="number" [(ngModel)]="editItemFat" class="form-input" min="0" />
+                  </div>
+                </div>
+              }
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-outline" (click)="closeEditFoodItem()">Annulla</button>
+              <button
+                class="btn btn-primary"
+                (click)="confirmEditFoodItem()"
+                [disabled]="isSavingItemEdit || (editingFoodItem.food_id ? !editItemQuantityGrams : (!editItemName.trim() || !editItemCalories))"
+              >
+                <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Modifiche
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
     </div>
     `,
   styles: [`
@@ -819,6 +914,15 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
       &:hover { color: #ef4444; }
     }
 
+    .edit-item-btn {
+      background: transparent;
+      border: none;
+      color: #71717a;
+      cursor: pointer;
+      padding: 0.2rem;
+      &:hover { color: var(--primary-cyan, #06b6d4); }
+    }
+
     .empty-meal-text {
       font-size: 0.8rem;
       color: #71717a;
@@ -866,6 +970,8 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
       border-radius: 16px;
       width: 100%;
       max-width: 440px;
+      max-height: 90vh;
+      overflow-y: auto;
       padding: 1.25rem;
       display: flex;
       flex-direction: column;
@@ -1069,9 +1175,13 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
 
     .macro-input-row {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
 
-      .form-group { flex: 1; }
+      .form-group {
+        flex: 1 1 120px;
+        min-width: 0;
+      }
     }
   `]
 })
@@ -1127,6 +1237,18 @@ export class DietLogComponent implements OnInit {
   newMealName = '';
   isSavingMeal = false;
 
+  // Edit food item modal (alimento già aggiunto a un pasto)
+  editingFoodItem: DietLogItem | null = null;
+  editItemFood: Food | null = null;
+  editItemQuantityGrams: number | null = null;
+  editItemName = '';
+  editItemCalories: number | null = null;
+  editItemNote = '';
+  editItemProtein: number | null = null;
+  editItemCarbs: number | null = null;
+  editItemFat: number | null = null;
+  isSavingItemEdit = false;
+
   constructor(
     private dietService: DietService,
     private foodService: FoodService,
@@ -1179,17 +1301,19 @@ export class DietLogComponent implements OnInit {
   get filteredFoods(): Food[] {
     const q = this.foodSearchQuery.trim().toLowerCase();
     if (!q) return [];
-    return this.allFoods.filter(f => f.name.toLowerCase().includes(q));
+    return this.allFoods.filter(f =>
+      f.name.toLowerCase().includes(q) || (f.original_name?.toLowerCase().includes(q) ?? false)
+    );
   }
 
   get catalogPreview(): { calories: number; protein: number; carbs: number; fat: number } | null {
     if (!this.selectedCatalogFood || !this.catalogQuantityGrams) return null;
     const factor = this.catalogQuantityGrams / 100;
     return {
-      calories: Math.round(this.selectedCatalogFood.kcal_100g * factor),
-      protein: Math.round(this.selectedCatalogFood.protein_100g * factor * 10) / 10,
-      carbs: Math.round(this.selectedCatalogFood.carbs_100g * factor * 10) / 10,
-      fat: Math.round(this.selectedCatalogFood.fat_100g * factor * 10) / 10
+      calories: Math.round((this.newFoodCalories ?? 0) * factor),
+      protein: Math.round((this.newFoodProtein ?? 0) * factor * 10) / 10,
+      carbs: Math.round((this.newFoodCarbs ?? 0) * factor * 10) / 10,
+      fat: Math.round((this.newFoodFat ?? 0) * factor * 10) / 10
     };
   }
 
@@ -1257,6 +1381,11 @@ export class DietLogComponent implements OnInit {
   selectCatalogFood(food: Food) {
     this.selectedCatalogFood = food;
     this.catalogQuantityGrams = 100;
+    this.newFoodName = food.name;
+    this.newFoodCalories = food.kcal_100g;
+    this.newFoodProtein = food.protein_100g;
+    this.newFoodCarbs = food.carbs_100g;
+    this.newFoodFat = food.fat_100g;
   }
 
   backToSearch() {
@@ -1375,6 +1504,17 @@ export class DietLogComponent implements OnInit {
 
     this.isSavingFood = true;
     try {
+      if (this.canDeleteFood(this.selectedCatalogFood)) {
+        const updated = await this.foodService.updateCustomFood(this.selectedCatalogFood, {
+          name: this.newFoodName,
+          kcal_100g: this.newFoodCalories ?? 0,
+          protein_100g: this.newFoodProtein ?? 0,
+          carbs_100g: this.newFoodCarbs ?? 0,
+          fat_100g: this.newFoodFat ?? 0
+        });
+        const idx = this.allFoods.findIndex(f => f.id === updated.id);
+        if (idx !== -1) this.allFoods[idx] = updated;
+      }
       await this.dietService.addFoodItemFromCatalog(
         this.selectedMealForFood.id,
         this.selectedCatalogFood.id,
@@ -1410,6 +1550,61 @@ export class DietLogComponent implements OnInit {
 
   async deleteFoodItem(item: DietLogItem) {
     await this.dietService.deleteFoodItem(item.id);
+  }
+
+  async openEditFoodItem(item: DietLogItem) {
+    this.editingFoodItem = item;
+    this.editItemQuantityGrams = item.quantity_grams ?? null;
+    this.editItemName = item.name;
+    this.editItemCalories = item.calories;
+    this.editItemNote = item.amount_note ?? '';
+    this.editItemProtein = item.protein ?? 0;
+    this.editItemCarbs = item.carbs ?? 0;
+    this.editItemFat = item.fat ?? 0;
+    this.editItemFood = item.food_id ? (await this.foodService.getFoodById(item.food_id)) ?? null : null;
+    this.cdr.markForCheck();
+  }
+
+  closeEditFoodItem() {
+    this.editingFoodItem = null;
+  }
+
+  get editItemPreview(): { calories: number; protein: number; carbs: number; fat: number } | null {
+    if (!this.editItemFood || !this.editItemQuantityGrams) return null;
+    const factor = this.editItemQuantityGrams / 100;
+    return {
+      calories: Math.round(this.editItemFood.kcal_100g * factor),
+      protein: Math.round(this.editItemFood.protein_100g * factor * 10) / 10,
+      carbs: Math.round(this.editItemFood.carbs_100g * factor * 10) / 10,
+      fat: Math.round(this.editItemFood.fat_100g * factor * 10) / 10
+    };
+  }
+
+  async confirmEditFoodItem() {
+    if (this.isSavingItemEdit || !this.editingFoodItem) return;
+
+    this.isSavingItemEdit = true;
+    try {
+      if (this.editingFoodItem.food_id) {
+        if (!this.editItemQuantityGrams) return;
+        await this.dietService.updateFoodItemQuantity(this.editingFoodItem.id, this.editItemQuantityGrams);
+      } else {
+        if (!this.editItemName.trim() || !this.editItemCalories) return;
+        await this.dietService.updateFoodItemManual(
+          this.editingFoodItem.id,
+          this.editItemName,
+          this.editItemCalories,
+          this.editItemNote,
+          this.editItemProtein ?? 0,
+          this.editItemCarbs ?? 0,
+          this.editItemFat ?? 0
+        );
+      }
+      this.editingFoodItem = null;
+    } finally {
+      this.isSavingItemEdit = false;
+      this.cdr.markForCheck();
+    }
   }
 
   openAddMealModal() {
