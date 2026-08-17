@@ -339,7 +339,32 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
                 <button class="back-link" (click)="backToSearch()">
                   <lucide-icon [img]="ArrowLeft" size="14"></lucide-icon> Cambia alimento
                 </button>
-                <div class="selected-food-name">{{ selectedCatalogFood.name }}</div>
+                @if (canDeleteFood(selectedCatalogFood)) {
+                  <div class="form-group">
+                    <label>Nome Alimento *</label>
+                    <input type="text" [(ngModel)]="newFoodName" class="form-input" />
+                  </div>
+                  <div class="macro-input-row">
+                    <div class="form-group">
+                      <label>Kcal per 100g *</label>
+                      <input type="number" [(ngModel)]="newFoodCalories" class="form-input" min="0" />
+                    </div>
+                    <div class="form-group">
+                      <label>Proteine per 100g (g)</label>
+                      <input type="number" [(ngModel)]="newFoodProtein" class="form-input" min="0" />
+                    </div>
+                    <div class="form-group">
+                      <label>Carboidrati per 100g (g)</label>
+                      <input type="number" [(ngModel)]="newFoodCarbs" class="form-input" min="0" />
+                    </div>
+                    <div class="form-group">
+                      <label>Grassi per 100g (g)</label>
+                      <input type="number" [(ngModel)]="newFoodFat" class="form-input" min="0" />
+                    </div>
+                  </div>
+                } @else {
+                  <div class="selected-food-name">{{ selectedCatalogFood.name }}</div>
+                }
                 <div class="form-group">
                   <label>Quantità (grammi) *</label>
                   <input type="number" [(ngModel)]="catalogQuantityGrams" placeholder="Es. 150" class="form-input" min="0" autofocus />
@@ -355,7 +380,7 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
               </div>
               <div class="modal-footer">
                 <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
-                <button class="btn btn-primary" (click)="confirmAddCatalogFood()" [disabled]="!catalogQuantityGrams || isSavingFood">
+                <button class="btn btn-primary" (click)="confirmAddCatalogFood()" [disabled]="!catalogQuantityGrams || !newFoodName.trim() || !newFoodCalories || isSavingFood">
                   <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Cibo
                 </button>
               </div>
@@ -1179,17 +1204,19 @@ export class DietLogComponent implements OnInit {
   get filteredFoods(): Food[] {
     const q = this.foodSearchQuery.trim().toLowerCase();
     if (!q) return [];
-    return this.allFoods.filter(f => f.name.toLowerCase().includes(q));
+    return this.allFoods.filter(f =>
+      f.name.toLowerCase().includes(q) || (f.original_name?.toLowerCase().includes(q) ?? false)
+    );
   }
 
   get catalogPreview(): { calories: number; protein: number; carbs: number; fat: number } | null {
     if (!this.selectedCatalogFood || !this.catalogQuantityGrams) return null;
     const factor = this.catalogQuantityGrams / 100;
     return {
-      calories: Math.round(this.selectedCatalogFood.kcal_100g * factor),
-      protein: Math.round(this.selectedCatalogFood.protein_100g * factor * 10) / 10,
-      carbs: Math.round(this.selectedCatalogFood.carbs_100g * factor * 10) / 10,
-      fat: Math.round(this.selectedCatalogFood.fat_100g * factor * 10) / 10
+      calories: Math.round((this.newFoodCalories ?? 0) * factor),
+      protein: Math.round((this.newFoodProtein ?? 0) * factor * 10) / 10,
+      carbs: Math.round((this.newFoodCarbs ?? 0) * factor * 10) / 10,
+      fat: Math.round((this.newFoodFat ?? 0) * factor * 10) / 10
     };
   }
 
@@ -1257,6 +1284,11 @@ export class DietLogComponent implements OnInit {
   selectCatalogFood(food: Food) {
     this.selectedCatalogFood = food;
     this.catalogQuantityGrams = 100;
+    this.newFoodName = food.name;
+    this.newFoodCalories = food.kcal_100g;
+    this.newFoodProtein = food.protein_100g;
+    this.newFoodCarbs = food.carbs_100g;
+    this.newFoodFat = food.fat_100g;
   }
 
   backToSearch() {
@@ -1375,6 +1407,17 @@ export class DietLogComponent implements OnInit {
 
     this.isSavingFood = true;
     try {
+      if (this.canDeleteFood(this.selectedCatalogFood)) {
+        const updated = await this.foodService.updateCustomFood(this.selectedCatalogFood, {
+          name: this.newFoodName,
+          kcal_100g: this.newFoodCalories ?? 0,
+          protein_100g: this.newFoodProtein ?? 0,
+          carbs_100g: this.newFoodCarbs ?? 0,
+          fat_100g: this.newFoodFat ?? 0
+        });
+        const idx = this.allFoods.findIndex(f => f.id === updated.id);
+        if (idx !== -1) this.allFoods[idx] = updated;
+      }
       await this.dietService.addFoodItemFromCatalog(
         this.selectedMealForFood.id,
         this.selectedCatalogFood.id,

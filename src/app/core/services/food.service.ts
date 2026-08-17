@@ -43,6 +43,27 @@ export class FoodService {
     await this.syncService.enqueue('foods', 'DELETE', { id });
   }
 
+  async updateCustomFood(
+    food: Food,
+    updates: { name: string; kcal_100g: number; protein_100g: number; carbs_100g: number; fat_100g: number }
+  ): Promise<Food> {
+    const trimmedName = updates.name.trim();
+    const patch: Partial<Food> = {
+      name: trimmedName,
+      kcal_100g: Math.max(0, Number(updates.kcal_100g) || 0),
+      protein_100g: Math.max(0, Number(updates.protein_100g) || 0),
+      carbs_100g: Math.max(0, Number(updates.carbs_100g) || 0),
+      fat_100g: Math.max(0, Number(updates.fat_100g) || 0)
+    };
+    if (trimmedName !== food.name && !food.original_name) {
+      patch.original_name = food.name;
+    }
+
+    await db.foods.update(food.id, patch);
+    await this.syncService.enqueue('foods', 'UPDATE', { id: food.id, ...patch });
+    return { ...food, ...patch };
+  }
+
   async createCustomFood(
     name: string,
     kcal_100g: number,
