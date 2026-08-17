@@ -959,9 +959,9 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
       z-index: 2500;
       background: rgba(0, 0, 0, 0.7);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 1rem;
+      padding: 8vh 1rem 1rem;
     }
 
     .modal-card {

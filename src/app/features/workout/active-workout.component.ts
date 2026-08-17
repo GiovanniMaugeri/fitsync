@@ -5,7 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
 import { WorkoutService, ActiveWorkoutState } from '../../core/services/workout.service';
 import { ExerciseService } from '../../core/services/exercise.service';
-import { Exercise } from '../../core/models/fitsync.models';
+import { Exercise, WorkoutSet } from '../../core/models/fitsync.models';
 import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, Check, Trash2, Trophy, Save, X } from 'lucide-angular';
 
 @Component({
@@ -112,6 +112,7 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
                           <button
                             class="check-btn"
                             [class.checked]="s.is_completed"
+                            [disabled]="!canCompleteSet(s)"
                             (click)="toggleSet(state.activeExerciseIndex, setIdx)">
                             @if (s.is_completed) {
                               <lucide-icon [img]="Check" size="18"></lucide-icon>
@@ -484,14 +485,16 @@ import { LucideAngularModule, Dumbbell, Zap, ClipboardList, Radio, Flag, Timer, 
       backdrop-filter: blur(8px);
       z-index: 3000;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 1rem;
+      padding: 8vh 1rem 1rem;
     }
 
     .modal-card {
       width: 100%;
       max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 1rem;
@@ -708,6 +711,13 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
 
   toggleSet(exIdx: number, setIdx: number) {
     this.workoutService.toggleSetCompleted(exIdx, setIdx);
+  }
+
+  /** 0 è un valore valido (es. trazioni a corpo libero) — il controllo è "non vuoto", non "diverso da zero". */
+  canCompleteSet(s: WorkoutSet): boolean {
+    if (s.is_completed) return true;
+    return s.weight !== null && s.weight !== undefined && !isNaN(s.weight) &&
+           s.reps !== null && s.reps !== undefined && !isNaN(s.reps);
   }
 
   addSet(exIdx: number) {
