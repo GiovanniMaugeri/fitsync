@@ -339,6 +339,15 @@ export class FitSyncDatabase extends Dexie {
         // Esegue sempre un controllo e migrazione dei dati vecchi rimasti con ID non-UUID
         await this.performLegacyMigrationCheck();
 
+        // Recupera gli item rimasti bloccati in SYNCING da un run precedente interrotto (es.
+        // refresh di pagina a metà sync): all'avvio non può esserci nessuna sync realmente in
+        // corso, quindi qualunque item ancora in questo stato è orfano e va rimesso in coda.
+        const stuckSyncingCount = await this.syncQueue.where('status').equals('SYNCING').count();
+        if (stuckSyncingCount > 0) {
+          await this.syncQueue.where('status').equals('SYNCING').modify({ status: 'PENDING' });
+          logger.log(`FitSyncDB: Ripristinati ${stuckSyncingCount} elementi di sync bloccati in SYNCING da un run precedente interrotto.`);
+        }
+
         // Rimuove eventuali elementi di sync bloccati con ID non-UUID (pre-migrazione)
         const syncItems = await this.syncQueue.toArray();
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
