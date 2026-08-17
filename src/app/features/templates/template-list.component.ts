@@ -91,7 +91,7 @@ import { LucideAngularModule, ClipboardList, Pencil, Trash2, Zap, Plus } from 'l
               }
             </div>
             <div class="card-footer">
-              <button class="btn btn-accent btn-block" (click)="startWorkout(t.id)">
+              <button class="btn btn-accent btn-block" (click)="startWorkout(t.id)" [disabled]="isStarting">
                 <lucide-icon [img]="Zap" size="16"></lucide-icon> Avvia Allenamento
               </button>
             </div>
@@ -339,6 +339,7 @@ export class TemplateListComponent implements OnInit {
 
   templates: WorkoutTemplate[] = [];
   filterVisibility: 'Tutte' | 'Pubbliche' | 'Private' = 'Tutte';
+  isStarting = false;
 
   constructor(
     private templateService: TemplateService,
@@ -387,8 +388,15 @@ export class TemplateListComponent implements OnInit {
   }
 
   async startWorkout(templateId: string) {
-    await this.workoutService.startWorkoutFromTemplate(templateId);
-    this.router.navigate(['/workout/active']);
+    if (this.isStarting) return;
+    this.isStarting = true;
+    try {
+      await this.workoutService.startWorkoutFromTemplate(templateId);
+      this.router.navigate(['/workout/active']);
+    } finally {
+      this.isStarting = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async deleteTemplate(id: string) {

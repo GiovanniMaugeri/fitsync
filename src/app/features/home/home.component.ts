@@ -54,7 +54,7 @@ import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckC
     
         <div class="template-grid">
           @for (t of templates.slice(0, 3); track t) {
-            <div class="template-card glass-card glass-card-interactive" (click)="startFromTemplate(t.id)">
+            <div class="template-card glass-card glass-card-interactive" [class.is-disabled]="isStarting" (click)="startFromTemplate(t.id)">
               <div class="template-top">
                 <h3 class="template-title">{{ t.name }}</h3>
                 <span class="ex-count">{{ t.exercises?.length || 0 }} esercizi</span>
@@ -177,6 +177,11 @@ import { LucideAngularModule, Zap, PlayCircle, FileText, Calendar, Clock, CheckC
       flex-direction: column;
       justify-content: space-between;
       height: 100%;
+
+      &.is-disabled {
+        pointer-events: none;
+        opacity: 0.6;
+      }
 
       .template-top {
         display: flex;
@@ -327,6 +332,7 @@ export class HomeComponent implements OnInit {
 
   templates: WorkoutTemplate[] = [];
   recentSessions: WorkoutSession[] = [];
+  isStarting = false;
   isOnline = this.syncService.isOnline;
   currentUser$ = this.supabaseService.currentUser$;
 
@@ -358,8 +364,15 @@ export class HomeComponent implements OnInit {
   }
 
   async startFromTemplate(templateId: string) {
-    await this.workoutService.startWorkoutFromTemplate(templateId);
-    this.router.navigate(['/workout/active']);
+    if (this.isStarting) return;
+    this.isStarting = true;
+    try {
+      await this.workoutService.startWorkoutFromTemplate(templateId);
+      this.router.navigate(['/workout/active']);
+    } finally {
+      this.isStarting = false;
+      this.cdr.markForCheck();
+    }
   }
 
   formatDate(dateStr: string): string {
