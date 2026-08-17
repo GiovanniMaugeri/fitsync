@@ -39,5 +39,5 @@ Il progetto di sviluppo non è quello collegato di default (`supabase link` punt
 va sempre specificato esplicitamente con `--project-ref`, così non si rischia di dimenticare il
 flag e pushare per sbaglio su dev quando si intendeva produzione (o viceversa).
 
-Dettagli su come l'app sceglie a quale progetto connettersi (`.env` vs `.env.dev`) in `CLAUDE.md`,
-sezione "Database di sviluppo".
+Dettagli su come l'app sceglie a quale progetto connettersi (`.env` = dev per default, `.env.production`
+solo opt-in esplicito) in `CLAUDE.md`, sezione "Database di sviluppo".
