@@ -16,17 +16,20 @@ import {
   X,
   Search,
   ArrowLeft,
-  Clock
+  Clock,
+  ScanBarcode
 } from 'lucide-angular';
 import { DietService } from '../../core/services/diet.service';
 import { FoodService } from '../../core/services/food.service';
+import { BarcodeLookupService } from '../../core/services/barcode-lookup.service';
+import { BarcodeScannerComponent } from './barcode-scanner.component';
 import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fitsync.models';
 
 @Component({
   selector: 'app-diet-log',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterModule, LucideAngularModule],
+  imports: [FormsModule, RouterModule, LucideAngularModule, BarcodeScannerComponent],
   template: `
     <div class="diet-log-container">
     
@@ -191,7 +194,7 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
             </div>
 
             <!-- STATO 1: RICERCA NEL CATALOGO -->
-            @if (!selectedCatalogFood && !showManualEntry) {
+            @if (!selectedCatalogFood && !showManualEntry && !showBarcodeScanner && !isLookingUpBarcode && !barcodeManualEntry && !scanErrorMessage) {
               <div class="modal-body">
                 <div class="search-input-wrap">
                   <lucide-icon [img]="Search" size="16" class="search-icon"></lucide-icon>
@@ -208,7 +211,14 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
                       @for (food of frequentFoods; track food.id) {
                         <div class="food-result-row" (click)="selectCatalogFood(food)">
                           <span class="food-result-name">{{ food.name }}</span>
-                          <span class="food-result-kcal">{{ food.kcal_100g }} kcal/100g</span>
+                          <div class="food-right">
+                            <span class="food-result-kcal">{{ food.kcal_100g }} kcal/100g</span>
+                            @if (canDeleteFood(food)) {
+                              <button class="delete-item-btn" (click)="$event.stopPropagation(); deleteCustomFood(food)" title="Elimina alimento custom">
+                                <lucide-icon [img]="Trash2" size="14"></lucide-icon>
+                              </button>
+                            }
+                          </div>
                         </div>
                       }
                     </div>
@@ -220,7 +230,14 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
                     @for (food of filteredFoods; track food.id) {
                       <div class="food-result-row" (click)="selectCatalogFood(food)">
                         <span class="food-result-name">{{ food.name }}</span>
-                        <span class="food-result-kcal">{{ food.kcal_100g }} kcal/100g</span>
+                        <div class="food-right">
+                          <span class="food-result-kcal">{{ food.kcal_100g }} kcal/100g</span>
+                          @if (canDeleteFood(food)) {
+                            <button class="delete-item-btn" (click)="$event.stopPropagation(); deleteCustomFood(food)" title="Elimina alimento custom">
+                              <lucide-icon [img]="Trash2" size="14"></lucide-icon>
+                            </button>
+                          }
+                        </div>
                       </div>
                     }
                     @if (filteredFoods.length === 0) {
@@ -232,9 +249,87 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
                 <button class="manual-fallback-link" (click)="showManualEntry = true">
                   Alimento non trovato? Inserisci manualmente
                 </button>
+                <button class="manual-fallback-link" (click)="startBarcodeScan()">
+                  <lucide-icon [img]="ScanBarcode" size="14"></lucide-icon> Scansiona codice a barre
+                </button>
               </div>
               <div class="modal-footer">
                 <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
+              </div>
+            }
+
+            <!-- STATO SCANNER: FOTOCAMERA CODICE A BARRE -->
+            @if (showBarcodeScanner) {
+              <div class="modal-body">
+                <app-barcode-scanner
+                  (detected)="onBarcodeDetected($event)"
+                  (cancelled)="closeBarcodeScan()"
+                  (cameraError)="onCameraError($event)">
+                </app-barcode-scanner>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
+              </div>
+            }
+
+            <!-- STATO RICERCA PRODOTTO IN CORSO -->
+            @if (isLookingUpBarcode) {
+              <div class="modal-body">
+                <p class="picker-hint">Ricerca prodotto in corso...</p>
+              </div>
+            }
+
+            <!-- STATO ERRORE FOTOCAMERA (senza fallback a creazione custom) -->
+            @if (scanErrorMessage && !barcodeManualEntry) {
+              <div class="modal-body">
+                <p class="picker-hint">{{ scanErrorMessage }}</p>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline" (click)="scanErrorMessage = null">Torna alla ricerca</button>
+              </div>
+            }
+
+            <!-- STATO: ALIMENTO CUSTOM DA BARCODE (prodotto non trovato / rete assente) -->
+            @if (barcodeManualEntry) {
+              <div class="modal-body">
+                <button class="back-link" (click)="cancelBarcodeManualEntry()">
+                  <lucide-icon [img]="ArrowLeft" size="14"></lucide-icon> Torna alla ricerca
+                </button>
+                @if (scanErrorMessage) {
+                  <p class="picker-hint">{{ scanErrorMessage }}</p>
+                }
+                <div class="form-group">
+                  <label>Codice a barre</label>
+                  <input type="text" [value]="barcodeManualEntry" class="form-input" disabled />
+                </div>
+                <div class="form-group">
+                  <label>Nome Alimento *</label>
+                  <input type="text" [(ngModel)]="newFoodName" placeholder="Es. Biscotti al cioccolato" class="form-input" autofocus />
+                </div>
+                <div class="form-group">
+                  <label>Calorie per 100g (kcal) *</label>
+                  <input type="number" [(ngModel)]="newFoodCalories" placeholder="Es. 450" class="form-input" min="0" />
+                </div>
+                <div class="macro-input-row">
+                  <div class="form-group">
+                    <label>Proteine per 100g (g)</label>
+                    <input type="number" [(ngModel)]="newFoodProtein" placeholder="0" class="form-input" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label>Carboidrati per 100g (g)</label>
+                    <input type="number" [(ngModel)]="newFoodCarbs" placeholder="0" class="form-input" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label>Grassi per 100g (g)</label>
+                    <input type="number" [(ngModel)]="newFoodFat" placeholder="0" class="form-input" min="0" />
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
+                <button class="btn btn-primary" (click)="confirmCustomFoodFromBarcode()" [disabled]="!newFoodName.trim() || !newFoodCalories || isSavingFood">
+                  <lucide-icon [img]="Check" size="16"></lucide-icon> Salva Alimento
+                </button>
               </div>
             }
 
@@ -909,6 +1004,10 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
     }
 
     .manual-fallback-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
       background: transparent;
       border: none;
       color: var(--primary-cyan, #06b6d4);
@@ -990,6 +1089,7 @@ export class DietLogComponent implements OnInit {
   readonly Search = Search;
   readonly ArrowLeft = ArrowLeft;
   readonly Clock = Clock;
+  readonly ScanBarcode = ScanBarcode;
 
   activeLog: DietLog | null = null;
   currentDateObj = new Date();
@@ -1016,12 +1116,23 @@ export class DietLogComponent implements OnInit {
   newFoodCarbs: number | null = null;
   newFoodFat: number | null = null;
 
+  // Add food modal — scansione barcode
+  showBarcodeScanner = false;
+  isLookingUpBarcode = false;
+  scanErrorMessage: string | null = null;
+  barcodeManualEntry: string | null = null; // valorizzato = stato "crea alimento custom da barcode"
+
   // Add meal modal
   isAddingMeal = false;
   newMealName = '';
   isSavingMeal = false;
 
-  constructor(private dietService: DietService, private foodService: FoodService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private dietService: DietService,
+    private foodService: FoodService,
+    private barcodeLookupService: BarcodeLookupService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.dietService.activeLog$.subscribe(log => {
@@ -1133,6 +1244,10 @@ export class DietLogComponent implements OnInit {
     this.newFoodProtein = null;
     this.newFoodCarbs = null;
     this.newFoodFat = null;
+    this.showBarcodeScanner = false;
+    this.isLookingUpBarcode = false;
+    this.scanErrorMessage = null;
+    this.barcodeManualEntry = null;
 
     this.allFoods = await this.foodService.getAllFoods();
     this.frequentFoods = await this.foodService.getFrequentFoodsForMeal(meal.name, 5);
@@ -1146,6 +1261,113 @@ export class DietLogComponent implements OnInit {
 
   backToSearch() {
     this.selectedCatalogFood = null;
+  }
+
+  canDeleteFood(food: Food): boolean {
+    return this.foodService.canDeleteCustomFood(food);
+  }
+
+  async deleteCustomFood(food: Food) {
+    if (!confirm(`Eliminare "${food.name}" dal catalogo? Le voci già registrate nel diario non saranno modificate.`)) return;
+
+    await this.foodService.deleteCustomFood(food.id);
+    this.allFoods = this.allFoods.filter(f => f.id !== food.id);
+    this.frequentFoods = this.frequentFoods.filter(f => f.id !== food.id);
+    this.cdr.markForCheck();
+  }
+
+  startBarcodeScan() {
+    if (this.showBarcodeScanner) return;
+    this.scanErrorMessage = null;
+    this.showBarcodeScanner = true;
+  }
+
+  closeBarcodeScan() {
+    this.showBarcodeScanner = false;
+  }
+
+  onCameraError(kind: 'denied' | 'unavailable') {
+    this.showBarcodeScanner = false;
+    this.scanErrorMessage = kind === 'denied'
+      ? 'Permesso fotocamera negato. Puoi comunque cercare o inserire manualmente.'
+      : 'Fotocamera non disponibile su questo dispositivo.';
+    this.cdr.markForCheck();
+  }
+
+  cancelBarcodeManualEntry() {
+    this.barcodeManualEntry = null;
+    this.scanErrorMessage = null;
+    this.newFoodName = '';
+    this.newFoodCalories = null;
+    this.newFoodProtein = null;
+    this.newFoodCarbs = null;
+    this.newFoodFat = null;
+  }
+
+  async onBarcodeDetected(barcode: string) {
+    this.showBarcodeScanner = false;
+
+    const existing = await this.foodService.findByBarcode(barcode);
+    if (existing) {
+      this.selectCatalogFood(existing);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.isLookingUpBarcode = true;
+    this.cdr.markForCheck();
+    try {
+      const result = await this.barcodeLookupService.lookupProduct(barcode);
+      if (!result) {
+        this.scanErrorMessage = 'Prodotto non trovato, inserisci i valori manualmente.';
+        this.openBarcodeManualEntry(barcode);
+        return;
+      }
+      const newFood = await this.foodService.createCustomFood(
+        result.name, result.kcal_100g, result.protein_100g, result.carbs_100g, result.fat_100g, false, barcode
+      );
+      this.allFoods = [...this.allFoods, newFood];
+      this.selectCatalogFood(newFood);
+    } catch {
+      this.scanErrorMessage = 'Connessione non disponibile, inserisci i valori manualmente.';
+      this.openBarcodeManualEntry(barcode);
+    } finally {
+      this.isLookingUpBarcode = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private openBarcodeManualEntry(barcode: string) {
+    this.barcodeManualEntry = barcode;
+    this.newFoodName = '';
+    this.newFoodCalories = null;
+    this.newFoodProtein = null;
+    this.newFoodCarbs = null;
+    this.newFoodFat = null;
+  }
+
+  async confirmCustomFoodFromBarcode() {
+    if (this.isSavingFood || !this.barcodeManualEntry || !this.newFoodName.trim() || !this.newFoodCalories) return;
+
+    this.isSavingFood = true;
+    try {
+      const newFood = await this.foodService.createCustomFood(
+        this.newFoodName,
+        this.newFoodCalories,
+        this.newFoodProtein ?? 0,
+        this.newFoodCarbs ?? 0,
+        this.newFoodFat ?? 0,
+        false,
+        this.barcodeManualEntry
+      );
+      this.allFoods = [...this.allFoods, newFood];
+      this.barcodeManualEntry = null;
+      this.scanErrorMessage = null;
+      this.selectCatalogFood(newFood);
+    } finally {
+      this.isSavingFood = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async confirmAddCatalogFood() {

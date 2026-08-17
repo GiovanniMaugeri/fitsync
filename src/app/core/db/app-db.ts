@@ -248,9 +248,15 @@ export class FitSyncDatabase extends Dexie {
       foods: 'id, user_id, name, is_custom, is_public'
     };
 
+    const schemaV7 = {
+      ...schemaV6,
+      foods: 'id, user_id, name, is_custom, is_public, barcode'
+    };
+
     this.version(1).stores(schemaV1);
     this.version(5).stores(schemaV5);
     this.version(6).stores(schemaV6);
+    this.version(7).stores(schemaV7);
 
     this.version(2).stores(schemaV1).upgrade(async tx => {
       // Migrazione degli esercizi esistenti da 'Braccia' a 'Bicipiti' o 'Tricipiti'
