@@ -8,6 +8,7 @@ import { AuthComponent } from './features/auth/auth.component';
 import { ExerciseListComponent } from './features/exercises/exercise-list.component';
 import { DietLogComponent } from './features/diet/diet-log.component';
 import { DietHistoryComponent } from './features/diet/diet-history.component';
+import { DietDashboardComponent } from './features/diet/diet-dashboard.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -19,6 +20,7 @@ export const routes: Routes = [
   { path: 'exercises', component: ExerciseListComponent },
   { path: 'diet', component: DietLogComponent },
   { path: 'diet/history', component: DietHistoryComponent },
+  { path: 'diet/dashboard', component: DietDashboardComponent },
   { path: 'auth', component: AuthComponent },
   { path: '**', redirectTo: '' }
 ];
