@@ -304,12 +304,12 @@ export class WorkoutService {
     this.isTimerRunningSubject.next(true);
 
     this.timerInterval = setInterval(() => {
-      const current = this.restTimerSecondsSubject.value;
-      if (current <= 1) {
+      const remaining = Math.ceil((endTimestamp - Date.now()) / 1000);
+      if (remaining <= 0) {
         this.stopRestTimer();
         this.playBeepSound();
       } else {
-        this.restTimerSecondsSubject.next(current - 1);
+        this.restTimerSecondsSubject.next(remaining);
       }
     }, 1000);
   }
