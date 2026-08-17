@@ -211,7 +211,14 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
                       @for (food of frequentFoods; track food.id) {
                         <div class="food-result-row" (click)="selectCatalogFood(food)">
                           <span class="food-result-name">{{ food.name }}</span>
-                          <span class="food-result-kcal">{{ food.kcal_100g }} kcal/100g</span>
+                          <div class="food-right">
+                            <span class="food-result-kcal">{{ food.kcal_100g }} kcal/100g</span>
+                            @if (canDeleteFood(food)) {
+                              <button class="delete-item-btn" (click)="$event.stopPropagation(); deleteCustomFood(food)" title="Elimina alimento custom">
+                                <lucide-icon [img]="Trash2" size="14"></lucide-icon>
+                              </button>
+                            }
+                          </div>
                         </div>
                       }
                     </div>
@@ -223,7 +230,14 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
                     @for (food of filteredFoods; track food.id) {
                       <div class="food-result-row" (click)="selectCatalogFood(food)">
                         <span class="food-result-name">{{ food.name }}</span>
-                        <span class="food-result-kcal">{{ food.kcal_100g }} kcal/100g</span>
+                        <div class="food-right">
+                          <span class="food-result-kcal">{{ food.kcal_100g }} kcal/100g</span>
+                          @if (canDeleteFood(food)) {
+                            <button class="delete-item-btn" (click)="$event.stopPropagation(); deleteCustomFood(food)" title="Elimina alimento custom">
+                              <lucide-icon [img]="Trash2" size="14"></lucide-icon>
+                            </button>
+                          }
+                        </div>
                       </div>
                     }
                     @if (filteredFoods.length === 0) {
@@ -1247,6 +1261,19 @@ export class DietLogComponent implements OnInit {
 
   backToSearch() {
     this.selectedCatalogFood = null;
+  }
+
+  canDeleteFood(food: Food): boolean {
+    return this.foodService.canDeleteCustomFood(food);
+  }
+
+  async deleteCustomFood(food: Food) {
+    if (!confirm(`Eliminare "${food.name}" dal catalogo? Le voci già registrate nel diario non saranno modificate.`)) return;
+
+    await this.foodService.deleteCustomFood(food.id);
+    this.allFoods = this.allFoods.filter(f => f.id !== food.id);
+    this.frequentFoods = this.frequentFoods.filter(f => f.id !== food.id);
+    this.cdr.markForCheck();
   }
 
   startBarcodeScan() {

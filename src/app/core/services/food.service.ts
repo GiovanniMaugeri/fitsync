@@ -34,6 +34,15 @@ export class FoodService {
     return await db.foods.where('barcode').equals(barcode).first();
   }
 
+  canDeleteCustomFood(food: Food): boolean {
+    return food.is_custom === true && food.user_id === this.supabaseService.currentUserId;
+  }
+
+  async deleteCustomFood(id: string): Promise<void> {
+    await db.foods.delete(id);
+    await this.syncService.enqueue('foods', 'DELETE', { id });
+  }
+
   async createCustomFood(
     name: string,
     kcal_100g: number,
