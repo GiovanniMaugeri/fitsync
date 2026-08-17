@@ -891,6 +891,8 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
       border-radius: 16px;
       width: 100%;
       max-width: 440px;
+      max-height: 90vh;
+      overflow-y: auto;
       padding: 1.25rem;
       display: flex;
       flex-direction: column;
@@ -1094,9 +1096,13 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
 
     .macro-input-row {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
 
-      .form-group { flex: 1; }
+      .form-group {
+        flex: 1 1 120px;
+        min-width: 0;
+      }
     }
   `]
 })
