@@ -30,13 +30,18 @@ export class FoodService {
     return await db.foods.get(id);
   }
 
+  async findByBarcode(barcode: string): Promise<Food | undefined> {
+    return await db.foods.where('barcode').equals(barcode).first();
+  }
+
   async createCustomFood(
     name: string,
     kcal_100g: number,
     protein_100g: number,
     carbs_100g: number,
     fat_100g: number,
-    isPublic: boolean = false
+    isPublic: boolean = false,
+    barcode?: string
   ): Promise<Food> {
     const userId = this.supabaseService.currentUserId;
     const newFood: Food = {
@@ -49,6 +54,7 @@ export class FoodService {
       protein_100g: Math.max(0, Number(protein_100g) || 0),
       carbs_100g: Math.max(0, Number(carbs_100g) || 0),
       fat_100g: Math.max(0, Number(fat_100g) || 0),
+      barcode: barcode ?? null,
       created_at: new Date().toISOString()
     };
 
