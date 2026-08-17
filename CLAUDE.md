@@ -6,6 +6,12 @@ PWA Angular 19 per allenamenti e dieta. Backend Supabase, storage locale offline
 - Usa `npm start` / `npm run build` — NON `ng serve` / `ng build` direttamente: saltano `set-env.js`, che genera `src/environments/environment.ts` (gitignored) dalle variabili in `.env`. Senza quel passaggio l'app non ha le credenziali Supabase.
 - Nessun test automatico configurato (nessun file `.spec.ts`, nessuno script `test` in package.json). Se scrivi test, va impostato prima il framework — non assumere che esista già.
 
+# Database di sviluppo
+Esiste un secondo progetto Supabase (`fitsync-db-dev`, stesso org, region `eu-west-1`, ref `nultwrzgauspmeelmlps`) separato dalla produzione (`fitsync-db`, ref `gpehmwufdobdsuasokdg`), con lo stesso schema (tutte le migrazioni in `supabase/migrations/` applicate su entrambi). Credenziali in `.env.dev` (gitignored).
+- `npm run start:dev-db` / `npm run config:dev` — puntano al DB di sviluppo invece che a produzione.
+- Nuove migrazioni: pusha prima su dev per testare (`npx supabase db push --project-ref nultwrzgauspmeelmlps`), poi su produzione una volta verificate (`npx supabase db push`, richiede `supabase link` sul progetto di produzione — è quello linkato di default).
+- Il DB di sviluppo parte vuoto (solo lo schema + seed dei foods/exercises di default, nessun dato utente) — serve un account di test separato per accedere alla sincronizzazione, non riusa gli utenti di produzione.
+
 # Stile di scrittura del codice (minimal-first)
 Prima di scrivere codice nuovo, valuta in ordine, fermandoti al primo che si applica:
 1. Serve davvero? (YAGNI — non costruire per ipotesi future non richieste)

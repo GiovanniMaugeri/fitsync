@@ -1,8 +1,10 @@
 const fs = require('fs');
 const dotenv = require('dotenv');
 
-// Carica il file .env se presente
-dotenv.config();
+// Carica .env di default, oppure il file passato come primo argomento
+// (es. `node set-env.js .env.dev` per puntare al progetto Supabase di sviluppo)
+const envFile = process.argv[2] || '.env';
+dotenv.config({ path: envFile });
 
 const clean = (val) => (val || '').replace(/[\r\n"']/g, '').trim();
 
