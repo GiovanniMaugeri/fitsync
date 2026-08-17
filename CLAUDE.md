@@ -6,6 +6,13 @@ PWA Angular 19 per allenamenti e dieta. Backend Supabase, storage locale offline
 - Usa `npm start` / `npm run build` — NON `ng serve` / `ng build` direttamente: saltano `set-env.js`, che genera `src/environments/environment.ts` (gitignored) dalle variabili in `.env`. Senza quel passaggio l'app non ha le credenziali Supabase.
 - Nessun test automatico configurato (nessun file `.spec.ts`, nessuno script `test` in package.json). Se scrivi test, va impostato prima il framework — non assumere che esista già.
 
+# Database di sviluppo
+Esiste un secondo progetto Supabase (`fitsync-db-dev`, stesso org, region `eu-west-1`, ref `nultwrzgauspmeelmlps`) separato dalla produzione (`fitsync-db`, ref `gpehmwufdobdsuasokdg`), con lo stesso schema (tutte le migrazioni in `supabase/migrations/` applicate su entrambi).
+
+**`npm start` / `npm run build` / `npm run watch` puntano SEMPRE al DB di sviluppo per default** (`.env`, gitignored, contiene le credenziali dev) — solo il deploy reale su Vercel usa produzione, tramite le env var configurate nel dashboard Vercel (non legge `.env`, che non fa parte del repo). Per testare localmente contro produzione, serve l'opt-in esplicito: `npm run start:prod-db` / `npm run build:prod-db` / `npm run config:prod` (credenziali in `.env.production`, gitignored).
+- Nuove migrazioni: pusha prima su dev per testare (`npx supabase db push --project-ref nultwrzgauspmeelmlps`), poi su produzione una volta verificate (`npx supabase db push`, richiede `supabase link` sul progetto di produzione — è quello linkato di default).
+- Account di test sul DB dev: username `test123`, password `test123` (email sintetica `test123@fitsync.com`). Dati fittizzi già popolati (schede allenamento, sessioni storiche, diario dieta) — vedi Dev Log 2026-08-17 nel vault per i dettagli.
+
 # Stile di scrittura del codice (minimal-first)
 Prima di scrivere codice nuovo, valuta in ordine, fermandoti al primo che si applica:
 1. Serve davvero? (YAGNI — non costruire per ipotesi future non richieste)

@@ -16,9 +16,28 @@ invece di un unico file monolitico modificato a mano.
 
 ## Come applicare una migrazione
 
-Non è configurata la Supabase CLI in questo repo: le migrazioni vanno eseguite manualmente,
-in ordine, incollando il contenuto del file SQL nel Supabase Dashboard → SQL Editor del progetto.
+La Supabase CLI è collegata (`npx supabase`, nessuna installazione globale) al progetto di
+produzione (`fitsync-db`). Applicare una nuova migrazione:
 
-Se in futuro si passa alla Supabase CLI (`supabase migration new` / `supabase db push`), questa
-stessa cartella `migrations/` è già nel formato compatibile: basterà collegare il progetto
-(`supabase link`) e i file esistenti verranno riconosciuti come storico.
+```
+npx supabase db push
+```
+
+da eseguire dalla root del repo (lo stato del link vive in `supabase/.temp`, relativo alla cwd).
+
+## Due progetti: produzione e sviluppo
+
+Esiste anche un secondo progetto Supabase dedicato allo sviluppo (`fitsync-db-dev`, stesso schema,
+creato il 2026-08-17 per non lavorare su nuove feature direttamente contro i dati reali). Prima di
+pushare una nuova migrazione in produzione, testala sul progetto di sviluppo:
+
+```
+npx supabase db push --project-ref nultwrzgauspmeelmlps --include-all
+```
+
+Il progetto di sviluppo non è quello collegato di default (`supabase link` punta a produzione) —
+va sempre specificato esplicitamente con `--project-ref`, così non si rischia di dimenticare il
+flag e pushare per sbaglio su dev quando si intendeva produzione (o viceversa).
+
+Dettagli su come l'app sceglie a quale progetto connettersi (`.env` = dev per default, `.env.production`
+solo opt-in esplicito) in `CLAUDE.md`, sezione "Database di sviluppo".
