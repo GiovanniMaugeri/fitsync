@@ -9,6 +9,8 @@ import { ExerciseListComponent } from './features/exercises/exercise-list.compon
 import { DietLogComponent } from './features/diet/diet-log.component';
 import { DietHistoryComponent } from './features/diet/diet-history.component';
 import { DietDashboardComponent } from './features/diet/diet-dashboard.component';
+import { WeightComponent } from './features/weight/weight.component';
+import { WeightDashboardComponent } from './features/weight/weight-dashboard.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -21,6 +23,8 @@ export const routes: Routes = [
   { path: 'diet', component: DietLogComponent },
   { path: 'diet/history', component: DietHistoryComponent },
   { path: 'diet/dashboard', component: DietDashboardComponent },
+  { path: 'weight', component: WeightComponent },
+  { path: 'weight/dashboard', component: WeightDashboardComponent },
   { path: 'auth', component: AuthComponent },
   { path: '**', redirectTo: '' }
 ];

@@ -155,7 +155,8 @@ export class SyncService {
         'workout_sets': 6,
         'diet_logs': 7,
         'diet_meals': 8,
-        'diet_log_items': 9
+        'diet_log_items': 9,
+        'body_weight_logs': 10
       };
 
       pendingItems.sort((a, b) => {
@@ -174,7 +175,7 @@ export class SyncService {
 
           // Se l'utente è autenticato su Supabase e l'oggetto richiede user_id, colleghiamo l'utente corrente
           if (isRealUser && item.payload && typeof item.payload === 'object') {
-            if (['exercises', 'foods', 'workout_templates', 'workout_sessions', 'diet_logs', 'diet_meals', 'diet_log_items'].includes(item.table_name)) {
+            if (['exercises', 'foods', 'workout_templates', 'workout_sessions', 'diet_logs', 'diet_meals', 'diet_log_items', 'body_weight_logs'].includes(item.table_name)) {
               if (!item.payload['user_id'] || item.payload['user_id'] === LOCAL_USER_ID) {
                 item.payload['user_id'] = currentUserId;
               }
@@ -464,6 +465,29 @@ export class SyncService {
           }
         } catch (dErr) {
           logger.warn('FitSync: Pull tabella dieta non riuscito:', dErr);
+        }
+      }
+
+      // 7. Pull Body Weight Logs dell'utente
+      if (userId && userId !== LOCAL_USER_ID) {
+        try {
+          const { data: weightLogs, error: wErr } = await client.from('body_weight_logs').select('*').eq('user_id', userId);
+          if (!wErr && weightLogs) {
+            const pendingQueueWeight = await db.syncQueue.toArray();
+            const pendingWeightIds = new Set(pendingQueueWeight.filter(q => q.table_name === 'body_weight_logs').map(q => q.payload?.['id']));
+
+            const remoteWeightIds = new Set(weightLogs.map(w => w.id));
+            const localWeightLogs = await db.bodyWeightLogs.where('user_id').equals(userId).toArray();
+            const toDelWeight = localWeightLogs.filter(w => !remoteWeightIds.has(w.id) && !pendingWeightIds.has(w.id)).map(w => w.id);
+            if (toDelWeight.length > 0) {
+              await db.bodyWeightLogs.bulkDelete(toDelWeight);
+            }
+            if (weightLogs.length > 0) {
+              await db.bodyWeightLogs.bulkPut(weightLogs);
+            }
+          }
+        } catch (wErr) {
+          logger.warn('FitSync: Pull peso corporeo non riuscito:', wErr);
         }
       }
 

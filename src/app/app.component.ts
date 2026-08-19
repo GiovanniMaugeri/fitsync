@@ -21,7 +21,8 @@ import {
   X,
   Calendar,
   Flame,
-  TrendingUp
+  TrendingUp,
+  Weight
 } from 'lucide-angular';
 
 @Component({
@@ -92,6 +93,16 @@ import {
               </div>
               <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
             </a>
+            <a routerLink="/weight" class="drawer-item" (click)="closeSettingsMenu()">
+              <div class="item-icon icon-weight">
+                <lucide-icon [img]="Weight" size="22"></lucide-icon>
+              </div>
+              <div class="item-content">
+                <span class="item-title">Peso</span>
+                <span class="item-subtitle">Monitora il peso corporeo</span>
+              </div>
+              <lucide-icon [img]="ChevronRight" size="18" class="arrow-icon"></lucide-icon>
+            </a>
           </div>
         </div>
       }
@@ -146,7 +157,7 @@ import {
       </main>
     
       <!-- WORKOUT BOTTOM NAVIGATION BAR -->
-      @if (!isDietMode) {
+      @if (!isDietMode && !isWeightMode) {
         <nav class="bottom-nav">
           <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
             <span class="nav-icon"><lucide-icon [img]="Activity" size="24"></lucide-icon></span>
@@ -185,6 +196,20 @@ import {
             <span class="nav-label">Storico</span>
           </a>
           <a routerLink="/diet/dashboard" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="TrendingUp" size="24"></lucide-icon></span>
+            <span class="nav-label">Andamento</span>
+          </a>
+        </nav>
+      }
+
+      <!-- WEIGHT CUSTOM BOTTOM NAVIGATION BAR -->
+      @if (isWeightMode) {
+        <nav class="bottom-nav weight-bottom-nav">
+          <a routerLink="/weight" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="Weight" size="24"></lucide-icon></span>
+            <span class="nav-label">Registra</span>
+          </a>
+          <a routerLink="/weight/dashboard" routerLinkActive="active" class="nav-item">
             <span class="nav-icon"><lucide-icon [img]="TrendingUp" size="24"></lucide-icon></span>
             <span class="nav-label">Andamento</span>
           </a>
@@ -443,6 +468,11 @@ import {
       color: #34d399;
     }
 
+    .icon-weight {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+    }
+
     .item-content {
       display: flex;
       flex-direction: column;
@@ -603,6 +633,12 @@ import {
         color: #ffffff;
       }
     }
+
+    .weight-bottom-nav {
+      .nav-item.active {
+        color: #f59e0b;
+      }
+    }
   `]
 })
 export class AppComponent implements OnInit {
@@ -615,6 +651,7 @@ export class AppComponent implements OnInit {
   readonly Radio = Radio;
   readonly User = User;
   readonly Utensils = Utensils;
+  readonly Weight = Weight;
   readonly ChevronRight = ChevronRight;
   readonly X = X;
   readonly Calendar = Calendar;
@@ -623,6 +660,7 @@ export class AppComponent implements OnInit {
 
   isSettingsOpen = false;
   isDietMode = false;
+  isWeightMode = false;
 
   isOnline: Signal<boolean>;
   isSyncing: Signal<boolean>;
@@ -651,10 +689,12 @@ export class AppComponent implements OnInit {
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event) => {
       this.isDietMode = event.url.startsWith('/diet');
+      this.isWeightMode = event.url.startsWith('/weight');
       this.cdr.markForCheck();
     });
 
     this.isDietMode = this.router.url.startsWith('/diet');
+    this.isWeightMode = this.router.url.startsWith('/weight');
   }
 
   forceSync() {

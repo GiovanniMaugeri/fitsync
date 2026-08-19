@@ -12,7 +12,8 @@ import {
   SyncQueueItem,
   DietLog,
   DietMeal,
-  DietLogItem
+  DietLogItem,
+  BodyWeightLog
 } from '../models/fitsync.models';
 import defaultExercisesData from '../data/default-exercises.json';
 import defaultFoodsData from '../data/default-foods.json';
@@ -222,6 +223,7 @@ export class FitSyncDatabase extends Dexie {
   dietMeals!: Table<DietMeal, string>;
   dietLogItems!: Table<DietLogItem, string>;
   foods!: Table<Food, string>;
+  bodyWeightLogs!: Table<BodyWeightLog, string>;
 
   constructor() {
     super('FitSyncDB');
@@ -253,10 +255,16 @@ export class FitSyncDatabase extends Dexie {
       foods: 'id, user_id, name, is_custom, is_public, barcode'
     };
 
+    const schemaV8 = {
+      ...schemaV7,
+      bodyWeightLogs: 'id, user_id, date, [user_id+date]'
+    };
+
     this.version(1).stores(schemaV1);
     this.version(5).stores(schemaV5);
     this.version(6).stores(schemaV6);
     this.version(7).stores(schemaV7);
+    this.version(8).stores(schemaV8);
 
     this.version(2).stores(schemaV1).upgrade(async tx => {
       // Migrazione degli esercizi esistenti da 'Braccia' a 'Bicipiti' o 'Tricipiti'

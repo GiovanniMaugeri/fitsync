@@ -149,6 +149,7 @@ export class SupabaseService {
       await this.reassignLocalUserId(db.workoutTemplates, realUserId);
       await this.reassignLocalUserId(db.workoutSessions, realUserId);
       await this.claimDietLogs(realUserId);
+      await this.claimBodyWeightLogs(realUserId);
     } catch (err) {
       logger.error('FitSync: errore durante la riconciliazione dei dati locali pre-login:', err);
     }
@@ -200,6 +201,30 @@ export class SupabaseService {
         await this.deleteQueueItemsForRow('diet_logs', orphan.id);
       } else {
         await db.dietLogs.update(orphan.id, { user_id: realUserId });
+        await this.patchQueuePayloads([orphan.id], { user_id: realUserId });
+      }
+    }
+  }
+
+  /**
+   * body_weight_logs ha lo stesso vincolo UNIQUE(user_id, date) di diet_logs. Qui non ci
+   * sono figli da reparentare: in caso di conflitto sulla stessa data il log orfano viene
+   * semplicemente scartato, altrimenti riassegnato all'utente reale.
+   */
+  private async claimBodyWeightLogs(realUserId: string): Promise<void> {
+    const orphanLogs = await db.bodyWeightLogs.where('user_id').equals(LOCAL_USER_ID).toArray();
+    if (orphanLogs.length === 0) return;
+
+    const realLogs = await db.bodyWeightLogs.where('user_id').equals(realUserId).toArray();
+    const realLogByDate = new Map(realLogs.map(l => [l.date, l]));
+
+    for (const orphan of orphanLogs) {
+      const conflict = realLogByDate.get(orphan.date);
+      if (conflict) {
+        await db.bodyWeightLogs.delete(orphan.id);
+        await this.deleteQueueItemsForRow('body_weight_logs', orphan.id);
+      } else {
+        await db.bodyWeightLogs.update(orphan.id, { user_id: realUserId });
         await this.patchQueuePayloads([orphan.id], { user_id: realUserId });
       }
     }
