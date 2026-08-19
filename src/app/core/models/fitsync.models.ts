@@ -126,9 +126,17 @@ export interface Food {
   created_at?: string;
 }
 
+export interface BodyWeightLog {
+  id: string;
+  user_id: string;
+  date: string; // 'YYYY-MM-DD'
+  weight_kg: number;
+  created_at?: string;
+}
+
 export interface SyncQueueItem {
   id: string;
-  table_name: 'profiles' | 'exercises' | 'foods' | 'workout_templates' | 'template_exercises' | 'workout_sessions' | 'workout_sets' | 'diet_logs' | 'diet_meals' | 'diet_log_items';
+  table_name: 'profiles' | 'exercises' | 'foods' | 'workout_templates' | 'template_exercises' | 'workout_sessions' | 'workout_sets' | 'diet_logs' | 'diet_meals' | 'diet_log_items' | 'body_weight_logs';
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   payload: Record<string, unknown>;
   timestamp: number;
