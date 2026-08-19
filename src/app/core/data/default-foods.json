@@ -1508,5 +1508,145 @@
     "protein_100g": 11,
     "carbs_100g": 33,
     "fat_100g": 10
+  },
+  {
+    "id": "a983fc80-f16c-42e2-8177-dd454b45458d",
+    "name": "Kiwi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 44,
+    "protein_100g": 1.2,
+    "carbs_100g": 8.6,
+    "fat_100g": 0.5
+  },
+  {
+    "id": "5aac30ec-6636-46b2-a9c6-890d6ca04c4e",
+    "name": "Susine (prugne fresche)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 42,
+    "protein_100g": 0.5,
+    "carbs_100g": 9.5,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "c5927d8a-0769-434e-a658-868f96834b3d",
+    "name": "Fichi freschi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 47,
+    "protein_100g": 1.1,
+    "carbs_100g": 10.4,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "3c5566e0-b341-49c3-a1d0-19b052284d4f",
+    "name": "Lamponi",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 35,
+    "protein_100g": 1.2,
+    "carbs_100g": 4.7,
+    "fat_100g": 0.4
+  },
+  {
+    "id": "2f1c6824-2842-4e05-9034-c0ccfe62e00e",
+    "name": "Nespole",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 47,
+    "protein_100g": 0.4,
+    "carbs_100g": 12.1,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "649b2c2e-7665-439d-97ff-94c5a606d1ee",
+    "name": "Mirtilli rossi (cranberry)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 46,
+    "protein_100g": 0.4,
+    "carbs_100g": 12.2,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "74b5ba67-c153-4a36-acd9-f22be2765225",
+    "name": "Amarene (ciliegie acide)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 50,
+    "protein_100g": 1,
+    "carbs_100g": 12.2,
+    "fat_100g": 0.3
+  },
+  {
+    "id": "0a675000-b76f-438c-9b30-e66bc3f4f4dd",
+    "name": "Cocco fresco (polpa)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 354,
+    "protein_100g": 3.3,
+    "carbs_100g": 15.2,
+    "fat_100g": 33.5
+  },
+  {
+    "id": "99d69833-4602-46f4-a7bf-700d1c5278d1",
+    "name": "Clementine",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 47,
+    "protein_100g": 0.9,
+    "carbs_100g": 11.7,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "de7abd3f-9017-44dd-9a6d-6a6dd0fe1ae2",
+    "name": "Frutto della passione (maracuja)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 97,
+    "protein_100g": 2.2,
+    "carbs_100g": 23.4,
+    "fat_100g": 0.7
+  },
+  {
+    "id": "75dfcd02-ebe0-47ec-a76b-7a700bd4eb88",
+    "name": "Guava",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 68,
+    "protein_100g": 2.6,
+    "carbs_100g": 14.3,
+    "fat_100g": 0.5
+  },
+  {
+    "id": "d78efe47-0ca7-475a-9072-405a8b91e98f",
+    "name": "Frutto del drago (pitaya)",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 57,
+    "protein_100g": 0.4,
+    "carbs_100g": 15.2,
+    "fat_100g": 0.1
+  },
+  {
+    "id": "72193788-8215-4377-9fe3-a96ce81a5fad",
+    "name": "Giuggiole",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 79,
+    "protein_100g": 1.2,
+    "carbs_100g": 20.2,
+    "fat_100g": 0.2
+  },
+  {
+    "id": "0bfcbf92-d2d5-4e0f-8c9e-037bdcd7be71",
+    "name": "Fico d'India",
+    "is_custom": false,
+    "user_id": null,
+    "kcal_100g": 41,
+    "protein_100g": 0.7,
+    "carbs_100g": 9.6,
+    "fat_100g": 0.5
   }
 ]
