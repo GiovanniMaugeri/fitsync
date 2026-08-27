@@ -38,7 +38,9 @@
     "@angular/cli": "^19.1.0",
     "@angular/compiler-cli": "^19.1.0",
     "@types/node": "^22.0.0",
+    "@vercel/node": "^3.2.0",
     "dotenv": "^17.4.2",
-    "typescript": "~5.7.0"
+    "typescript": "~5.7.0",
+    "vercel": "^59.7.0"
   }
 }

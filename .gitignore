@@ -7,4 +7,6 @@ src/environments/environment.ts
 dist/
 supabase/.temp/
 tools/
+.vercel/
 
+.vercel
