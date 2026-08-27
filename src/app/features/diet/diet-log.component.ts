@@ -17,19 +17,22 @@ import {
   Search,
   ArrowLeft,
   Clock,
-  ScanBarcode
+  ScanBarcode,
+  Camera
 } from 'lucide-angular';
 import { DietService } from '../../core/services/diet.service';
 import { FoodService } from '../../core/services/food.service';
 import { BarcodeLookupService } from '../../core/services/barcode-lookup.service';
+import { MealPhotoAiService, MealPhotoAiError, RecognizedFoodItem } from '../../core/services/meal-photo-ai.service';
 import { BarcodeScannerComponent } from './barcode-scanner.component';
+import { MealPhotoCaptureComponent } from './meal-photo-capture.component';
 import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fitsync.models';
 
 @Component({
   selector: 'app-diet-log',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterModule, LucideAngularModule, BarcodeScannerComponent],
+  imports: [FormsModule, RouterModule, LucideAngularModule, BarcodeScannerComponent, MealPhotoCaptureComponent],
   template: `
     <div class="diet-log-container">
     
@@ -197,7 +200,7 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
             </div>
 
             <!-- STATO 1: RICERCA NEL CATALOGO -->
-            @if (!selectedCatalogFood && !showManualEntry && !showBarcodeScanner && !isLookingUpBarcode && !barcodeManualEntry && !scanErrorMessage) {
+            @if (!selectedCatalogFood && !showManualEntry && !showBarcodeScanner && !isLookingUpBarcode && !barcodeManualEntry && !scanErrorMessage && !showPhotoCapture && !isAnalyzingPhoto && !photoAnalysisError && recognizedFoodItems.length === 0) {
               <div class="modal-body">
                 <div class="search-input-wrap">
                   <lucide-icon [img]="Search" size="16" class="search-icon"></lucide-icon>
@@ -255,9 +258,101 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
                 <button class="manual-fallback-link" (click)="startBarcodeScan()">
                   <lucide-icon [img]="ScanBarcode" size="14"></lucide-icon> Scansiona codice a barre
                 </button>
+                <button class="manual-fallback-link" [disabled]="!isOnline" [title]="!isOnline ? 'Richiede connessione a internet' : ''" (click)="startPhotoCapture()">
+                  <lucide-icon [img]="Camera" size="14"></lucide-icon> Fotografa il piatto
+                </button>
               </div>
               <div class="modal-footer">
                 <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
+              </div>
+            }
+
+            <!-- STATO: CATTURA FOTO PIATTO -->
+            @if (showPhotoCapture) {
+              <div class="modal-body">
+                <button class="back-link" (click)="showPhotoCapture = false">
+                  <lucide-icon [img]="ArrowLeft" size="14"></lucide-icon> Torna alla ricerca
+                </button>
+                <app-meal-photo-capture
+                  (photoReady)="onPhotoReady($event)"
+                  (cancelled)="showPhotoCapture = false">
+                </app-meal-photo-capture>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
+              </div>
+            }
+
+            <!-- STATO: ANALISI FOTO IN CORSO -->
+            @if (isAnalyzingPhoto) {
+              <div class="modal-body">
+                <p class="picker-hint">Analisi del piatto in corso...</p>
+              </div>
+            }
+
+            <!-- STATO: ERRORE ANALISI FOTO -->
+            @if (photoAnalysisError) {
+              <div class="modal-body">
+                <p class="picker-hint">{{ photoAnalysisError }}</p>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline" (click)="photoAnalysisError = null">Torna alla ricerca</button>
+                <button class="btn btn-primary" (click)="photoAnalysisError = null; showPhotoCapture = true">Riprova</button>
+              </div>
+            }
+
+            <!-- STATO: ALIMENTI RICONOSCIUTI DALLA FOTO (lista editabile) -->
+            @if (recognizedFoodItems.length > 0) {
+              <div class="modal-body">
+                <button class="back-link" (click)="recognizedFoodItems = []">
+                  <lucide-icon [img]="ArrowLeft" size="14"></lucide-icon> Torna alla ricerca
+                </button>
+                @for (item of recognizedFoodItems; track $index) {
+                  <div class="recognized-item-card">
+                    <div class="recognized-item-header">
+                      <input type="text" [(ngModel)]="item.name" class="form-input" />
+                      <button class="delete-item-btn" (click)="removeRecognizedItem($index)" title="Rimuovi">
+                        <lucide-icon [img]="Trash2" size="14"></lucide-icon>
+                      </button>
+                    </div>
+                    <div class="macro-input-row">
+                      <div class="form-group">
+                        <label>Grammi</label>
+                        <input type="number" [(ngModel)]="item.estimated_grams" class="form-input" min="0" />
+                      </div>
+                      <div class="form-group">
+                        <label>Kcal/100g</label>
+                        <input type="number" [(ngModel)]="item.kcal_100g" class="form-input" min="0" />
+                      </div>
+                    </div>
+                    <div class="macro-input-row">
+                      <div class="form-group">
+                        <label>Prot./100g</label>
+                        <input type="number" [(ngModel)]="item.protein_100g" class="form-input" min="0" />
+                      </div>
+                      <div class="form-group">
+                        <label>Carb./100g</label>
+                        <input type="number" [(ngModel)]="item.carbs_100g" class="form-input" min="0" />
+                      </div>
+                      <div class="form-group">
+                        <label>Grassi/100g</label>
+                        <input type="number" [(ngModel)]="item.fat_100g" class="form-input" min="0" />
+                      </div>
+                    </div>
+                    <div class="macro-preview-grid">
+                      <div class="macro-preview-item"><span class="mp-label">Kcal</span><span class="mp-value">{{ photoItemPreview(item).calories }}</span></div>
+                      <div class="macro-preview-item"><span class="mp-label">Prot.</span><span class="mp-value">{{ photoItemPreview(item).protein }}g</span></div>
+                      <div class="macro-preview-item"><span class="mp-label">Carb.</span><span class="mp-value">{{ photoItemPreview(item).carbs }}g</span></div>
+                      <div class="macro-preview-item"><span class="mp-label">Grassi</span><span class="mp-value">{{ photoItemPreview(item).fat }}g</span></div>
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline" (click)="selectedMealForFood = null">Annulla</button>
+                <button class="btn btn-primary" [disabled]="isSavingPhotoItems" (click)="confirmSavePhotoItems()">
+                  <lucide-icon [img]="Check" size="16"></lucide-icon> Salva {{ recognizedFoodItems.length }} aliment{{ recognizedFoodItems.length === 1 ? 'o' : 'i' }}
+                </button>
               </div>
             }
 
@@ -1123,6 +1218,30 @@ import { DietLog, DietMealDetail, DietLogItem, Food } from '../../core/models/fi
       padding: 0.4rem;
 
       &:hover { text-decoration: underline; }
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        &:hover { text-decoration: none; }
+      }
+    }
+
+    .recognized-item-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 0.75rem;
+    }
+
+    .recognized-item-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .form-input { flex: 1; }
     }
 
     .back-link {
@@ -1200,6 +1319,7 @@ export class DietLogComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;
   readonly Clock = Clock;
   readonly ScanBarcode = ScanBarcode;
+  readonly Camera = Camera;
 
   activeLog: DietLog | null = null;
   currentDateObj = new Date();
@@ -1232,6 +1352,13 @@ export class DietLogComponent implements OnInit {
   scanErrorMessage: string | null = null;
   barcodeManualEntry: string | null = null; // valorizzato = stato "crea alimento custom da barcode"
 
+  // Add food modal — foto del piatto (riconoscimento AI)
+  showPhotoCapture = false;
+  isAnalyzingPhoto = false;
+  photoAnalysisError: string | null = null;
+  recognizedFoodItems: RecognizedFoodItem[] = [];
+  isSavingPhotoItems = false;
+
   // Add meal modal
   isAddingMeal = false;
   newMealName = '';
@@ -1253,8 +1380,13 @@ export class DietLogComponent implements OnInit {
     private dietService: DietService,
     private foodService: FoodService,
     private barcodeLookupService: BarcodeLookupService,
+    private mealPhotoAiService: MealPhotoAiService,
     private cdr: ChangeDetectorRef
   ) {}
+
+  get isOnline(): boolean {
+    return navigator.onLine;
+  }
 
   ngOnInit() {
     this.dietService.activeLog$.subscribe(log => {
@@ -1372,6 +1504,11 @@ export class DietLogComponent implements OnInit {
     this.isLookingUpBarcode = false;
     this.scanErrorMessage = null;
     this.barcodeManualEntry = null;
+    this.showPhotoCapture = false;
+    this.isAnalyzingPhoto = false;
+    this.photoAnalysisError = null;
+    this.recognizedFoodItems = [];
+    this.isSavingPhotoItems = false;
 
     this.allFoods = await this.foodService.getAllFoods();
     this.frequentFoods = await this.foodService.getFrequentFoodsForMeal(meal.name, 5);
@@ -1421,6 +1558,72 @@ export class DietLogComponent implements OnInit {
       ? 'Permesso fotocamera negato. Puoi comunque cercare o inserire manualmente.'
       : 'Fotocamera non disponibile su questo dispositivo.';
     this.cdr.markForCheck();
+  }
+
+  startPhotoCapture() {
+    if (!this.isOnline) return;
+    this.photoAnalysisError = null;
+    this.showPhotoCapture = true;
+  }
+
+  async onPhotoReady(photo: { base64: string; mimeType: string }) {
+    this.showPhotoCapture = false;
+    this.isAnalyzingPhoto = true;
+    this.cdr.markForCheck();
+
+    try {
+      const items = await this.mealPhotoAiService.analyzeMealPhoto(photo.base64, photo.mimeType);
+      if (items.length === 0) {
+        this.photoAnalysisError = 'Nessun alimento riconosciuto nella foto. Riprova con un\'inquadratura più chiara o inserisci manualmente.';
+      } else {
+        this.recognizedFoodItems = items;
+      }
+    } catch (err) {
+      this.photoAnalysisError = err instanceof MealPhotoAiError
+        ? err.message
+        : 'Si è verificato un errore durante l\'analisi della foto.';
+    } finally {
+      this.isAnalyzingPhoto = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  removeRecognizedItem(index: number) {
+    this.recognizedFoodItems = this.recognizedFoodItems.filter((_, i) => i !== index);
+  }
+
+  photoItemPreview(item: RecognizedFoodItem): { calories: number; protein: number; carbs: number; fat: number } {
+    const factor = (item.estimated_grams || 0) / 100;
+    return {
+      calories: Math.round((item.kcal_100g || 0) * factor),
+      protein: Math.round((item.protein_100g || 0) * factor * 10) / 10,
+      carbs: Math.round((item.carbs_100g || 0) * factor * 10) / 10,
+      fat: Math.round((item.fat_100g || 0) * factor * 10) / 10
+    };
+  }
+
+  async confirmSavePhotoItems() {
+    if (this.isSavingPhotoItems || !this.selectedMealForFood || this.recognizedFoodItems.length === 0) return;
+
+    this.isSavingPhotoItems = true;
+    try {
+      const items = this.recognizedFoodItems.map(item => {
+        const preview = this.photoItemPreview(item);
+        return {
+          name: item.name,
+          calories: preview.calories,
+          amountNote: `${Math.round(item.estimated_grams)}g`,
+          protein: preview.protein,
+          carbs: preview.carbs,
+          fat: preview.fat
+        };
+      });
+      await this.dietService.addFoodItemsBatch(this.selectedMealForFood.id, items);
+      this.selectedMealForFood = null;
+    } finally {
+      this.isSavingPhotoItems = false;
+      this.cdr.markForCheck();
+    }
   }
 
   cancelBarcodeManualEntry() {

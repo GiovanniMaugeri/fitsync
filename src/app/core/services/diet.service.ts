@@ -226,6 +226,39 @@ export class DietService {
   }
 
   /**
+   * Aggiunge in blocco più alimenti (es. dal riconoscimento AI di una foto piatto):
+   * un solo bulkAdd + un solo reload, invece di N chiamate a addFoodItem in loop.
+   * Item "manuali" come quelli inseriti a mano: nessun food_id, nessuna riga in `foods`.
+   */
+  async addFoodItemsBatch(
+    mealId: string,
+    items: { name: string; calories: number; amountNote?: string; protein?: number; carbs?: number; fat?: number }[]
+  ): Promise<void> {
+    const currentLog = this.activeLogSubject.value;
+    if (!currentLog || items.length === 0) return;
+
+    const userId = this.supabaseService.currentUserId;
+    const newItems: DietLogItem[] = items.map(it => ({
+      id: generateUUID(),
+      user_id: userId,
+      meal_id: mealId,
+      name: it.name.trim(),
+      calories: Math.max(0, Number(it.calories) || 0),
+      amount_note: it.amountNote ? it.amountNote.trim() : undefined,
+      protein: Math.max(0, Number(it.protein) || 0),
+      carbs: Math.max(0, Number(it.carbs) || 0),
+      fat: Math.max(0, Number(it.fat) || 0),
+      created_at: new Date().toISOString()
+    }));
+
+    await db.dietLogItems.bulkAdd(newItems);
+    for (const item of newItems) {
+      await this.syncService.enqueue('diet_log_items', 'INSERT', { ...item });
+    }
+    await this.loadLogForDate(currentLog.date);
+  }
+
+  /**
    * Aggiunge un alimento scelto dal catalogo. Calorie/macro vengono calcolate una sola
    * volta (snapshot) da foods.*_100g × quantityGrams/100 e salvate sulla riga: una futura
    * correzione dei valori nel catalogo non altera retroattivamente i log già registrati.
