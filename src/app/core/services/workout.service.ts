@@ -28,6 +28,10 @@ export interface ActiveWorkoutState {
 const ACTIVE_WORKOUT_STORAGE_KEY = 'fitsync_active_workout_state';
 const REST_TIMER_END_STORAGE_KEY = 'fitsync_rest_timer_end_timestamp';
 
+// Un allenamento lasciato "in corso" oltre questa soglia (app chiusa, telefono scarico, ecc.)
+// viene chiuso automaticamente al riavvio invece di essere ripresentato come attivo.
+const MAX_ACTIVE_WORKOUT_HOURS = 4;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -79,6 +83,12 @@ export class WorkoutService {
       if (saved) {
         const state: ActiveWorkoutState = JSON.parse(saved);
         if (state && state.session && state.exercises) {
+          const hoursElapsed = (Date.now() - new Date(state.session.start_time).getTime()) / (1000 * 60 * 60);
+          if (hoursElapsed > MAX_ACTIVE_WORKOUT_HOURS) {
+            this.autoFinishStaleWorkout(state);
+            return;
+          }
+
           this.activeWorkout.set(state);
 
           const timerEnd = localStorage.getItem(REST_TIMER_END_STORAGE_KEY);
@@ -96,6 +106,20 @@ export class WorkoutService {
     } catch (e) {
       logger.warn('FitSync: Errore ripristino allenamento attivo da localStorage:', e);
     }
+  }
+
+  // Chiude in background l'allenamento trovato ancora "in corso" al riavvio ma avviato oltre
+  // MAX_ACTIVE_WORKOUT_HOURS fa (es. app chiusa senza salvare). Riusa la stessa finishWorkout()
+  // così le serie già completate vengono salvate come una sessione normale in cronologia,
+  // solo con una nota che ne segnala la chiusura automatica.
+  private autoFinishStaleWorkout(state: ActiveWorkoutState) {
+    logger.log(`FitSync: allenamento "${state.session.name}" avviato più di ${MAX_ACTIVE_WORKOUT_HOURS}h fa, chiusura automatica.`);
+    this.activeWorkout.set(state);
+    this.finishWorkout('Allenamento chiuso automaticamente: sessione lasciata aperta troppo a lungo.')
+      .catch(e => {
+        logger.warn('FitSync: Errore durante la chiusura automatica dell\'allenamento scaduto:', e);
+        this.updateActiveWorkoutState(null);
+      });
   }
 
   public get currentActiveWorkout(): ActiveWorkoutState | null {
@@ -143,8 +167,9 @@ export class WorkoutService {
       const defaultWeight = lastSets.length > 0 ? lastSets[0].weight : 20;
 
       for (let i = 1; i <= te.target_sets; i++) {
-        const lastWeightForSet = lastSets.find(s => s.set_number === i)?.weight || defaultWeight;
-        const lastRepsForSet = lastSets.find(s => s.set_number === i)?.reps || te.target_reps;
+        // `??`: un peso di 0 kg (esercizio a corpo libero) è un valore valido, non un dato mancante
+        const lastWeightForSet = lastSets.find(s => s.set_number === i)?.weight ?? defaultWeight;
+        const lastRepsForSet = lastSets.find(s => s.set_number === i)?.reps ?? te.target_reps;
 
         sets.push({
           id: generateUUID(),
@@ -378,25 +403,30 @@ export class WorkoutService {
     this.stopRestTimer();
   }
 
+  /**
+   * Set dell'ultima sessione in cui l'utente corrente ha eseguito questo esercizio,
+   * ordinati per numero di serie. Usata per precompilare peso e ripetizioni.
+   * L'ultima sessione va cercata per `start_time`: l'indice `exercise_id` ordina i set
+   * per primary key (UUID casuale) a parità di chiave, quindi non dice nulla sulla cronologia.
+   */
   async getLastPerformanceForExercise(exerciseId: string): Promise<WorkoutSet[]> {
     const currentUserId = this.supabaseService.currentUserId;
-    const sets = await db.workoutSets.where('exercise_id').equals(exerciseId).reverse().toArray();
+    const sets = await db.workoutSets.where('exercise_id').equals(exerciseId).toArray();
     if (sets.length === 0) return [];
 
-    for (const setItem of sets) {
-      const session = await db.workoutSessions.get(setItem.session_id);
-      if (session) {
-        const isUserSession = (currentUserId && currentUserId !== LOCAL_USER_ID)
-          ? session.user_id === currentUserId
-          : (!session.user_id || session.user_id === LOCAL_USER_ID);
+    const sessions = await db.workoutSessions.bulkGet([...new Set(sets.map(s => s.session_id))]);
 
-        if (isUserSession) {
-          return sets.filter(s => s.session_id === setItem.session_id);
-        }
-      }
-    }
+    const lastSession = sessions
+      .filter((s): s is WorkoutSession => !!s && ((currentUserId && currentUserId !== LOCAL_USER_ID)
+        ? s.user_id === currentUserId
+        : (!s.user_id || s.user_id === LOCAL_USER_ID)))
+      .sort((a, b) => (b.start_time || '').localeCompare(a.start_time || ''))[0];
 
-    return [];
+    if (!lastSession) return [];
+
+    return sets
+      .filter(s => s.session_id === lastSession.id)
+      .sort((a, b) => a.set_number - b.set_number);
   }
 
   async getRecentWorkoutSessions(limit: number = 10): Promise<WorkoutSession[]> {
